@@ -1,64 +1,105 @@
-import { Link } from "react-router-dom"
-import { client, property, healthReport, priorityList, jobHistory } from "../mockData"
-import { Card, PageHeader, UrgencyBadge, StatusBadge } from "../components"
+import { useState } from "react"
+import { Link, useOutletContext } from "react-router-dom"
+import { useItems } from "../useItems"
+import {
+  Card,
+  PageHeader,
+  UrgencyBadge,
+  StatusBadge,
+  Button,
+  Modal,
+  DynamicForm,
+} from "../components"
+
+const propertyFields = [
+  { name: "address", label: "Address", type: "text" },
+  { name: "areaLabel", label: "City / State / Zip", type: "text" },
+  { name: "acreage", label: "Acreage", type: "number" },
+  { name: "yearBuilt", label: "Year built", type: "number" },
+  { name: "profileSessionDate", label: "Property Profile session date", type: "text" },
+  { name: "conductedBy", label: "Conducted by", type: "text" },
+  { name: "clientName", label: "Family / client name", type: "text" },
+  { name: "tier", label: "Membership tier", type: "text" },
+  { name: "monthlyRate", label: "Monthly rate ($)", type: "number" },
+  { name: "nextInvoiceDate", label: "Next invoice date", type: "text" },
+  { name: "referralCredits", label: "Referral credits (free months)", type: "number" },
+]
 
 export default function Overview() {
-  const attentionCount = healthReport.systems.filter(
-    (s) => s.condition !== "good"
-  ).length
-  const topPriorities = priorityList.slice(0, 3)
-  const recentJobs = jobHistory.slice(0, 3)
+  const { uid, profile, saveProfile } = useOutletContext()
+  const { items: healthItems } = useItems(uid, "healthReport")
+  const { items: priorityItems } = useItems(uid, "priorityList")
+  const { items: jobItems } = useItems(uid, "jobHistory")
+  const [editingProperty, setEditingProperty] = useState(false)
+
+  const attentionCount = healthItems.filter((s) => s.condition !== "good").length
+  const topPriorities = priorityItems.slice(0, 3)
+  const recentJobs = jobItems.slice(-3).reverse()
 
   return (
     <div>
       <PageHeader
-        title={`${property.address}`}
-        subtitle={`${property.areaLabel} · ${property.acreage} acres · Built ${property.yearBuilt}`}
+        title={profile.address}
+        subtitle={`${profile.areaLabel}${profile.acreage ? ` · ${profile.acreage} acres` : ""}${profile.yearBuilt ? ` · Built ${profile.yearBuilt}` : ""}`}
+        action={
+          <Button variant="subtle" onClick={() => setEditingProperty(true)}>
+            Edit property info
+          </Button>
+        }
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card>
           <p className="text-sm text-brand-600">Membership</p>
-          <p className="text-xl font-semibold mt-1">{client.tier}</p>
+          <p className="text-xl font-semibold mt-1">{profile.tier || "—"}</p>
           <p className="text-sm text-brand-600 mt-1">
-            ${client.monthlyRate}/mo · locked for life
+            {profile.monthlyRate ? `$${profile.monthlyRate}/mo` : "Rate not set"}
           </p>
         </Card>
         <Card>
           <p className="text-sm text-brand-600">Property Health</p>
           <p className="text-xl font-semibold mt-1">
-            {attentionCount === 0
-              ? "All systems good"
-              : `${attentionCount} item${attentionCount > 1 ? "s" : ""} flagged`}
+            {healthItems.length === 0
+              ? "No data yet"
+              : attentionCount === 0
+                ? "All systems good"
+                : `${attentionCount} item${attentionCount > 1 ? "s" : ""} flagged`}
           </p>
           <p className="text-sm text-brand-600 mt-1">
-            Last profiled {healthReport.generatedOn}
+            {profile.profileSessionDate
+              ? `Last profiled ${profile.profileSessionDate}`
+              : "Add your Property Profile Session details"}
           </p>
         </Card>
         <Card>
           <p className="text-sm text-brand-600">Referral Credits</p>
           <p className="text-xl font-semibold mt-1">
-            {client.referralCredits} free month{client.referralCredits === 1 ? "" : "s"}
+            {profile.referralCredits || 0} free month
+            {profile.referralCredits === 1 ? "" : "s"}
           </p>
-          <p className="text-sm text-brand-600 mt-1">
-            Refer a neighbor to earn more
-          </p>
+          <p className="text-sm text-brand-600 mt-1">Refer a neighbor to earn more</p>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card title="Top Priorities">
-          <ul className="divide-y divide-brand-100">
-            {topPriorities.map((item) => (
-              <li key={item.rank} className="py-2.5 flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-medium text-brand-900">{item.title}</p>
-                  <p className="text-sm text-brand-600">{item.category}</p>
-                </div>
-                <UrgencyBadge urgency={item.urgency} />
-              </li>
-            ))}
-          </ul>
+          {topPriorities.length === 0 ? (
+            <p className="text-sm text-brand-600">
+              Nothing on your priority list yet.
+            </p>
+          ) : (
+            <ul className="divide-y divide-brand-100">
+              {topPriorities.map((item) => (
+                <li key={item.id} className="py-2.5 flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-brand-900">{item.title}</p>
+                    <p className="text-sm text-brand-600">{item.category}</p>
+                  </div>
+                  <UrgencyBadge urgency={item.urgency} />
+                </li>
+              ))}
+            </ul>
+          )}
           <Link
             to="/priority-list"
             className="inline-block mt-3 text-sm font-medium text-brand-600 hover:text-brand-800"
@@ -68,17 +109,23 @@ export default function Overview() {
         </Card>
 
         <Card title="Recent Activity">
-          <ul className="divide-y divide-brand-100">
-            {recentJobs.map((job, i) => (
-              <li key={i} className="py-2.5 flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-medium text-brand-900">{job.title}</p>
-                  <p className="text-sm text-brand-600">{job.date} · {job.sub}</p>
-                </div>
-                <StatusBadge status={job.status} />
-              </li>
-            ))}
-          </ul>
+          {recentJobs.length === 0 ? (
+            <p className="text-sm text-brand-600">No jobs logged yet.</p>
+          ) : (
+            <ul className="divide-y divide-brand-100">
+              {recentJobs.map((job) => (
+                <li key={job.id} className="py-2.5 flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-brand-900">{job.title}</p>
+                    <p className="text-sm text-brand-600">
+                      {job.date} · {job.sub}
+                    </p>
+                  </div>
+                  <StatusBadge status={job.status} />
+                </li>
+              ))}
+            </ul>
+          )}
           <Link
             to="/job-history"
             className="inline-block mt-3 text-sm font-medium text-brand-600 hover:text-brand-800"
@@ -106,6 +153,20 @@ export default function Overview() {
           </Card>
         </Link>
       </div>
+
+      {editingProperty && (
+        <Modal title="Edit property info" onClose={() => setEditingProperty(false)}>
+          <DynamicForm
+            fields={propertyFields}
+            initialValues={profile}
+            submitLabel="Save"
+            onSubmit={(values) => {
+              saveProfile(values)
+              setEditingProperty(false)
+            }}
+          />
+        </Modal>
+      )}
     </div>
   )
 }

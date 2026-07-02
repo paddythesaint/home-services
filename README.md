@@ -1,18 +1,14 @@
 # home-services
 
-## Homeowner Dashboard Prototype
+## Homeowner Dashboard
 
-A clickable, front-end-only mockup of the founding-member homeowner dashboard
-described in the business plan. No backend — all data is hardcoded in
-`dashboard/src/mockData.js` for a single sample property.
+A homeowner dashboard for 895 Old Ballard Road, Charlottesville, VA,
+modeled on the Charlottesville Home & Property Services business plan.
+React + Vite + Tailwind, backed by Firebase (Google sign-in + Firestore),
+deployed to GitHub Pages via GitHub Actions.
 
-Pages: Overview, Property Health Report, Annual Care Calendar, 90-Day
-Priority List, Job History.
+Sections: Overview, Property Health Report, Annual Care Calendar, 90-Day
+Priority List, Job History — all fully editable through the UI.
 
-### Run it
-
-```
-cd dashboard
-npm install
-npm run dev
-```
+See `dashboard/README.md` for one-time Firebase/GitHub setup and local
+development instructions.

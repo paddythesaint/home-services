@@ -1,0 +1,20 @@
+rules_version = '2';
+
+// Locks all property data to a single owner account. Update OWNER_EMAIL
+// below (and the VITE_OWNER_EMAIL env var) if the account ever changes.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email == 'paddythesaint@gmail.com';
+    }
+
+    match /properties/{uid} {
+      allow read, write: if isOwner() && request.auth.uid == uid;
+
+      match /{subcollection}/{docId} {
+        allow read, write: if isOwner() && request.auth.uid == uid;
+      }
+    }
+  }
+}
