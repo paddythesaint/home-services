@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import SeedBanner from "../SeedBanner"
+import InsightsBanner from "../InsightsBanner"
 import {
   Card,
   PageHeader,
@@ -32,10 +33,13 @@ const propertyFields = [
 
 export default function Overview() {
   const { uid, profile, saveProfile } = useOutletContext()
-  const { items: healthItems, loading: healthLoading } = useItems(uid, "healthReport")
-  const { items: priorityItems, loading: priorityLoading } = useItems(uid, "priorityList")
+  const healthApi = useItems(uid, "healthReport")
+  const priorityApi = useItems(uid, "priorityList")
   const { items: calendarItems, loading: calendarLoading } = useItems(uid, "careCalendar")
-  const { items: jobItems } = useItems(uid, "jobHistory")
+  const jobApi = useItems(uid, "jobHistory")
+  const { items: healthItems, loading: healthLoading } = healthApi
+  const { items: priorityItems, loading: priorityLoading } = priorityApi
+  const { items: jobItems } = jobApi
   const [editingProperty, setEditingProperty] = useState(false)
 
   const dashboardEmpty =
@@ -67,6 +71,18 @@ export default function Overview() {
       />
 
       {dashboardEmpty && <SeedBanner uid={uid} />}
+
+      {!dashboardEmpty && !profile.insightsAppliedOn && (
+        <InsightsBanner
+          healthItems={healthItems}
+          priorityItems={priorityItems}
+          jobItems={jobItems}
+          healthApi={healthApi}
+          priorityApi={priorityApi}
+          jobApi={jobApi}
+          saveProfile={saveProfile}
+        />
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <StatTile
