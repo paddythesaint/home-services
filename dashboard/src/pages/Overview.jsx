@@ -6,6 +6,7 @@ import InsightsBanner from "../InsightsBanner"
 import { closingDocsInsights } from "../documentInsights"
 import { recordsIndexInsights } from "../recordsIndexInsights"
 import { energyAuditInsights } from "../energyAuditInsights"
+import { todayISO, isoToLabel } from "../dates"
 import {
   Card,
   PageHeader,
@@ -56,11 +57,18 @@ export default function Overview() {
     return acc
   }, {})
   const completedJobs = jobItems.filter((j) => j.status === "completed").length
-  const topPriorities = priorityItems.slice(0, 3)
+  const openPriorities = priorityItems.filter(
+    (p) => !p.status || p.status === "open" || p.status === "scheduled"
+  )
+  const topPriorities = openPriorities.slice(0, 3)
   const recentJobs = jobItems.slice(-3).reverse()
 
   const currentMonth = new Date().toLocaleDateString("en-US", { month: "long" })
   const thisMonthTasks = calendarItems.filter((t) => t.month === currentMonth)
+
+  const dueChecks = healthItems
+    .filter((s) => s.nextDue && s.nextDue <= todayISO())
+    .sort((a, b) => a.nextDue.localeCompare(b.nextDue))
 
   return (
     <div>
@@ -120,6 +128,19 @@ export default function Overview() {
         />
       )}
 
+      {dueChecks.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4 text-sm text-amber-900">
+          <span className="font-medium">
+            {dueChecks.length} recurring check{dueChecks.length === 1 ? "" : "s"} due:
+          </span>{" "}
+          {dueChecks.map((s) => `${s.category} (${isoToLabel(s.nextDue)})`).join(", ")}.{" "}
+          <Link to="/health-report" className="font-medium underline">
+            Log them on the Health Report
+          </Link>
+          .
+        </div>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <StatTile
           label="Systems verified"
@@ -134,7 +155,7 @@ export default function Overview() {
         />
         <StatTile
           label="Open priorities"
-          value={priorityItems.length}
+          value={openPriorities.length}
           sub="Next 90 days"
         />
         <StatTile

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
+import { addItem } from "../firestoreApi"
 import { Card, Button, ConditionBadge, DynamicForm } from "../components"
 import PhotoSection from "../PhotoSection"
 
@@ -237,6 +238,13 @@ export default function Walkthrough() {
                 ...values,
                 verified: true,
                 verifiedOn: todayLabel(),
+              })
+              addItem(uid, "activity", {
+                systemId: currentItem.id,
+                type: "service",
+                summary: "Confirmed during walkthrough",
+                date: todayLabel(),
+                order: Date.now(),
               })
               setConfirmedCount((c) => c + 1)
               advanceSystems()

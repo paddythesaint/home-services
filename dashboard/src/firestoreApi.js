@@ -62,6 +62,17 @@ export function addPhoto(uid, data) {
   return addDoc(collectionRef(uid, "photos"), data)
 }
 
+// Per-system activity timeline (readings, actions, observations, service).
+// Subscribed per system so cards only load their own history when opened.
+export function subscribeActivity(uid, systemId, callback) {
+  const q = query(collectionRef(uid, "activity"), where("systemId", "==", systemId))
+  return onSnapshot(q, (snap) => {
+    const entries = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+    entries.sort((a, b) => b.order - a.order)
+    callback(entries)
+  })
+}
+
 export function updatePhoto(uid, id, data) {
   return updateDoc(doc(db, "properties", uid, "photos", id), data)
 }

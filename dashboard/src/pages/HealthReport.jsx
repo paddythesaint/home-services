@@ -2,6 +2,9 @@ import { useState } from "react"
 import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import PhotoSection from "../PhotoSection"
+import ActivitySection from "../ActivitySection"
+import { addItem } from "../firestoreApi"
+import { todayLabel, todayISO, isoToLabel, addMonthsISO } from "../dates"
 import {
   Card,
   ConditionBadge,
@@ -11,6 +14,17 @@ import {
   Modal,
   DynamicForm,
 } from "../components"
+
+const FREQ_OPTIONS = ["0", "1", "3", "6", "12", "24", "36"]
+const FREQ_LABELS = {
+  0: "No recurring check",
+  1: "Monthly",
+  3: "Quarterly",
+  6: "Every 6 months",
+  12: "Yearly",
+  24: "Every 2 years",
+  36: "Every 3 years",
+}
 
 const fields = [
   { name: "category", label: "Category", type: "text", placeholder: "e.g. HVAC" },
@@ -26,8 +40,20 @@ const fields = [
     options: ["good", "attention", "urgent"],
     optionLabels: { good: "Good", attention: "Attention", urgent: "Urgent" },
   },
+  {
+    name: "verifyFrequencyMonths",
+    label: "Recurring check",
+    type: "select",
+    options: FREQ_OPTIONS,
+    optionLabels: FREQ_LABELS,
+  },
   { name: "note", label: "Note", type: "textarea" },
 ]
+
+function dueClass(nextDue) {
+  if (!nextDue) return ""
+  return nextDue <= todayISO() ? "text-status-critical" : "text-ink-3"
+}
 
 export default function HealthReport() {
   const { uid, profile } = useOutletContext()
@@ -36,6 +62,27 @@ export default function HealthReport() {
   const [confirmDelete, setConfirmDelete] = useState(null)
 
   const unverifiedCount = items.filter((i) => !i.verified).length
+
+  // Record a verification: stamp the system, roll its next-due date forward by
+  // its frequency, and drop a dated entry in the activity log so the history
+  // accumulates rather than overwrites.
+  async function logVerification(system) {
+    const freq = Number(system.verifyFrequencyMonths) || 0
+    const patch = {
+      verified: true,
+      verifiedOn: todayLabel(),
+      lastVerified: todayISO(),
+    }
+    if (freq > 0) patch.nextDue = addMonthsISO(freq)
+    await update(system.id, patch)
+    await addItem(uid, "activity", {
+      systemId: system.id,
+      type: "service",
+      summary: "Verified / checked",
+      date: todayLabel(),
+      order: Date.now(),
+    })
+  }
 
   return (
     <div>
@@ -69,61 +116,87 @@ export default function HealthReport() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {items.map((system) => (
-            <Card key={system.id}>
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-ink">{system.category}</p>
-                  <p className="text-sm text-ink-2">{system.detail}</p>
+          {items.map((system) => {
+            const freq = Number(system.verifyFrequencyMonths) || 0
+            return (
+              <Card key={system.id}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-ink">{system.category}</p>
+                    <p className="text-sm text-ink-2">{system.detail}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    <ConditionBadge condition={system.condition} />
+                    <VerifiedBadge verified={system.verified} />
+                  </div>
                 </div>
-                <div className="flex flex-col items-end gap-1.5 shrink-0">
-                  <ConditionBadge condition={system.condition} />
-                  <VerifiedBadge verified={system.verified} />
+
+                {(system.brand || system.installYear || system.lastServiced || system.location) && (
+                  <p className="text-xs text-ink-3 mt-2">
+                    {[
+                      system.brand,
+                      system.installYear && `Installed ${system.installYear}`,
+                      system.lastServiced && `Serviced ${system.lastServiced}`,
+                      system.location,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                )}
+
+                <p className="text-sm text-ink-2 mt-2 whitespace-pre-line">{system.note}</p>
+
+                {freq > 0 && (
+                  <p className={`text-xs mt-2 ${dueClass(system.nextDue)}`}>
+                    {FREQ_LABELS[freq]} check ·{" "}
+                    {system.nextDue
+                      ? `next due ${isoToLabel(system.nextDue)}`
+                      : "not yet scheduled"}
+                    {system.lastVerified && ` · last ${isoToLabel(system.lastVerified)}`}
+                  </p>
+                )}
+
+                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-line flex-wrap">
+                  <Button variant="ghost" className="!px-0" onClick={() => setEditing(system)}>
+                    Edit
+                  </Button>
+                  <Button
+                    variant="danger"
+                    className="!px-0"
+                    onClick={() => setConfirmDelete(system)}
+                  >
+                    Delete
+                  </Button>
+                  {freq > 0 && (
+                    <Button
+                      variant="ghost"
+                      className="!px-0"
+                      onClick={() => logVerification(system)}
+                    >
+                      Log check
+                    </Button>
+                  )}
+                  <PhotoSection
+                    uid={uid}
+                    systemId={system.id}
+                    onSuggest={(f) => {
+                      const patch = { ...f }
+                      if (f.note) {
+                        patch.note = system.note
+                          ? `${system.note}\n${f.note}`
+                          : f.note
+                      }
+                      update(system.id, patch)
+                    }}
+                  />
                 </div>
-              </div>
 
-              {(system.brand || system.installYear || system.lastServiced || system.location) && (
-                <p className="text-xs text-ink-3 mt-2">
-                  {[
-                    system.brand,
-                    system.installYear && `Installed ${system.installYear}`,
-                    system.lastServiced && `Serviced ${system.lastServiced}`,
-                    system.location,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
-              )}
-
-              <p className="text-sm text-ink-2 mt-2 whitespace-pre-line">{system.note}</p>
-
-              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-line">
-                <Button variant="ghost" className="!px-0" onClick={() => setEditing(system)}>
-                  Edit
-                </Button>
-                <Button
-                  variant="danger"
-                  className="!px-0"
-                  onClick={() => setConfirmDelete(system)}
-                >
-                  Delete
-                </Button>
-                <PhotoSection
-                  uid={uid}
-                  systemId={system.id}
-                  onSuggest={(fields) => {
-                    const patch = { ...fields }
-                    if (fields.note) {
-                      patch.note = system.note
-                        ? `${system.note}\n${fields.note}`
-                        : fields.note
-                    }
-                    update(system.id, patch)
-                  }}
-                />
-              </div>
-            </Card>
-          ))}
+                <div className="mt-3 pt-3 border-t border-line">
+                  <ActivitySection uid={uid} systemId={system.id} />
+                </div>
+              </Card>
+            )
+          })}
         </div>
       )}
 
@@ -134,7 +207,7 @@ export default function HealthReport() {
         >
           <DynamicForm
             fields={fields}
-            initialValues={editing === "new" ? {} : editing}
+            initialValues={editing === "new" ? { verifyFrequencyMonths: "0" } : editing}
             onSubmit={(values) => {
               if (editing === "new") {
                 add(values)

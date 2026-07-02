@@ -3,16 +3,9 @@ import { useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import { callClaude, assistantTools, buildSystemPrompt } from "../assistantApi"
 import { compressImage } from "../photoUtils"
-import { addPhoto } from "../firestoreApi"
+import { addPhoto, addItem } from "../firestoreApi"
+import { todayLabel, todayISO, addMonthsISO } from "../dates"
 import { Card, Button } from "../components"
-
-function todayLabel() {
-  return new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
-}
 
 const GREETING =
   "Hi — I'm your property assistant. Tell me about any part of the house and I'll record it as we talk: \"the water heater is a 2019 Rheem in the garage\", \"we had the septic pumped last fall\", \"what should I check next?\" You can also snap a photo of any nameplate or piece of equipment with the camera button and I'll read it. Where do you want to start — or should I pick the biggest gap in the record?"
@@ -130,6 +123,53 @@ export default function Assistant() {
       case "update_priority":
         await priorityApi.update(args.id, args.fields)
         return "Updated priority"
+      case "resolve_priority": {
+        await priorityApi.update(args.id, {
+          status: args.status,
+          resolvedOn: todayLabel(),
+          resolutionNote: args.note || "",
+        })
+        const item = priorityApi.items.find((i) => i.id === args.id)
+        return `${args.status[0].toUpperCase()}${args.status.slice(1)}: ${item?.title || "priority"}`
+      }
+      case "log_activity": {
+        await addItem(uid, "activity", {
+          systemId: args.systemId,
+          type: args.type,
+          summary: args.summary,
+          ...(args.value ? { value: args.value } : {}),
+          ...(args.unit ? { unit: args.unit } : {}),
+          date: todayLabel(),
+          order: Date.now(),
+        })
+        const item = healthApi.items.find((i) => i.id === args.systemId)
+        const valStr = args.value ? ` (${args.value}${args.unit ? " " + args.unit : ""})` : ""
+        return `Logged to ${item?.category || "system"}: ${args.summary}${valStr}`
+      }
+      case "set_recurring_check": {
+        const freq = Number(args.frequencyMonths) || 0
+        const patch = { verifyFrequencyMonths: String(freq) }
+        if (freq > 0 && args.markCheckedNow) {
+          patch.verified = true
+          patch.verifiedOn = todayLabel()
+          patch.lastVerified = todayISO()
+          patch.nextDue = addMonthsISO(freq)
+          await addItem(uid, "activity", {
+            systemId: args.systemId,
+            type: "service",
+            summary: "Verified / checked",
+            date: todayLabel(),
+            order: Date.now(),
+          })
+        } else if (freq === 0) {
+          patch.nextDue = ""
+        }
+        await healthApi.update(args.systemId, patch)
+        const item = healthApi.items.find((i) => i.id === args.systemId)
+        return freq === 0
+          ? `Removed recurring check on ${item?.category || "system"}`
+          : `Set ${item?.category || "system"} to check every ${freq} month${freq === 1 ? "" : "s"}`
+      }
       case "remove_priority": {
         const item = priorityApi.items.find((i) => i.id === args.id)
         await priorityApi.remove(args.id)
