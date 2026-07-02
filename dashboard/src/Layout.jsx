@@ -11,6 +11,7 @@ const icons = {
   calendar: <path d="M8 2v4M16 2v4M3 9h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" />,
   priorities: <path d="M4 21V4m0 0s1-1.5 5-1.5S14 4 14 4s1 1.5 5 1.5c1 0 1.5-.25 1.5-.25v10.5s-.5.25-1.5.25c-4 0-5-1.5-5-1.5s-1-1.5-5-1.5-5 1.5-5 1.5" />,
   history: <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />,
+  ops: <path d="M3 3v18h18M7 15l3-3 3 3 5-6" />,
 }
 
 function NavIcon({ name }) {
@@ -40,6 +41,7 @@ const navItems = [
   { to: "/care-calendar", label: "Care Calendar", icon: "calendar" },
   { to: "/priority-list", label: "90-Day Priorities", icon: "priorities" },
   { to: "/job-history", label: "Job History", icon: "history" },
+  { to: "/ops", label: "Operations", icon: "ops" },
 ]
 
 export default function Layout({ user }) {

@@ -4,6 +4,7 @@ import Layout from "./Layout"
 import Overview from "./pages/Overview"
 import Walkthrough from "./pages/Walkthrough"
 import Assistant from "./pages/Assistant"
+import Ops from "./pages/Ops"
 import HealthReport from "./pages/HealthReport"
 import CareCalendar from "./pages/CareCalendar"
 import PriorityList from "./pages/PriorityList"
@@ -23,6 +24,7 @@ export default function App() {
               <Route path="care-calendar" element={<CareCalendar />} />
               <Route path="priority-list" element={<PriorityList />} />
               <Route path="job-history" element={<JobHistory />} />
+              <Route path="ops" element={<Ops />} />
             </Route>
           </Routes>
         )}
