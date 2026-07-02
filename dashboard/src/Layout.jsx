@@ -6,6 +6,7 @@ import { useProperty } from "./useProperty"
 const icons = {
   overview: <path d="M3 10.5L12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5" />,
   walkthrough: <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 13l2 2 4-4" />,
+  assistant: <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />,
   health: <path d="M22 12h-4l-3 8-4-16-3 8H2" />,
   calendar: <path d="M8 2v4M16 2v4M3 9h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" />,
   priorities: <path d="M4 21V4m0 0s1-1.5 5-1.5S14 4 14 4s1 1.5 5 1.5c1 0 1.5-.25 1.5-.25v10.5s-.5.25-1.5.25c-4 0-5-1.5-5-1.5s-1-1.5-5-1.5-5 1.5-5 1.5" />,
@@ -33,6 +34,7 @@ function NavIcon({ name }) {
 
 const navItems = [
   { to: "/", label: "Overview", icon: "overview", end: true },
+  { to: "/assistant", label: "Intake Assistant", icon: "assistant" },
   { to: "/walkthrough", label: "Walkthrough", icon: "walkthrough" },
   { to: "/health-report", label: "Health Report", icon: "health" },
   { to: "/care-calendar", label: "Care Calendar", icon: "calendar" },
