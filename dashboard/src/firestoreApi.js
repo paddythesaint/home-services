@@ -25,29 +25,45 @@ function propertyDocRef(uid) {
 // self-heals it by writing the owner's membership so future lookups use the
 // membership path. Returns the property id, or null if the user has no access.
 export async function resolvePropertyId(user) {
-  const membershipQuery = query(
-    collection(db, "properties"),
-    where("memberEmails", "array-contains", user.email)
-  )
-  const found = await getDocs(membershipQuery)
-  if (!found.empty) return found.docs[0].id
-
-  const legacy = await getDoc(propertyDocRef(user.uid))
-  if (legacy.exists()) {
-    const data = legacy.data()
-    if (!data.memberEmails || !data.memberEmails.includes(user.email)) {
-      await setDoc(
-        propertyDocRef(user.uid),
-        {
-          memberEmails: [user.email],
-          members: [
-            { email: user.email, name: user.displayName || "", role: "owner" },
-          ],
-        },
-        { merge: true }
+  // Membership lookup. If the rules don't permit this collection query yet
+  // (e.g. the updated rules haven't been published), treat it as "no match"
+  // and fall through to the legacy path rather than failing resolution — this
+  // is what keeps the original owner from being locked out during the
+  // rules transition.
+  try {
+    const found = await getDocs(
+      query(
+        collection(db, "properties"),
+        where("memberEmails", "array-contains", user.email)
       )
+    )
+    if (!found.empty) return found.docs[0].id
+  } catch (err) {
+    console.warn("Membership lookup unavailable, trying legacy path:", err.code || err)
+  }
+
+  // Legacy uid-keyed doc: the original owner. Self-heal by writing membership
+  // so subsequent lookups use the membership path.
+  try {
+    const legacy = await getDoc(propertyDocRef(user.uid))
+    if (legacy.exists()) {
+      const data = legacy.data()
+      if (!data.memberEmails || !data.memberEmails.includes(user.email)) {
+        await setDoc(
+          propertyDocRef(user.uid),
+          {
+            memberEmails: [user.email],
+            members: [
+              { email: user.email, name: user.displayName || "", role: "owner" },
+            ],
+          },
+          { merge: true }
+        )
+      }
+      return user.uid
     }
-    return user.uid
+  } catch (err) {
+    console.warn("Legacy property lookup failed:", err.code || err)
   }
   return null
 }
