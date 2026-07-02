@@ -5,6 +5,7 @@ import SeedBanner from "../SeedBanner"
 import InsightsBanner from "../InsightsBanner"
 import { closingDocsInsights } from "../documentInsights"
 import { recordsIndexInsights } from "../recordsIndexInsights"
+import { energyAuditInsights } from "../energyAuditInsights"
 import {
   Card,
   PageHeader,
@@ -96,6 +97,21 @@ export default function Overview() {
           buttonLabel="Apply records-index insights"
           flagField="recordsIndexAppliedOn"
           insights={recordsIndexInsights}
+          healthApi={healthApi}
+          priorityApi={priorityApi}
+          jobApi={jobApi}
+          calendarApi={calendarApi}
+          saveProfile={saveProfile}
+        />
+      )}
+
+      {!dashboardEmpty && !profile.energyAuditAppliedOn && (
+        <InsightsBanner
+          title="Apply insights from your March 2026 energy audit?"
+          description="We read the full 40-page LEAP energy audit (report #387364, March 10, 2026). Two safety findings lead: the water heaters failed the gas-leak screen (burner corrosion, loose exhaust gasket) and the auditor was blunt about the basement stove — 'fix it or get rid of it'. This also adds windows (mold in four rooms), ventilation (three bath fans at 0 CFM), attic insulation, and drainage as systems, logs the audit as a job, and queues the ~$687/yr weatherization package as a priority."
+          buttonLabel="Apply energy-audit insights"
+          flagField="energyAuditAppliedOn"
+          insights={energyAuditInsights}
           healthApi={healthApi}
           priorityApi={priorityApi}
           jobApi={jobApi}
