@@ -36,7 +36,7 @@ export default function JobHistory() {
 
       {orderedItems.length === 0 ? (
         <Card>
-          <p className="text-sm text-brand-600">No jobs logged yet.</p>
+          <p className="text-sm text-ink-2">No jobs logged yet.</p>
         </Card>
       ) : (
         <div className="flex flex-col gap-3">
@@ -44,11 +44,11 @@ export default function JobHistory() {
             <Card key={job.id}>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="font-semibold text-brand-900">{job.title}</p>
-                  <p className="text-sm text-brand-600">
+                  <p className="font-semibold text-ink">{job.title}</p>
+                  <p className="text-sm text-ink-2">
                     {job.date} · {job.category} · {job.sub}
                   </p>
-                  <p className="text-sm text-brand-700 mt-1.5">{job.notes}</p>
+                  <p className="text-sm text-ink-2 mt-1.5">{job.notes}</p>
                   <div className="flex gap-3 mt-3">
                     <Button variant="ghost" className="!px-0" onClick={() => setEditing(job)}>
                       Edit
@@ -64,7 +64,7 @@ export default function JobHistory() {
                 </div>
                 <div className="text-right shrink-0">
                   <StatusBadge status={job.status} />
-                  <p className="text-sm text-brand-600 mt-2">{job.cost}</p>
+                  <p className="text-sm text-ink-2 mt-2">{job.cost}</p>
                 </div>
               </div>
             </Card>
@@ -91,7 +91,7 @@ export default function JobHistory() {
 
       {confirmDelete && (
         <Modal title="Delete job?" onClose={() => setConfirmDelete(null)}>
-          <p className="text-sm text-brand-700 mb-4">
+          <p className="text-sm text-ink-2 mb-4">
             Remove "{confirmDelete.title}" from your job history?
           </p>
           <div className="flex justify-end gap-2">

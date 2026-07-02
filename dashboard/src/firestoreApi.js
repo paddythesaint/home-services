@@ -8,6 +8,7 @@ import {
   onSnapshot,
   query,
   orderBy,
+  where,
 } from "firebase/firestore"
 import { db } from "./firebase"
 
@@ -46,6 +47,27 @@ export function updateItem(uid, name, id, data) {
 
 export function removeItem(uid, name, id) {
   return deleteDoc(doc(db, "properties", uid, name, id))
+}
+
+// Photos live in their own collection (one doc per photo, keyed to a system)
+// so system cards only load images when their photo section is opened.
+export function subscribePhotos(uid, systemId, callback) {
+  const q = query(collectionRef(uid, "photos"), where("systemId", "==", systemId))
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+  })
+}
+
+export function addPhoto(uid, data) {
+  return addDoc(collectionRef(uid, "photos"), data)
+}
+
+export function updatePhoto(uid, id, data) {
+  return updateDoc(doc(db, "properties", uid, "photos", id), data)
+}
+
+export function removePhoto(uid, id) {
+  return deleteDoc(doc(db, "properties", uid, "photos", id))
 }
 
 export async function seedCollections(uid, collections) {

@@ -3,65 +3,120 @@ import { useState } from "react"
 export function Card({ title, children, className = "" }) {
   return (
     <div
-      className={`bg-white border border-brand-200 rounded-lg p-5 shadow-sm ${className}`}
+      className={`bg-surface border border-line rounded-xl p-5 shadow-[0_1px_2px_rgba(11,11,11,0.04)] ${className}`}
     >
       {title && (
-        <h2 className="text-base font-semibold text-brand-900 mb-3">{title}</h2>
+        <h2 className="text-sm font-semibold text-ink mb-3 tracking-tight">{title}</h2>
       )}
       {children}
     </div>
   )
 }
 
-const conditionStyles = {
-  good: "bg-brand-100 text-brand-700",
-  attention: "bg-amber-100 text-amber-800",
-  urgent: "bg-red-100 text-red-700",
+// Status chips: a colored dot carries the state, the label stays in ink —
+// per the status-palette rule, color never carries meaning alone.
+function StatusChip({ color, children }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-2 whitespace-nowrap">
+      <span
+        className="w-2 h-2 rounded-full shrink-0"
+        style={{ background: color }}
+        aria-hidden="true"
+      />
+      {children}
+    </span>
+  )
+}
+
+export const CONDITION_META = {
+  good: { label: "Good", color: "var(--color-status-good)" },
+  attention: { label: "Attention", color: "var(--color-status-warn)" },
+  urgent: { label: "Urgent", color: "var(--color-status-critical)" },
 }
 
 export function ConditionBadge({ condition }) {
-  const label = { good: "Good", attention: "Attention", urgent: "Urgent" }[
-    condition
-  ]
-  return (
-    <span
-      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${conditionStyles[condition] || conditionStyles.good}`}
-    >
-      {label}
-    </span>
-  )
+  const meta = CONDITION_META[condition] || CONDITION_META.good
+  return <StatusChip color={meta.color}>{meta.label}</StatusChip>
 }
 
-const urgencyStyles = {
-  high: "bg-red-100 text-red-700",
-  medium: "bg-amber-100 text-amber-800",
-  low: "bg-brand-100 text-brand-700",
+const URGENCY_META = {
+  high: { label: "High priority", color: "var(--color-status-critical)" },
+  medium: { label: "Medium priority", color: "var(--color-status-warn)" },
+  low: { label: "Low priority", color: "var(--color-status-good)" },
 }
 
 export function UrgencyBadge({ urgency }) {
-  const label = { high: "High", medium: "Medium", low: "Low" }[urgency]
-  return (
-    <span
-      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${urgencyStyles[urgency] || urgencyStyles.low}`}
-    >
-      {label} priority
-    </span>
-  )
+  const meta = URGENCY_META[urgency] || URGENCY_META.low
+  return <StatusChip color={meta.color}>{meta.label}</StatusChip>
 }
 
-const statusStyles = {
-  completed: "bg-brand-100 text-brand-700",
-  scheduled: "bg-blue-100 text-blue-700",
+const JOB_STATUS_META = {
+  completed: { label: "Completed", color: "var(--color-status-good)" },
+  scheduled: { label: "Scheduled", color: "var(--color-ink-3)" },
 }
 
 export function StatusBadge({ status }) {
-  const label = { completed: "Completed", scheduled: "Scheduled" }[status]
-  return (
-    <span
-      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${statusStyles[status] || statusStyles.completed}`}
-    >
-      {label}
+  const meta = JOB_STATUS_META[status] || JOB_STATUS_META.completed
+  return <StatusChip color={meta.color}>{meta.label}</StatusChip>
+}
+
+export function VerifiedBadge({ verified }) {
+  return verified ? (
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-ink-2 whitespace-nowrap">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M20 6L9 17l-5-5" stroke="var(--color-status-good)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      Verified
     </span>
+  ) : (
+    <span className="text-xs font-medium text-ink-3 whitespace-nowrap">Unverified</span>
+  )
+}
+
+// Stat tile per the dataviz figure contract: sentence-case label,
+// semibold value, optional secondary line. Values stay proportional-figure.
+export function StatTile({ label, value, sub }) {
+  return (
+    <div className="bg-surface border border-line rounded-xl p-4 shadow-[0_1px_2px_rgba(11,11,11,0.04)]">
+      <p className="text-xs font-medium text-ink-2">{label}</p>
+      <p className="text-2xl font-semibold text-ink mt-1 leading-tight">{value}</p>
+      {sub && <p className="text-xs text-ink-3 mt-1">{sub}</p>}
+    </div>
+  )
+}
+
+// Horizontal segmented meter of system conditions. Status colors carry the
+// fill; the legend row beneath (dot + label + count in ink) is the identity
+// channel, so the bar is never read by color alone. 2px surface gaps.
+export function ConditionMeter({ counts }) {
+  const entries = ["good", "attention", "urgent"]
+    .map((key) => ({ key, ...CONDITION_META[key], count: counts[key] || 0 }))
+    .filter((e) => e.count > 0)
+  const total = entries.reduce((sum, e) => sum + e.count, 0)
+
+  if (total === 0) {
+    return <p className="text-sm text-ink-3">No systems recorded yet.</p>
+  }
+
+  return (
+    <div>
+      <div className="flex h-2.5 rounded-full overflow-hidden gap-[2px] bg-surface">
+        {entries.map((e) => (
+          <div
+            key={e.key}
+            style={{ width: `${(e.count / total) * 100}%`, background: e.color }}
+            className="first:rounded-l-full last:rounded-r-full"
+          />
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2.5">
+        {entries.map((e) => (
+          <StatusChip key={e.key} color={e.color}>
+            {e.label} · {e.count}
+          </StatusChip>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -69,8 +124,8 @@ export function PageHeader({ title, subtitle, action }) {
   return (
     <div className="mb-6 flex items-start justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-semibold text-brand-900">{title}</h1>
-        {subtitle && <p className="text-brand-600 mt-1">{subtitle}</p>}
+        <h1 className="text-xl md:text-2xl font-semibold text-ink tracking-tight">{title}</h1>
+        {subtitle && <p className="text-sm text-ink-2 mt-1">{subtitle}</p>}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
@@ -80,14 +135,14 @@ export function PageHeader({ title, subtitle, action }) {
 export function Button({ children, variant = "primary", className = "", ...props }) {
   const variants = {
     primary: "bg-brand-700 text-white hover:bg-brand-800",
-    subtle: "bg-brand-100 text-brand-700 hover:bg-brand-200",
-    ghost: "text-brand-600 hover:text-brand-800",
-    danger: "text-red-600 hover:text-red-800",
+    subtle: "bg-brand-100 text-brand-800 hover:bg-brand-200",
+    ghost: "text-ink-2 hover:text-ink",
+    danger: "text-status-critical hover:opacity-75",
   }
   return (
     <button
       type="button"
-      className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${variants[variant]} ${className}`}
+      className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 ${variants[variant]} ${className}`}
       {...props}
     >
       {children}
@@ -98,14 +153,14 @@ export function Button({ children, variant = "primary", className = "", ...props
 export function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-brand-100">
-          <h2 className="font-semibold text-brand-900">{title}</h2>
+      <div className="bg-surface rounded-xl shadow-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-line">
+          <h2 className="font-semibold text-ink">{title}</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="text-brand-400 hover:text-brand-700 text-xl leading-none"
+            className="text-ink-3 hover:text-ink text-xl leading-none"
           >
             &times;
           </button>
@@ -129,6 +184,9 @@ export function DynamicForm({ fields, initialValues = {}, onSubmit, submitLabel 
     setValues((v) => ({ ...v, [name]: value }))
   }
 
+  const inputClass =
+    "border border-line rounded-lg px-3 py-2 bg-surface text-ink focus:outline-none focus:border-brand-400"
+
   return (
     <form
       className="flex flex-col gap-4"
@@ -139,10 +197,10 @@ export function DynamicForm({ fields, initialValues = {}, onSubmit, submitLabel 
     >
       {fields.map((field) => (
         <label key={field.name} className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-brand-800">{field.label}</span>
+          <span className="font-medium text-ink-2">{field.label}</span>
           {field.type === "select" ? (
             <select
-              className="border border-brand-200 rounded-md px-3 py-2"
+              className={inputClass}
               value={values[field.name]}
               onChange={(e) => handleChange(field.name, e.target.value)}
             >
@@ -154,7 +212,7 @@ export function DynamicForm({ fields, initialValues = {}, onSubmit, submitLabel 
             </select>
           ) : field.type === "textarea" ? (
             <textarea
-              className="border border-brand-200 rounded-md px-3 py-2"
+              className={inputClass}
               rows={3}
               value={values[field.name]}
               onChange={(e) => handleChange(field.name, e.target.value)}
@@ -162,7 +220,7 @@ export function DynamicForm({ fields, initialValues = {}, onSubmit, submitLabel 
           ) : (
             <input
               type={field.type === "number" ? "number" : "text"}
-              className="border border-brand-200 rounded-md px-3 py-2"
+              className={inputClass}
               value={values[field.name]}
               onChange={(e) =>
                 handleChange(

@@ -3,12 +3,41 @@ import { signOut } from "firebase/auth"
 import { auth } from "./firebase"
 import { useProperty } from "./useProperty"
 
+const icons = {
+  overview: <path d="M3 10.5L12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5" />,
+  walkthrough: <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 13l2 2 4-4" />,
+  health: <path d="M22 12h-4l-3 8-4-16-3 8H2" />,
+  calendar: <path d="M8 2v4M16 2v4M3 9h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" />,
+  priorities: <path d="M4 21V4m0 0s1-1.5 5-1.5S14 4 14 4s1 1.5 5 1.5c1 0 1.5-.25 1.5-.25v10.5s-.5.25-1.5.25c-4 0-5-1.5-5-1.5s-1-1.5-5-1.5-5 1.5-5 1.5" />,
+  history: <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />,
+}
+
+function NavIcon({ name }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="shrink-0"
+    >
+      {icons[name]}
+    </svg>
+  )
+}
+
 const navItems = [
-  { to: "/", label: "Overview", end: true },
-  { to: "/health-report", label: "Property Health Report" },
-  { to: "/care-calendar", label: "Annual Care Calendar" },
-  { to: "/priority-list", label: "90-Day Priority List" },
-  { to: "/job-history", label: "Job History" },
+  { to: "/", label: "Overview", icon: "overview", end: true },
+  { to: "/walkthrough", label: "Walkthrough", icon: "walkthrough" },
+  { to: "/health-report", label: "Health Report", icon: "health" },
+  { to: "/care-calendar", label: "Care Calendar", icon: "calendar" },
+  { to: "/priority-list", label: "90-Day Priorities", icon: "priorities" },
+  { to: "/job-history", label: "Job History", icon: "history" },
 ]
 
 export default function Layout({ user }) {
@@ -16,49 +45,50 @@ export default function Layout({ user }) {
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-brand-50 text-brand-600">
+      <div className="min-h-screen flex items-center justify-center bg-plane text-ink-2">
         Loading your property…
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-brand-50 text-brand-900 flex">
-      <aside className="hidden md:flex w-64 shrink-0 flex-col bg-brand-800 text-brand-50 p-6">
-        <div className="mb-8">
-          <p className="text-xs uppercase tracking-wider text-brand-200">
+    <div className="min-h-screen bg-plane text-ink flex">
+      <aside className="hidden md:flex w-60 shrink-0 flex-col bg-brand-900 text-brand-50 p-5">
+        <div className="mb-8 px-2">
+          <p className="text-[11px] uppercase tracking-[0.14em] text-brand-200">
             Charlottesville
           </p>
-          <p className="text-lg font-semibold leading-tight">
+          <p className="text-base font-semibold leading-snug">
             Home &amp; Property Services
           </p>
         </div>
-        <nav className="flex flex-col gap-1">
+        <nav className="flex flex-col gap-0.5">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `rounded-md px-3 py-2 text-sm transition-colors ${
+                `flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
                   isActive
                     ? "bg-brand-50 text-brand-900 font-medium"
-                    : "text-brand-100 hover:bg-brand-700"
+                    : "text-brand-100 hover:bg-brand-800"
                 }`
               }
             >
+              <NavIcon name={item.icon} />
               {item.label}
             </NavLink>
           ))}
         </nav>
-        <div className="mt-auto pt-8 text-xs text-brand-200">
+        <div className="mt-auto pt-8 px-2 text-xs text-brand-200 leading-relaxed">
           <p className="font-medium text-brand-100">{profile.tier}</p>
           <p>{profile.address}</p>
           <p>{profile.areaLabel}</p>
           <button
             type="button"
             onClick={() => signOut(auth)}
-            className="mt-4 text-brand-300 hover:text-white underline"
+            className="mt-3 text-brand-200 hover:text-white underline underline-offset-2"
           >
             Sign out
           </button>
@@ -66,30 +96,30 @@ export default function Layout({ user }) {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="md:hidden bg-brand-800 text-brand-50 px-4 py-3 flex items-center justify-between">
+        <header className="md:hidden bg-brand-900 text-brand-50 px-4 py-3 flex items-center justify-between">
           <p className="text-sm font-semibold">Home &amp; Property Services</p>
           <button type="button" onClick={() => signOut(auth)} className="text-xs underline">
             Sign out
           </button>
         </header>
-        <header className="hidden md:flex items-center justify-between border-b border-brand-200 bg-white px-8 py-4">
+        <header className="hidden md:flex items-center justify-between border-b border-line bg-surface px-8 py-3.5">
           <div>
-            <p className="text-sm text-brand-600">Welcome back,</p>
-            <p className="text-lg font-semibold text-brand-900">
+            <p className="text-xs text-ink-3">Welcome back</p>
+            <p className="text-sm font-semibold text-ink">
               {profile.clientName ? `${profile.clientName} Family` : user.displayName}
             </p>
           </div>
-          <div className="text-right text-sm text-brand-600">
+          <div className="text-right text-xs text-ink-2">
             <p>
-              Next invoice:{" "}
-              <span className="font-medium text-brand-900">
+              Next invoice{" "}
+              <span className="font-semibold text-ink">
                 {profile.nextInvoiceDate || "—"}
               </span>
             </p>
-            <p>${profile.monthlyRate || 0}/mo</p>
+            <p className="text-ink-3">${profile.monthlyRate || 0}/mo</p>
           </div>
         </header>
-        <main className="flex-1 p-4 md:p-8">
+        <main className="flex-1 p-4 md:p-8 max-w-6xl w-full mx-auto">
           <Outlet context={{ uid: user.uid, profile, saveProfile: save }} />
         </main>
       </div>

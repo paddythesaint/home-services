@@ -37,22 +37,22 @@ export default function CareCalendar() {
               className={month === CURRENT_MONTH ? "border-brand-400 ring-1 ring-brand-400" : ""}
             >
               <div className="flex items-center justify-between mb-2">
-                <p className="font-semibold text-brand-900">{month}</p>
+                <p className="font-semibold text-ink">{month}</p>
                 {month === CURRENT_MONTH && (
-                  <span className="text-xs font-medium text-brand-600">This month</span>
+                  <span className="text-xs font-medium text-ink-2">This month</span>
                 )}
               </div>
               {monthItems.length === 0 ? (
-                <p className="text-sm text-brand-400">No tasks yet</p>
+                <p className="text-sm text-ink-3">No tasks yet</p>
               ) : (
-                <ul className="text-sm text-brand-700 space-y-1.5">
+                <ul className="text-sm text-ink-2 space-y-1.5">
                   {monthItems.map((item) => (
                     <li key={item.id} className="flex items-start justify-between gap-2">
                       <span>&bull; {item.task}</span>
                       <span className="flex gap-2 shrink-0">
                         <button
                           type="button"
-                          className="text-brand-500 hover:text-brand-800 text-xs"
+                          className="text-ink-3 hover:text-ink-2 text-xs"
                           onClick={() => setEditing(item)}
                         >
                           edit
@@ -93,7 +93,7 @@ export default function CareCalendar() {
 
       {confirmDelete && (
         <Modal title="Delete task?" onClose={() => setConfirmDelete(null)}>
-          <p className="text-sm text-brand-700 mb-4">
+          <p className="text-sm text-ink-2 mb-4">
             Remove "{confirmDelete.task}" from {confirmDelete.month}?
           </p>
           <div className="flex justify-end gap-2">

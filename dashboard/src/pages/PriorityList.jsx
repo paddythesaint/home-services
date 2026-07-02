@@ -33,7 +33,7 @@ export default function PriorityList() {
 
       {items.length === 0 ? (
         <Card>
-          <p className="text-sm text-brand-600">
+          <p className="text-sm text-ink-2">
             Nothing on your priority list yet. Add an item to get started.
           </p>
         </Card>
@@ -43,13 +43,13 @@ export default function PriorityList() {
             <Card key={item.id}>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
-                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-brand-100 text-brand-700 text-sm font-semibold shrink-0">
+                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-brand-100 text-ink-2 text-sm font-semibold shrink-0">
                     {index + 1}
                   </span>
                   <div>
-                    <p className="font-semibold text-brand-900">{item.title}</p>
-                    <p className="text-sm text-brand-600">{item.category}</p>
-                    <p className="text-sm text-brand-700 mt-1.5">{item.reason}</p>
+                    <p className="font-semibold text-ink">{item.title}</p>
+                    <p className="text-sm text-ink-2">{item.category}</p>
+                    <p className="text-sm text-ink-2 mt-1.5">{item.reason}</p>
                     <div className="flex gap-3 mt-3">
                       <Button variant="ghost" className="!px-0" onClick={() => setEditing(item)}>
                         Edit
@@ -66,13 +66,13 @@ export default function PriorityList() {
                 </div>
                 <div className="text-right shrink-0 flex flex-col items-end gap-2">
                   <UrgencyBadge urgency={item.urgency} />
-                  <p className="text-sm text-brand-600">{item.estCost}</p>
+                  <p className="text-sm text-ink-2">{item.estCost}</p>
                   <div className="flex gap-1">
                     <button
                       type="button"
                       disabled={index === 0}
                       onClick={() => moveUp(index)}
-                      className="text-brand-500 hover:text-brand-800 disabled:opacity-30 text-xs px-1.5 py-0.5 border border-brand-200 rounded"
+                      className="text-ink-3 hover:text-ink-2 disabled:opacity-30 text-xs px-1.5 py-0.5 border border-line rounded"
                     >
                       &uarr;
                     </button>
@@ -80,7 +80,7 @@ export default function PriorityList() {
                       type="button"
                       disabled={index === items.length - 1}
                       onClick={() => moveDown(index)}
-                      className="text-brand-500 hover:text-brand-800 disabled:opacity-30 text-xs px-1.5 py-0.5 border border-brand-200 rounded"
+                      className="text-ink-3 hover:text-ink-2 disabled:opacity-30 text-xs px-1.5 py-0.5 border border-line rounded"
                     >
                       &darr;
                     </button>
@@ -111,7 +111,7 @@ export default function PriorityList() {
 
       {confirmDelete && (
         <Modal title="Delete item?" onClose={() => setConfirmDelete(null)}>
-          <p className="text-sm text-brand-700 mb-4">
+          <p className="text-sm text-ink-2 mb-4">
             Remove "{confirmDelete.title}" from your priority list?
           </p>
           <div className="flex justify-end gap-2">
