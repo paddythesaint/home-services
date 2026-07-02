@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
+import SeedBanner from "../SeedBanner"
 import {
   Card,
   PageHeader,
@@ -27,10 +28,15 @@ const propertyFields = [
 
 export default function Overview() {
   const { uid, profile, saveProfile } = useOutletContext()
-  const { items: healthItems } = useItems(uid, "healthReport")
-  const { items: priorityItems } = useItems(uid, "priorityList")
+  const { items: healthItems, loading: healthLoading } = useItems(uid, "healthReport")
+  const { items: priorityItems, loading: priorityLoading } = useItems(uid, "priorityList")
+  const { items: calendarItems, loading: calendarLoading } = useItems(uid, "careCalendar")
   const { items: jobItems } = useItems(uid, "jobHistory")
   const [editingProperty, setEditingProperty] = useState(false)
+
+  const dashboardEmpty =
+    !healthLoading && !priorityLoading && !calendarLoading &&
+    healthItems.length === 0 && priorityItems.length === 0 && calendarItems.length === 0
 
   const attentionCount = healthItems.filter((s) => s.condition !== "good").length
   const topPriorities = priorityItems.slice(0, 3)
@@ -47,6 +53,8 @@ export default function Overview() {
           </Button>
         }
       />
+
+      {dashboardEmpty && <SeedBanner uid={uid} />}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card>
