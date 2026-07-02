@@ -159,3 +159,12 @@ export const jobAdds = [
 export const profileUpdates = {
   acreage: 5.01,
 }
+
+export const closingDocsInsights = {
+  systemUpdates,
+  systemAdds,
+  priorityUpdates,
+  priorityAdds,
+  jobAdds,
+  profileUpdates,
+}
