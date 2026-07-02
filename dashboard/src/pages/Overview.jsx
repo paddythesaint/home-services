@@ -3,6 +3,8 @@ import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import SeedBanner from "../SeedBanner"
 import InsightsBanner from "../InsightsBanner"
+import { closingDocsInsights } from "../documentInsights"
+import { recordsIndexInsights } from "../recordsIndexInsights"
 import {
   Card,
   PageHeader,
@@ -35,7 +37,8 @@ export default function Overview() {
   const { uid, profile, saveProfile } = useOutletContext()
   const healthApi = useItems(uid, "healthReport")
   const priorityApi = useItems(uid, "priorityList")
-  const { items: calendarItems, loading: calendarLoading } = useItems(uid, "careCalendar")
+  const calendarApi = useItems(uid, "careCalendar")
+  const { items: calendarItems, loading: calendarLoading } = calendarApi
   const jobApi = useItems(uid, "jobHistory")
   const { items: healthItems, loading: healthLoading } = healthApi
   const { items: priorityItems, loading: priorityLoading } = priorityApi
@@ -74,12 +77,29 @@ export default function Overview() {
 
       {!dashboardEmpty && !profile.insightsAppliedOn && (
         <InsightsBanner
-          healthItems={healthItems}
-          priorityItems={priorityItems}
-          jobItems={jobItems}
+          title="Apply insights from your closing documents?"
+          description="We reviewed the 2021 closing package — inspection addendum, certified radon report, appraisal, paint schedule, and the 2023 kitchen renovation estimate. This updates your systems with what they revealed (furnace replaced 2021, propane fuel, radon at 5.7 pCi/L with an unserviced mitigation system, two gas-log fireplaces flagged for service), adds a paint-color reference, and backfills your job history. Everything stays editable; mortgage details were excluded."
+          buttonLabel="Apply document insights"
+          flagField="insightsAppliedOn"
+          insights={closingDocsInsights}
           healthApi={healthApi}
           priorityApi={priorityApi}
           jobApi={jobApi}
+          saveProfile={saveProfile}
+        />
+      )}
+
+      {!dashboardEmpty && !profile.recordsIndexAppliedOn && (
+        <InsightsBanner
+          title="Apply insights from your Home Records Index?"
+          description="We reviewed the records index compiled from your Gmail and Drive. This adds your 22kW standby generator (installed 2021, serviced June 2026) and Dodson pest-control service, records the furnace's installer and warranty (Monticello Air, 2021), flags the 2025–26 roof insurance claim for follow-up, backfills six jobs, and adds priorities for the missing homeowner's-insurance policy and email-only documents worth saving."
+          buttonLabel="Apply records-index insights"
+          flagField="recordsIndexAppliedOn"
+          insights={recordsIndexInsights}
+          healthApi={healthApi}
+          priorityApi={priorityApi}
+          jobApi={jobApi}
+          calendarApi={calendarApi}
           saveProfile={saveProfile}
         />
       )}
