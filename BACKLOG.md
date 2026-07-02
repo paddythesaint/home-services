@@ -10,6 +10,41 @@ prune when done.
       rethink layout and hierarchy from scratch rather than iterating,
       mobile-first (the walkthrough + assistant are phone workflows).
 
+## Architecture roadmap (from 7/2/26 discussion)
+Sequenced. Slice 1 shipped; the rest are ordered by dependency.
+- [x] **Slice 1 — system of record primitives (shipped 7/2/26).** Per-system
+      activity timeline (typed reading/action/observation/service entries with
+      value+unit), recurring verifications (frequency → nextDue, "due" banner on
+      Overview, "Log check" action), and priority disposition (open / scheduled
+      / resolved / dismissed with resolution notes, kept not deleted). Assistant
+      got log_activity / set_recurring_check / resolve_priority tools.
+- [ ] **Slice 2 — multi-property migration (do BEFORE onboarding founder #2's
+      house).** Today a property is keyed by the owner's uid
+      (`properties/{uid}`), conflating user and property. Move to
+      `properties/{propertyId}` with a `members` map (`{uid: role}`) and rules
+      that check membership, not identity. Cheap to migrate now (copy one doc
+      tree), expensive after multiple homes + an ops team are in it. Unblocks
+      founder #2, technician access, and the operator view all at once.
+- [ ] **Slice 3 — contractor entities.** We've captured Monticello Air,
+      Charlottesville Generators, Dodson, Young & Rannigan, Insured Roofs, Four
+      Seasons as strings inside jobs. Promote to a top-level contractors
+      collection (name, phone, trades, jobs performed, how sourced) — this is
+      literally the business plan's contractor DB, pre-seeded by your house.
+- [ ] **Slice 4 — operator/ops view (`/ops`).** Once multi-property + roles
+      exist, this is mostly a query-shape change: all properties × open
+      priorities by urgency, overdue verifications, unresolved urgent systems,
+      recent jobs, with a triage→quote→schedule→dispatch→complete workflow
+      mirroring the business plan's job lifecycle. Homeowner priority list =
+      operator demand feed (same data, different lens). Roles ride the members
+      map: owner sees their house, operator the portfolio, tech a scoped view.
+- [ ] **Facts need provenance.** Add a lightweight `source` to facts (which
+      document/photo/chat asserted it, and when) so the record is auditable —
+      the roof story only made sense because we knew appraisal-said-X vs
+      claim-said-Y. Pairs with documents-as-records below.
+- [ ] **Shrink the overloaded note field.** With the activity log now carrying
+      history, the system `note` should return to "current state, one
+      paragraph" — provenance and history moved out.
+
 ## Product
 - [ ] **Document upload pipeline with AI extraction.** The 2021 closing-docs
       review was done by hand this session; the scalable version is: upload a
