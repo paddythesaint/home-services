@@ -18,13 +18,26 @@ Sequenced. Slice 1 shipped; the rest are ordered by dependency.
       Overview, "Log check" action), and priority disposition (open / scheduled
       / resolved / dismissed with resolution notes, kept not deleted). Assistant
       got log_activity / set_recurring_check / resolve_priority tools.
-- [ ] **Slice 2 — multi-property migration (do BEFORE onboarding founder #2's
-      house).** Today a property is keyed by the owner's uid
-      (`properties/{uid}`), conflating user and property. Move to
-      `properties/{propertyId}` with a `members` map (`{uid: role}`) and rules
-      that check membership, not identity. Cheap to migrate now (copy one doc
-      tree), expensive after multiple homes + an ops team are in it. Unblocks
-      founder #2, technician access, and the operator view all at once.
+- [x] **Slice 2a — property membership by email (shipped 7/2/26).** Property
+      docs carry `members: [{email, name, role}]` + a denormalized
+      `memberEmails` array; `resolvePropertyId` matches a signed-in user to
+      their property by verified email (array-contains), with a legacy fallback
+      to the uid-keyed doc that self-heals. Rules grant access by membership.
+      "People with access" panel lets owners invite/remove by email. This is
+      the homeowner-side (household) access layer.
+- [ ] **Slice 2b — multi-property creation & the two planes.** Membership
+      exists; still to build is *creating* new properties with generated ids
+      (rather than the legacy uid-as-id) when onboarding a new household.
+      **Two distinct planes — keep them separate (7/2/26 discussion):**
+      (1) *Property membership* — who can access a given house, at what role
+      (owner / co-owner / viewer / assigned technician); granted peer-to-peer by
+      owners. Sally lives here. (2) *Business / platform admin* — the
+      home-services company's tenant layer: customer households, subscriptions,
+      billing, and operator staff with cross-property authority; this is the
+      "new-user admin / signup" flow, and it *creates* a property + its first
+      owner, then hands off to peer membership. The `members` primitive is
+      shared by both; only *who may add whom* differs. The business plane is
+      Slice 4 (below), sitting above property membership, not inside it.
 - [ ] **Slice 3 — contractor entities.** We've captured Monticello Air,
       Charlottesville Generators, Dodson, Young & Rannigan, Insured Roofs, Four
       Seasons as strings inside jobs. Promote to a top-level contractors
