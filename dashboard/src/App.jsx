@@ -3,6 +3,7 @@ import AuthGate from "./AuthGate"
 import Layout from "./Layout"
 import Overview from "./pages/Overview"
 import Walkthrough from "./pages/Walkthrough"
+import Assistant from "./pages/Assistant"
 import HealthReport from "./pages/HealthReport"
 import CareCalendar from "./pages/CareCalendar"
 import PriorityList from "./pages/PriorityList"
@@ -17,6 +18,7 @@ export default function App() {
             <Route path="/" element={<Layout user={user} />}>
               <Route index element={<Overview />} />
               <Route path="walkthrough" element={<Walkthrough />} />
+              <Route path="assistant" element={<Assistant />} />
               <Route path="health-report" element={<HealthReport />} />
               <Route path="care-calendar" element={<CareCalendar />} />
               <Route path="priority-list" element={<PriorityList />} />
