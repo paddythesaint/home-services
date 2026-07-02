@@ -3,13 +3,15 @@ import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import { fetchMemberProperties } from "../firestoreApi"
 import { todayISO, isoToLabel, todayLabel } from "../dates"
-import { Card, PageHeader, StatTile, UrgencyBadge, Button } from "../components"
+import { Card, PageHeader, StatTile, UrgencyBadge, ConditionBadge } from "../components"
 
 const isOpen = (p) => !p.status || p.status === "open" || p.status === "scheduled"
+const rank = (u) => (u === "high" ? 3 : u === "medium" ? 2 : 1)
 
-// One property's live rollup. Reports its metrics up so the portfolio tiles
-// can sum across properties, and renders its own actionable priority queue.
-function OpsProperty({ propertyId, profile, onMetrics, onContractors }) {
+// One property's live rollup. Reports metrics + attention items up so the
+// command center can aggregate across the portfolio, and renders its own
+// actionable queue.
+function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractors }) {
   const priorityApi = useItems(propertyId, "priorityList")
   const { items: systems } = useItems(propertyId, "healthReport")
   const { items: jobs } = useItems(propertyId, "jobHistory")
@@ -19,6 +21,7 @@ function OpsProperty({ propertyId, profile, onMetrics, onContractors }) {
   const overdueChecks = systems.filter((s) => s.nextDue && s.nextDue <= todayISO())
   const urgentSystems = systems.filter((s) => s.condition === "urgent")
   const scheduledJobs = jobs.filter((j) => j.status === "scheduled")
+  const completedJobs = jobs.filter((j) => j.status === "completed")
 
   useEffect(() => {
     onMetrics(propertyId, {
@@ -27,6 +30,7 @@ function OpsProperty({ propertyId, profile, onMetrics, onContractors }) {
       overdue: overdueChecks.length,
       urgent: urgentSystems.length,
       scheduled: scheduledJobs.length,
+      completed: completedJobs.length,
     })
   }, [
     propertyId,
@@ -35,10 +39,37 @@ function OpsProperty({ propertyId, profile, onMetrics, onContractors }) {
     overdueChecks.length,
     urgentSystems.length,
     scheduledJobs.length,
+    completedJobs.length,
   ])
 
+  // High-urgency open priorities + overdue checks feed the cross-portfolio
+  // "needs attention now" list.
   useEffect(() => {
-    const names = [...new Set(jobs.map((j) => j.sub).filter((s) => s && s !== "—" && !s.startsWith("TBD")))]
+    const items = [
+      ...highPriorities.map((p) => ({
+        key: `p-${p.id}`,
+        kind: "priority",
+        title: p.title,
+        urgency: p.urgency,
+        property: profile.address,
+      })),
+      ...overdueChecks.map((s) => ({
+        key: `c-${s.id}`,
+        kind: "check",
+        title: `${s.category} check overdue (${isoToLabel(s.nextDue)})`,
+        urgency: "high",
+        property: profile.address,
+      })),
+    ]
+    onAttention(propertyId, items)
+  }, [propertyId, highPriorities, overdueChecks, profile.address])
+
+  useEffect(() => {
+    const names = [
+      ...new Set(
+        jobs.map((j) => j.sub).filter((s) => s && s !== "—" && !s.startsWith("TBD"))
+      ),
+    ]
     onContractors(propertyId, names)
   }, [propertyId, jobs])
 
@@ -100,7 +131,7 @@ function OpsProperty({ propertyId, profile, onMetrics, onContractors }) {
                       priorityApi.update(p.id, {
                         status: "resolved",
                         resolvedOn: todayLabel(),
-                        resolutionNote: "Resolved from ops",
+                        resolutionNote: "Resolved from command center",
                       })
                     }
                   >
@@ -115,14 +146,11 @@ function OpsProperty({ propertyId, profile, onMetrics, onContractors }) {
   )
 }
 
-function rank(u) {
-  return u === "high" ? 3 : u === "medium" ? 2 : 1
-}
-
 export default function Ops() {
   const { user } = useOutletContext()
   const [state, setState] = useState({ status: "loading", list: [] })
   const [metrics, setMetrics] = useState({})
+  const [attention, setAttention] = useState({})
   const [contractors, setContractors] = useState({})
 
   useEffect(() => {
@@ -136,22 +164,25 @@ export default function Ops() {
   }, [user.email])
 
   const totals = Object.values(metrics).reduce(
-    (acc, m) => ({
-      open: acc.open + m.open,
-      high: acc.high + m.high,
-      overdue: acc.overdue + m.overdue,
-      urgent: acc.urgent + m.urgent,
+    (a, m) => ({
+      open: a.open + m.open,
+      high: a.high + m.high,
+      overdue: a.overdue + m.overdue,
+      urgent: a.urgent + m.urgent,
+      scheduled: a.scheduled + m.scheduled,
+      completed: a.completed + m.completed,
     }),
-    { open: 0, high: 0, overdue: 0, urgent: 0 }
+    { open: 0, high: 0, overdue: 0, urgent: 0, scheduled: 0, completed: 0 }
   )
 
+  const attentionFeed = Object.values(attention).flat().sort((a, b) => rank(b.urgency) - rank(a.urgency))
   const allContractors = [...new Set(Object.values(contractors).flat())].sort()
 
   return (
     <div>
       <PageHeader
-        title="Operations"
-        subtitle="Internal portfolio view across the properties you manage. Actions here update the same records owners see."
+        title="Business"
+        subtitle="Command center for running the service — portfolio health, demand, and what needs action across every property. Internal financials and client health arrive as a separate founder-only layer."
       />
 
       {state.status === "loading" ? (
@@ -164,13 +195,45 @@ export default function Ops() {
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <StatTile label="Properties" value={state.list.length} sub="In your portfolio" />
-            <StatTile label="Open priorities" value={totals.open} sub={`${totals.high} high urgency`} />
-            <StatTile label="Overdue checks" value={totals.overdue} sub="Recurring verifications" />
-            <StatTile label="Urgent systems" value={totals.urgent} sub="Need attention now" />
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
+            <StatTile label="Properties" value={state.list.length} sub="Under management" />
+            <StatTile label="Open work" value={totals.open} sub={`${totals.high} high urgency`} />
+            <StatTile label="Overdue checks" value={totals.overdue} sub="SLA risk" />
+            <StatTile label="Urgent systems" value={totals.urgent} sub="Needs attention" />
+            <StatTile label="Scheduled" value={totals.scheduled} sub="Jobs in flight" />
+            <StatTile label="Completed" value={totals.completed} sub="Jobs all-time" />
           </div>
 
+          <div className="mb-4">
+            <Card title="Needs attention now">
+              {attentionFeed.length === 0 ? (
+                <p className="text-sm text-ink-3">
+                  Nothing urgent across the portfolio — high-urgency work and overdue
+                  checks would surface here.
+                </p>
+              ) : (
+                <ul className="divide-y divide-line">
+                  {attentionFeed.map((item) => (
+                    <li key={item.key} className="py-2.5 flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-ink">{item.title}</p>
+                        <p className="text-xs text-ink-3">{item.property}</p>
+                      </div>
+                      <span className="shrink-0">
+                        {item.kind === "check" ? (
+                          <ConditionBadge condition="urgent" />
+                        ) : (
+                          <UrgencyBadge urgency={item.urgency} />
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </div>
+
+          <h2 className="text-sm font-semibold text-ink-2 mb-2">By property</h2>
           <div className="flex flex-col gap-4">
             {state.list.map((p) => (
               <OpsProperty
@@ -178,9 +241,8 @@ export default function Ops() {
                 propertyId={p.id}
                 profile={p}
                 onMetrics={(id, m) => setMetrics((prev) => ({ ...prev, [id]: m }))}
-                onContractors={(id, names) =>
-                  setContractors((prev) => ({ ...prev, [id]: names }))
-                }
+                onAttention={(id, items) => setAttention((prev) => ({ ...prev, [id]: items }))}
+                onContractors={(id, names) => setContractors((prev) => ({ ...prev, [id]: names }))}
               />
             ))}
           </div>
@@ -204,8 +266,8 @@ export default function Ops() {
                     ))}
                   </div>
                   <p className="text-xs text-ink-3 mt-3">
-                    Pulled from job history. Promoting these to full contractor
-                    records (trades, phone, jobs, sourcing) is the next step.
+                    Pulled from job history. Promoting these to full contractor records
+                    (trades, phone, jobs, ratings, pay) is a planned next step.
                   </p>
                 </>
               )}
@@ -215,7 +277,7 @@ export default function Ops() {
       )}
 
       <p className="text-xs text-ink-3 mt-4">
-        Portfolio is scoped to properties you're a member of.{" "}
+        Scoped to properties you're a member of.{" "}
         <Link to="/" className="underline">
           Back to the homeowner view
         </Link>

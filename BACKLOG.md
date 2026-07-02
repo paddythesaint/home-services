@@ -3,6 +3,13 @@
 Items parked for future sessions, roughly in priority order. Add freely;
 prune when done.
 
+## Parked ideas to revisit
+- [ ] **Concept to review (7/2/26)** — interesting concept the founder flagged
+      to explore later:
+      https://x.com/everestchris6/status/2072687270709309589
+      (not yet reviewed — open the link together and assess fit for the
+      product when we pick this up).
+
 ## Design
 - [ ] **Design overhaul (paused 7/1/26).** Current design isn't hitting the
       mark — "we could do a lot, lot better." Dedicate a session to it:
@@ -43,13 +50,30 @@ Sequenced. Slice 1 shipped; the rest are ordered by dependency.
       Seasons as strings inside jobs. Promote to a top-level contractors
       collection (name, phone, trades, jobs performed, how sourced) — this is
       literally the business plan's contractor DB, pre-seeded by your house.
-- [ ] **Slice 4 — operator/ops view (`/ops`).** Once multi-property + roles
-      exist, this is mostly a query-shape change: all properties × open
-      priorities by urgency, overdue verifications, unresolved urgent systems,
-      recent jobs, with a triage→quote→schedule→dispatch→complete workflow
-      mirroring the business plan's job lifecycle. Homeowner priority list =
-      operator demand feed (same data, different lens). Roles ride the members
-      map: owner sees their house, operator the portfolio, tech a scoped view.
+- [x] **Slice 4 — operator/ops + business command center (shipped 7/2/26).**
+      `/ops` ("Business" in nav): membership-scoped portfolio with performance
+      tiles (properties, open work, overdue checks, urgent systems, jobs
+      scheduled/completed), a cross-portfolio "needs attention now" feed, per-
+      property dispatch queues with disposition (Schedule/Done writing the same
+      status the owner sees), and a contractor glimpse from job history.
+      Non-financial for now (per 7/2 decision). Homeowner priority list =
+      operator demand feed, same data different lens.
+- [ ] **Slice 4b — business-only data behind a founder-only store (the
+      homeowner↔business visibility split).** Decided business-only (7/2/26):
+      **job margin/markup**, **client account health** (LTV, tenure, churn
+      risk, internal tier), and **internal ops notes / dispatch detail**. These
+      CANNOT live in the property doc or its subcollections — homeowner members
+      (e.g. Sally) can read those. They need a separate top-level
+      `business/{propertyId}` collection with rules that allow only *founders*
+      (not property members). Open decision: how to identify founders without a
+      backend — (a) hardcoded email allowlist in rules + a VITE_FOUNDER_EMAILS
+      env for UI gating (simple, truly secure, adding a founder = rules+env
+      edit), or (b) a `config/founders` doc (emails array) that rules `get()`
+      and the client reads for gating (no redeploy to add a founder, one extra
+      read per check). Recommend (a) for 3 rarely-changing founders. Financials
+      themselves still deferred ("no financials yet"); this slice builds the
+      *secured container* + the first non-financial business-only fields
+      (client health, internal notes), and gates the Business nav to founders.
 - [ ] **Facts need provenance.** Add a lightweight `source` to facts (which
       document/photo/chat asserted it, and when) so the record is auditable —
       the roof story only made sense because we knew appraisal-said-X vs

@@ -33,16 +33,26 @@ function NavIcon({ name }) {
   )
 }
 
-const navItems = [
-  { to: "/", label: "Overview", icon: "overview", end: true },
-  { to: "/assistant", label: "Intake Assistant", icon: "assistant" },
-  { to: "/walkthrough", label: "Walkthrough", icon: "walkthrough" },
-  { to: "/health-report", label: "Health Report", icon: "health" },
-  { to: "/care-calendar", label: "Care Calendar", icon: "calendar" },
-  { to: "/priority-list", label: "90-Day Priorities", icon: "priorities" },
-  { to: "/job-history", label: "Job History", icon: "history" },
-  { to: "/ops", label: "Operations", icon: "ops" },
+const navSections = [
+  {
+    heading: "Property",
+    items: [
+      { to: "/", label: "Overview", icon: "overview", end: true },
+      { to: "/assistant", label: "Intake Assistant", icon: "assistant" },
+      { to: "/walkthrough", label: "Walkthrough", icon: "walkthrough" },
+      { to: "/health-report", label: "Health Report", icon: "health" },
+      { to: "/care-calendar", label: "Care Calendar", icon: "calendar" },
+      { to: "/priority-list", label: "90-Day Priorities", icon: "priorities" },
+      { to: "/job-history", label: "Job History", icon: "history" },
+    ],
+  },
+  {
+    heading: "Business",
+    items: [{ to: "/ops", label: "Command Center", icon: "ops" }],
+  },
 ]
+
+const allNavItems = navSections.flatMap((s) => s.items)
 
 export default function Layout({ user }) {
   const { status, propertyId } = usePropertyId(user)
@@ -88,23 +98,30 @@ export default function Layout({ user }) {
             Home &amp; Property Services
           </p>
         </div>
-        <nav className="flex flex-col gap-0.5">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                `flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
-                  isActive
-                    ? "bg-brand-50 text-brand-900 font-medium"
-                    : "text-brand-100 hover:bg-brand-800"
-                }`
-              }
-            >
-              <NavIcon name={item.icon} />
-              {item.label}
-            </NavLink>
+        <nav className="flex flex-col gap-4">
+          {navSections.map((section) => (
+            <div key={section.heading} className="flex flex-col gap-0.5">
+              <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-300">
+                {section.heading}
+              </p>
+              {section.items.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    `flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+                      isActive
+                        ? "bg-brand-50 text-brand-900 font-medium"
+                        : "text-brand-100 hover:bg-brand-800"
+                    }`
+                  }
+                >
+                  <NavIcon name={item.icon} />
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
           ))}
         </nav>
         <div className="mt-auto pt-8 px-2 text-xs text-brand-200 leading-relaxed">
@@ -130,7 +147,7 @@ export default function Layout({ user }) {
             </button>
           </div>
           <nav className="flex gap-1.5 overflow-x-auto px-3 pb-2.5">
-            {navItems.map((item) => (
+            {allNavItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
