@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
-import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth"
-import { auth, googleProvider, OWNER_EMAIL } from "./firebase"
+import { onAuthStateChanged, signInWithPopup } from "firebase/auth"
+import { auth, googleProvider } from "./firebase"
 
 export default function AuthGate({ children }) {
   const [user, setUser] = useState(undefined) // undefined = loading, null = signed out
@@ -45,25 +45,8 @@ export default function AuthGate({ children }) {
     )
   }
 
-  if (OWNER_EMAIL && user.email !== OWNER_EMAIL) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-plane px-4">
-        <div className="bg-white border border-line rounded-lg p-8 max-w-sm w-full text-center shadow-sm">
-          <p className="font-semibold text-ink mb-2">Not authorized</p>
-          <p className="text-sm text-ink-2 mb-6">
-            {user.email} doesn't have access to this property dashboard.
-          </p>
-          <button
-            type="button"
-            onClick={() => signOut(auth)}
-            className="text-sm font-medium text-brand-600 hover:text-brand-800"
-          >
-            Sign out
-          </button>
-        </div>
-      </div>
-    )
-  }
-
+  // Any signed-in Google user may proceed to the app; access to actual
+  // property data is enforced by property membership (Firestore rules +
+  // the resolver in Layout), not by a single hardcoded email here.
   return children(user)
 }

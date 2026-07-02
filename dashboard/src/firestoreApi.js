@@ -1,5 +1,7 @@
 import {
   doc,
+  getDoc,
+  getDocs,
   setDoc,
   collection,
   addDoc,
@@ -12,8 +14,67 @@ import {
 } from "firebase/firestore"
 import { db } from "./firebase"
 
+// The `uid` parameter below is the property id. Historically it equalled the
+// owner's Firebase uid; membership decouples the two. Resolve it once at load.
 function propertyDocRef(uid) {
   return doc(db, "properties", uid)
+}
+
+// Find which property a signed-in user belongs to. Prefers membership (email
+// in the property's memberEmails); falls back to the legacy uid-keyed doc and
+// self-heals it by writing the owner's membership so future lookups use the
+// membership path. Returns the property id, or null if the user has no access.
+export async function resolvePropertyId(user) {
+  const membershipQuery = query(
+    collection(db, "properties"),
+    where("memberEmails", "array-contains", user.email)
+  )
+  const found = await getDocs(membershipQuery)
+  if (!found.empty) return found.docs[0].id
+
+  const legacy = await getDoc(propertyDocRef(user.uid))
+  if (legacy.exists()) {
+    const data = legacy.data()
+    if (!data.memberEmails || !data.memberEmails.includes(user.email)) {
+      await setDoc(
+        propertyDocRef(user.uid),
+        {
+          memberEmails: [user.email],
+          members: [
+            { email: user.email, name: user.displayName || "", role: "owner" },
+          ],
+        },
+        { merge: true }
+      )
+    }
+    return user.uid
+  }
+  return null
+}
+
+export async function addMember(propertyId, { email, name, role }) {
+  const snap = await getDoc(propertyDocRef(propertyId))
+  const data = snap.data() || {}
+  const members = data.members || []
+  const cleanEmail = email.trim().toLowerCase()
+  if (members.some((m) => m.email === cleanEmail)) return
+  const nextMembers = [...members, { email: cleanEmail, name: name || "", role: role || "owner" }]
+  await setDoc(
+    propertyDocRef(propertyId),
+    { members: nextMembers, memberEmails: nextMembers.map((m) => m.email) },
+    { merge: true }
+  )
+}
+
+export async function removeMember(propertyId, email) {
+  const snap = await getDoc(propertyDocRef(propertyId))
+  const data = snap.data() || {}
+  const nextMembers = (data.members || []).filter((m) => m.email !== email)
+  await setDoc(
+    propertyDocRef(propertyId),
+    { members: nextMembers, memberEmails: nextMembers.map((m) => m.email) },
+    { merge: true }
+  )
 }
 
 export function subscribeProperty(uid, callback) {

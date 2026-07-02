@@ -3,6 +3,7 @@ import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import SeedBanner from "../SeedBanner"
 import InsightsBanner from "../InsightsBanner"
+import Members from "../Members"
 import { closingDocsInsights } from "../documentInsights"
 import { recordsIndexInsights } from "../recordsIndexInsights"
 import { energyAuditInsights } from "../energyAuditInsights"
@@ -36,7 +37,7 @@ const propertyFields = [
 ]
 
 export default function Overview() {
-  const { uid, profile, saveProfile } = useOutletContext()
+  const { uid, profile, saveProfile, user } = useOutletContext()
   const healthApi = useItems(uid, "healthReport")
   const priorityApi = useItems(uid, "priorityList")
   const calendarApi = useItems(uid, "careCalendar")
@@ -259,6 +260,10 @@ export default function Overview() {
             View full job history &rarr;
           </Link>
         </Card>
+      </div>
+
+      <div className="mt-4">
+        <Members uid={uid} profile={profile} currentEmail={user?.email} />
       </div>
 
       {editingProperty && (

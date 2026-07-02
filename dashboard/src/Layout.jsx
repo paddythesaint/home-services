@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom"
 import { signOut } from "firebase/auth"
 import { auth } from "./firebase"
-import { useProperty } from "./useProperty"
+import { useProperty, usePropertyId } from "./useProperty"
 
 const icons = {
   overview: <path d="M3 10.5L12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5" />,
@@ -43,12 +43,34 @@ const navItems = [
 ]
 
 export default function Layout({ user }) {
-  const { profile, save } = useProperty(user.uid)
+  const { status, propertyId } = usePropertyId(user)
+  const { profile, save } = useProperty(propertyId)
 
-  if (!profile) {
+  if (status === "resolving" || (status === "ready" && !profile)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-plane text-ink-2">
         Loading your property…
+      </div>
+    )
+  }
+
+  if (status === "none") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-plane px-4">
+        <div className="bg-surface border border-line rounded-xl p-8 max-w-sm w-full text-center shadow-sm">
+          <p className="font-semibold text-ink mb-2">No property yet</p>
+          <p className="text-sm text-ink-2 mb-6">
+            {user.email} isn't a member of any property yet. Ask an owner to
+            invite you from their "People with access" panel, then reload.
+          </p>
+          <button
+            type="button"
+            onClick={() => signOut(auth)}
+            className="text-sm font-medium text-brand-600 hover:text-brand-800"
+          >
+            Sign out
+          </button>
+        </div>
       </div>
     )
   }
@@ -143,7 +165,7 @@ export default function Layout({ user }) {
           </div>
         </header>
         <main className="flex-1 p-4 md:p-8 max-w-6xl w-full mx-auto">
-          <Outlet context={{ uid: user.uid, profile, saveProfile: save }} />
+          <Outlet context={{ uid: propertyId, profile, saveProfile: save, user }} />
         </main>
       </div>
     </div>
