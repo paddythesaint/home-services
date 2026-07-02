@@ -1,19 +1,37 @@
 rules_version = '2';
 
-// Locks all property data to a single owner account. Update OWNER_EMAIL
-// below (and the VITE_OWNER_EMAIL env var) if the account ever changes.
+// Access is by property membership: a property doc carries a memberEmails
+// array, and any signed-in user whose verified email is in that array can
+// read and write the property and its subcollections. A legacy clause keeps
+// the original owner (whose uid equals the property id) working during the
+// one-time transition, before memberEmails has been backfilled.
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isOwner() {
-      return request.auth != null
-        && request.auth.token.email == 'paddythesaint@gmail.com';
+    function propertyData(pid) {
+      return get(/databases/$(database)/documents/properties/$(pid)).data;
     }
 
-    match /properties/{uid} {
-      allow read, write: if isOwner() && request.auth.uid == uid;
+    function isMemberOf(data) {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && 'memberEmails' in data
+        && request.auth.token.email in data.memberEmails;
+    }
 
-      match /{subcollection}/{docId} {
-        allow read, write: if isOwner() && request.auth.uid == uid;
+    // Original single-owner model: the property id is the owner's uid.
+    function isLegacyOwner(pid) {
+      return request.auth != null && request.auth.uid == pid;
+    }
+
+    match /properties/{propertyId} {
+      allow read: if isMemberOf(resource.data) || isLegacyOwner(propertyId);
+      // A member (or the legacy owner) may update the property, including its
+      // member list. New-member writes only work if you can already write.
+      allow write: if isLegacyOwner(propertyId) || isMemberOf(resource.data);
+
+      match /{sub}/{docId} {
+        allow read, write: if isLegacyOwner(propertyId)
+          || isMemberOf(propertyData(propertyId));
       }
     }
   }
