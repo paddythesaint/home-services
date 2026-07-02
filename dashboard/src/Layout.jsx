@@ -98,11 +98,32 @@ export default function Layout({ user }) {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="md:hidden bg-brand-900 text-brand-50 px-4 py-3 flex items-center justify-between">
-          <p className="text-sm font-semibold">Home &amp; Property Services</p>
-          <button type="button" onClick={() => signOut(auth)} className="text-xs underline">
-            Sign out
-          </button>
+        <header className="md:hidden bg-brand-900 text-brand-50">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <p className="text-sm font-semibold">Home &amp; Property Services</p>
+            <button type="button" onClick={() => signOut(auth)} className="text-xs underline">
+              Sign out
+            </button>
+          </div>
+          <nav className="flex gap-1.5 overflow-x-auto px-3 pb-2.5">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  `flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs whitespace-nowrap transition-colors ${
+                    isActive
+                      ? "bg-brand-50 text-brand-900 font-medium"
+                      : "bg-brand-800 text-brand-100"
+                  }`
+                }
+              >
+                <NavIcon name={item.icon} />
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
         </header>
         <header className="hidden md:flex items-center justify-between border-b border-line bg-surface px-8 py-3.5">
           <div>

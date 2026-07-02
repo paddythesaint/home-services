@@ -113,7 +113,7 @@ export default function Overview() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
         <Card title="Property health">
           <ConditionMeter counts={conditionCounts} />
           <Link
@@ -121,6 +121,19 @@ export default function Overview() {
             className="inline-block mt-3 text-sm font-medium text-brand-600 hover:text-brand-800"
           >
             View full health report &rarr;
+          </Link>
+        </Card>
+
+        <Card title="Intake Assistant">
+          <p className="text-sm text-ink-2">
+            Build out the record by talking — tell it about any system, past
+            work, or what needs doing, in any order.
+          </p>
+          <Link
+            to="/assistant"
+            className="inline-block mt-3 text-sm font-medium text-brand-600 hover:text-brand-800"
+          >
+            Open the assistant &rarr;
           </Link>
         </Card>
 
