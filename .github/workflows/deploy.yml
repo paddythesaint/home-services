@@ -15,7 +15,11 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # Let an in-flight Pages deployment finish rather than cancelling it —
+  # cancelling mid-deploy can poison that commit's deployment slot and cause
+  # the next run to fail with "Deployment cancelled" (GitHub's recommended
+  # setting for Pages deploys).
+  cancel-in-progress: false
 
 jobs:
   build:
