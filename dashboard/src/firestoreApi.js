@@ -48,6 +48,16 @@ export function removeItem(uid, name, id) {
   return deleteDoc(doc(db, "properties", uid, name, id))
 }
 
+export async function seedCollections(uid, collections) {
+  // Explicit incrementing order values — Date.now() would collide within a batch.
+  let order = Date.now()
+  for (const [name, items] of Object.entries(collections)) {
+    for (const item of items) {
+      await addDoc(collectionRef(uid, name), { ...item, order: order++ })
+    }
+  }
+}
+
 export function reorderItems(uid, name, itemA, itemB) {
   return Promise.all([
     updateDoc(doc(db, "properties", uid, name, itemA.id), { order: itemB.order }),
