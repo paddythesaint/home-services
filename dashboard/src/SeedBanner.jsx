@@ -29,9 +29,9 @@ export default function SeedBanner({ uid }) {
   }
 
   return (
-    <div className="bg-brand-100 border border-brand-200 rounded-lg p-5 mb-6">
-      <p className="font-semibold text-brand-900">Start with a pre-filled profile?</p>
-      <p className="text-sm text-brand-700 mt-1">
+    <div className="bg-brand-100 border border-line rounded-lg p-5 mb-6">
+      <p className="font-semibold text-ink">Start with a pre-filled profile?</p>
+      <p className="text-sm text-ink-2 mt-1">
         We assembled a starter dataset for this property from public records —
         county assessor data (built 1992, 5.011 acres, forced-air heat + central
         AC), EPA radon zone maps, and a zone 7a seasonal care calendar. Items we
@@ -42,7 +42,7 @@ export default function SeedBanner({ uid }) {
         <Button onClick={loadStarterProfile} disabled={state === "working"}>
           {state === "working" ? "Loading…" : "Load starter profile"}
         </Button>
-        <span className="text-xs text-brand-600">
+        <span className="text-xs text-ink-2">
           or skip this and add everything by hand
         </span>
       </div>

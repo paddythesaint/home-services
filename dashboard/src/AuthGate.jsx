@@ -12,7 +12,7 @@ export default function AuthGate({ children }) {
 
   if (user === undefined) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-brand-50 text-brand-600">
+      <div className="min-h-screen flex items-center justify-center bg-plane text-ink-2">
         Loading…
       </div>
     )
@@ -20,12 +20,12 @@ export default function AuthGate({ children }) {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-brand-50 px-4">
-        <div className="bg-white border border-brand-200 rounded-lg p-8 max-w-sm w-full text-center shadow-sm">
-          <p className="text-xs uppercase tracking-wider text-brand-600">
+      <div className="min-h-screen flex items-center justify-center bg-plane px-4">
+        <div className="bg-white border border-line rounded-lg p-8 max-w-sm w-full text-center shadow-sm">
+          <p className="text-xs uppercase tracking-wider text-ink-2">
             Charlottesville
           </p>
-          <p className="text-lg font-semibold text-brand-900 mb-6">
+          <p className="text-lg font-semibold text-ink mb-6">
             Home &amp; Property Services
           </p>
           <button
@@ -47,10 +47,10 @@ export default function AuthGate({ children }) {
 
   if (OWNER_EMAIL && user.email !== OWNER_EMAIL) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-brand-50 px-4">
-        <div className="bg-white border border-brand-200 rounded-lg p-8 max-w-sm w-full text-center shadow-sm">
-          <p className="font-semibold text-brand-900 mb-2">Not authorized</p>
-          <p className="text-sm text-brand-600 mb-6">
+      <div className="min-h-screen flex items-center justify-center bg-plane px-4">
+        <div className="bg-white border border-line rounded-lg p-8 max-w-sm w-full text-center shadow-sm">
+          <p className="font-semibold text-ink mb-2">Not authorized</p>
+          <p className="text-sm text-ink-2 mb-6">
             {user.email} doesn't have access to this property dashboard.
           </p>
           <button

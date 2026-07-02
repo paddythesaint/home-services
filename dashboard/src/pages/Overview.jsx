@@ -7,6 +7,8 @@ import {
   PageHeader,
   UrgencyBadge,
   StatusBadge,
+  StatTile,
+  ConditionMeter,
   Button,
   Modal,
   DynamicForm,
@@ -17,6 +19,8 @@ const propertyFields = [
   { name: "areaLabel", label: "City / State / Zip", type: "text" },
   { name: "acreage", label: "Acreage", type: "number" },
   { name: "yearBuilt", label: "Year built", type: "number" },
+  { name: "bedrooms", label: "Bedrooms", type: "number" },
+  { name: "bathrooms", label: "Bathrooms", type: "number" },
   { name: "profileSessionDate", label: "Property Profile session date", type: "text" },
   { name: "conductedBy", label: "Conducted by", type: "text" },
   { name: "clientName", label: "Family / client name", type: "text" },
@@ -38,9 +42,17 @@ export default function Overview() {
     !healthLoading && !priorityLoading && !calendarLoading &&
     healthItems.length === 0 && priorityItems.length === 0 && calendarItems.length === 0
 
-  const attentionCount = healthItems.filter((s) => s.condition !== "good").length
+  const verifiedCount = healthItems.filter((s) => s.verified).length
+  const conditionCounts = healthItems.reduce((acc, s) => {
+    acc[s.condition] = (acc[s.condition] || 0) + 1
+    return acc
+  }, {})
+  const completedJobs = jobItems.filter((j) => j.status === "completed").length
   const topPriorities = priorityItems.slice(0, 3)
   const recentJobs = jobItems.slice(-3).reverse()
+
+  const currentMonth = new Date().toLocaleDateString("en-US", { month: "long" })
+  const thisMonthTasks = calendarItems.filter((t) => t.month === currentMonth)
 
   return (
     <div>
@@ -56,52 +68,72 @@ export default function Overview() {
 
       {dashboardEmpty && <SeedBanner uid={uid} />}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card>
-          <p className="text-sm text-brand-600">Membership</p>
-          <p className="text-xl font-semibold mt-1">{profile.tier || "—"}</p>
-          <p className="text-sm text-brand-600 mt-1">
-            {profile.monthlyRate ? `$${profile.monthlyRate}/mo` : "Rate not set"}
-          </p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <StatTile
+          label="Systems verified"
+          value={healthItems.length > 0 ? `${verifiedCount}/${healthItems.length}` : "—"}
+          sub={
+            verifiedCount < healthItems.length
+              ? "Run the walkthrough to verify"
+              : healthItems.length > 0
+                ? "All confirmed in person"
+                : "No systems yet"
+          }
+        />
+        <StatTile
+          label="Open priorities"
+          value={priorityItems.length}
+          sub="Next 90 days"
+        />
+        <StatTile
+          label="Jobs completed"
+          value={completedJobs}
+          sub="All time"
+        />
+        <StatTile
+          label="This month"
+          value={thisMonthTasks.length}
+          sub={`${currentMonth} care tasks`}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <Card title="Property health">
+          <ConditionMeter counts={conditionCounts} />
+          <Link
+            to="/health-report"
+            className="inline-block mt-3 text-sm font-medium text-brand-600 hover:text-brand-800"
+          >
+            View full health report &rarr;
+          </Link>
         </Card>
-        <Card>
-          <p className="text-sm text-brand-600">Property Health</p>
-          <p className="text-xl font-semibold mt-1">
-            {healthItems.length === 0
-              ? "No data yet"
-              : attentionCount === 0
-                ? "All systems good"
-                : `${attentionCount} item${attentionCount > 1 ? "s" : ""} flagged`}
+
+        <Card title="Walkthrough">
+          <p className="text-sm text-ink-2">
+            {profile.walkthroughCompletedOn
+              ? `Last completed ${profile.walkthroughCompletedOn}. Re-run anytime to pick up skipped or new systems.`
+              : "Verify the property record in person — confirm each system, snap nameplate photos, and let the app read brands and install years off them."}
           </p>
-          <p className="text-sm text-brand-600 mt-1">
-            {profile.profileSessionDate
-              ? `Last profiled ${profile.profileSessionDate}`
-              : "Add your Property Profile Session details"}
-          </p>
-        </Card>
-        <Card>
-          <p className="text-sm text-brand-600">Referral Credits</p>
-          <p className="text-xl font-semibold mt-1">
-            {profile.referralCredits || 0} free month
-            {profile.referralCredits === 1 ? "" : "s"}
-          </p>
-          <p className="text-sm text-brand-600 mt-1">Refer a neighbor to earn more</p>
+          <Link
+            to="/walkthrough"
+            className="inline-block mt-3 text-sm font-medium text-brand-600 hover:text-brand-800"
+          >
+            {profile.walkthroughCompletedOn ? "Run walkthrough again" : "Start the walkthrough"} &rarr;
+          </Link>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card title="Top Priorities">
+        <Card title="Top priorities">
           {topPriorities.length === 0 ? (
-            <p className="text-sm text-brand-600">
-              Nothing on your priority list yet.
-            </p>
+            <p className="text-sm text-ink-3">Nothing on your priority list yet.</p>
           ) : (
-            <ul className="divide-y divide-brand-100">
+            <ul className="divide-y divide-line">
               {topPriorities.map((item) => (
                 <li key={item.id} className="py-2.5 flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium text-brand-900">{item.title}</p>
-                    <p className="text-sm text-brand-600">{item.category}</p>
+                    <p className="text-sm font-medium text-ink">{item.title}</p>
+                    <p className="text-xs text-ink-3">{item.category}</p>
                   </div>
                   <UrgencyBadge urgency={item.urgency} />
                 </li>
@@ -116,16 +148,16 @@ export default function Overview() {
           </Link>
         </Card>
 
-        <Card title="Recent Activity">
+        <Card title="Recent activity">
           {recentJobs.length === 0 ? (
-            <p className="text-sm text-brand-600">No jobs logged yet.</p>
+            <p className="text-sm text-ink-3">No jobs logged yet.</p>
           ) : (
-            <ul className="divide-y divide-brand-100">
+            <ul className="divide-y divide-line">
               {recentJobs.map((job) => (
                 <li key={job.id} className="py-2.5 flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium text-brand-900">{job.title}</p>
-                    <p className="text-sm text-brand-600">
+                    <p className="text-sm font-medium text-ink">{job.title}</p>
+                    <p className="text-xs text-ink-3">
                       {job.date} · {job.sub}
                     </p>
                   </div>
@@ -141,25 +173,6 @@ export default function Overview() {
             View full job history &rarr;
           </Link>
         </Card>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <Link to="/health-report">
-          <Card className="hover:border-brand-400 transition-colors h-full">
-            <p className="font-semibold text-brand-900">Property Health Report</p>
-            <p className="text-sm text-brand-600 mt-1">
-              Full systems inventory generated from your Property Profile Session.
-            </p>
-          </Card>
-        </Link>
-        <Link to="/care-calendar">
-          <Card className="hover:border-brand-400 transition-colors h-full">
-            <p className="font-semibold text-brand-900">Annual Care Calendar</p>
-            <p className="text-sm text-brand-600 mt-1">
-              Your month-by-month seasonal maintenance schedule.
-            </p>
-          </Card>
-        </Link>
       </div>
 
       {editingProperty && (
