@@ -68,6 +68,15 @@ export async function resolvePropertyId(user) {
   return null
 }
 
+// All properties the user is a member of — the operator's portfolio. Scoped
+// by membership, so an operator only ever sees properties they belong to.
+export async function fetchMemberProperties(email) {
+  const snap = await getDocs(
+    query(collection(db, "properties"), where("memberEmails", "array-contains", email))
+  )
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+}
+
 export async function addMember(propertyId, { email, name, role }) {
   const snap = await getDoc(propertyDocRef(propertyId))
   const data = snap.data() || {}
