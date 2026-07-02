@@ -166,6 +166,16 @@ export const assistantTools = [
     },
   },
   {
+    name: "save_photo",
+    description:
+      "File the photo(s) the user attached to their latest message under a specific system's photo gallery on the Health Report. Use after identifying which system the photo shows (add_system first if it's a new system).",
+    input_schema: {
+      type: "object",
+      properties: { systemId: { type: "string" } },
+      required: ["systemId"],
+    },
+  },
+  {
     name: "update_property",
     description: "Update the property's basic profile fields.",
     input_schema: {
@@ -239,6 +249,7 @@ How to behave:
 - If the user mentions past or upcoming work, capture it as a job. If they mention something that needs doing, offer to add it as a priority.
 - If something they say contradicts the record, trust the user and update it.
 - Never invent facts. If unsure what the user meant, ask.
+- The user may attach photos — nameplates, equipment, rooms, problem areas. Read them carefully: extract brand, model, serial, and manufacture/install year from nameplates (decode date-of-manufacture from serial formats when you're confident), note visible condition issues, record everything via tools, and file the image with save_photo under the system it shows.
 
 Current property record (ids are what you pass to tools):
 ${JSON.stringify(snapshot, null, 1)}`

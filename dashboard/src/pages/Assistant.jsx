@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react"
 import { useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import { callClaude, assistantTools, buildSystemPrompt } from "../assistantApi"
+import { compressImage } from "../photoUtils"
+import { addPhoto } from "../firestoreApi"
 import { Card, Button } from "../components"
 
 function todayLabel() {
@@ -13,7 +15,7 @@ function todayLabel() {
 }
 
 const GREETING =
-  "Hi — I'm your property assistant. Tell me about any part of the house and I'll record it as we talk: \"the water heater is a 2019 Rheem in the garage\", \"we had the septic pumped last fall\", \"what should I check next?\" Where do you want to start — or should I pick the biggest gap in the record?"
+  "Hi — I'm your property assistant. Tell me about any part of the house and I'll record it as we talk: \"the water heater is a 2019 Rheem in the garage\", \"we had the septic pumped last fall\", \"what should I check next?\" You can also snap a photo of any nameplate or piece of equipment with the camera button and I'll read it. Where do you want to start — or should I pick the biggest gap in the record?"
 
 function KeySetup({ onSave }) {
   const [value, setValue] = useState("")
@@ -79,8 +81,24 @@ export default function Assistant() {
   ])
   const [apiMessages, setApiMessages] = useState([])
   const [input, setInput] = useState("")
+  const [pending, setPending] = useState([]) // attached photo dataUrls, not yet sent
   const [busy, setBusy] = useState(false)
   const scrollRef = useRef(null)
+  const fileRef = useRef(null)
+  const turnPhotosRef = useRef([]) // photos in the message currently being processed
+
+  async function attachFiles(e) {
+    const files = [...(e.target.files || [])]
+    e.target.value = ""
+    for (const file of files.slice(0, 3)) {
+      try {
+        const dataUrl = await compressImage(file)
+        setPending((p) => [...p, dataUrl])
+      } catch (err) {
+        console.error(err)
+      }
+    }
+  }
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })
@@ -120,6 +138,20 @@ export default function Assistant() {
       case "add_calendar_task":
         await calendarApi.add(args)
         return `Calendar: ${args.task} (${args.month})`
+      case "save_photo": {
+        const photos = turnPhotosRef.current
+        if (photos.length === 0) return "No photo attached to file"
+        for (const dataUrl of photos) {
+          await addPhoto(uid, {
+            systemId: args.systemId,
+            dataUrl,
+            takenOn: todayLabel(),
+            order: Date.now(),
+          })
+        }
+        const item = healthApi.items.find((i) => i.id === args.systemId)
+        return `Filed ${photos.length} photo${photos.length > 1 ? "s" : ""} under ${item?.category || "system"}`
+      }
       case "update_property":
         await saveProfile(args.fields)
         return "Updated property info"
@@ -130,12 +162,30 @@ export default function Assistant() {
 
   async function send() {
     const text = input.trim()
-    if (!text || busy) return
+    const photos = pending
+    if ((!text && photos.length === 0) || busy) return
     setInput("")
+    setPending([])
+    turnPhotosRef.current = photos
     setBusy(true)
-    setUiMessages((m) => [...m, { role: "user", text }])
+    setUiMessages((m) => [...m, { role: "user", text, images: photos }])
 
-    let messages = [...apiMessages, { role: "user", content: text }]
+    const content =
+      photos.length > 0
+        ? [
+            ...photos.map((dataUrl) => ({
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: "image/jpeg",
+                data: dataUrl.split(",")[1],
+              },
+            })),
+            { type: "text", text: text || "Here's a photo — what do you see?" },
+          ]
+        : text
+
+    let messages = [...apiMessages, { role: "user", content }]
     const system = buildSystemPrompt({
       profile,
       systems: healthApi.items,
@@ -184,7 +234,22 @@ export default function Assistant() {
         }
         messages = [...messages, { role: "user", content: results }]
       }
-      setApiMessages(messages)
+      // Keep image bytes out of persisted history — facts were already
+      // extracted this turn, and resending photos every turn balloons cost.
+      setApiMessages(
+        messages.map((m) =>
+          Array.isArray(m.content)
+            ? {
+                ...m,
+                content: m.content.map((b) =>
+                  b.type === "image"
+                    ? { type: "text", text: "[photo was attached here]" }
+                    : b
+                ),
+              }
+            : m
+        )
+      )
     } catch (err) {
       console.error(err)
       setUiMessages((m) => [
@@ -263,6 +328,18 @@ export default function Assistant() {
                     : "self-start bg-plane text-ink"
               }`}
             >
+              {msg.images?.length > 0 && (
+                <div className="flex gap-1.5 mb-1.5">
+                  {msg.images.map((src, j) => (
+                    <img
+                      key={j}
+                      src={src}
+                      alt="Attached"
+                      className="w-24 h-24 object-cover rounded-lg"
+                    />
+                  ))}
+                </div>
+              )}
               {msg.text}
             </div>
           )
@@ -274,6 +351,28 @@ export default function Assistant() {
         )}
       </div>
 
+      {pending.length > 0 && (
+        <div className="flex gap-2 mt-3">
+          {pending.map((src, i) => (
+            <div key={i} className="relative">
+              <img
+                src={src}
+                alt="Ready to send"
+                className="w-16 h-16 object-cover rounded-lg border border-line"
+              />
+              <button
+                type="button"
+                aria-label="Remove photo"
+                onClick={() => setPending((p) => p.filter((_, j) => j !== i))}
+                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-white border border-line text-ink-2 hover:text-red-600 text-xs leading-none"
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <form
         className="flex gap-2 mt-3"
         onSubmit={(e) => {
@@ -282,13 +381,33 @@ export default function Assistant() {
         }}
       >
         <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={attachFiles}
+        />
+        <button
+          type="button"
+          onClick={() => fileRef.current.click()}
+          disabled={busy}
+          aria-label="Attach photo"
+          className="shrink-0 border border-line rounded-lg px-3 bg-surface text-ink-2 hover:text-ink disabled:opacity-50"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg>
+        </button>
+        <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Tell me about the house…"
           className="flex-1 border border-line rounded-lg px-3.5 py-2.5 bg-surface text-ink text-sm focus:outline-none focus:border-brand-400"
           disabled={busy}
         />
-        <Button type="submit" disabled={busy || !input.trim()}>
+        <Button type="submit" disabled={busy || (!input.trim() && pending.length === 0)}>
           Send
         </Button>
       </form>
