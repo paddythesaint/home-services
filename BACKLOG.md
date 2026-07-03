@@ -93,27 +93,42 @@ build that bridge.
 
 **Prioritization framework** (used to order them, and for future asks):
 three questions per candidate —
-1. **Revenue proximity** — does it move an open priority toward quoted or
-   booked work? The marketplace loop *is* the business.
+1. **Resolution proximity** (corrected from "revenue proximity", 7/3/26) —
+   does it move an open priority toward *closed*? The subscription's value
+   is "regular maintenance you don't have to worry about": a handyman on a
+   recurring cadence closes many small items (air filters, garage-door
+   rubbers) with minimal labor and the right materials on the truck.
+   Revenue follows resolution; the metric is items resolved per visit /
+   per unit effort, not per-job revenue.
 2. **Founder utility this month** — will it get used on 895 Old Ballard
    next week? Dogfooding is the only user research we have.
 3. **Cost & dependency** — frontend-only ships in a session; anything
    touching security rules or needing a backend queues behind a decision.
 
-- [ ] **Slice 5 — resolution pipeline on priorities (BUILD NEXT).** Encode
-      the founder's three "action ways" as a `resolutionPath` on each
-      priority: **`diy-product`** (buy + install, possibly recurring — air
-      filters), **`service-visit`** (someone comes out with a kit/parts —
-      garage-door rubbers, well-test kit), **`project-quote`** (work that
-      needs quoting, alone or bundled). Add an **`infoNeeded[]` checklist**
-      per priority — each entry an ask (photo / fact / measurement) with
-      open/provided status — so the app can say "2 of 3 things needed for an
-      accurate quote" and prompt the homeowner to close the gap. Add a
-      **`bundleTag`** so quotable work groups into efficient packages
-      (window washing + gutter cleaning = one exterior visit, not two
-      truck rolls). Priority List UI: path selector, quote-readiness meter,
-      bundle grouping. Assistant gets set_resolution_path /
-      add_info_need / provide_info tools. Frontend-only; highest revenue
+- [ ] **Slice 5 — resolution pipeline on priorities (BUILD NEXT).** The
+      organizing question per priority, in order: *what's needed to close
+      it out?* then *how does it get actioned?*
+      **(a) Closeout requirements:** a **`materialsNeeded[]`** list (part,
+      spec/size, source, status: needed → purchased → on the truck) and an
+      **`infoNeeded[]`** checklist (photo / fact / measurement asks with
+      open/provided status). When both are satisfied the priority is
+      **ready to action** — and the app can prompt the homeowner for
+      exactly what's missing ("snap a photo of the well cap").
+      **(b) Action disposition** (`resolutionPath`, chosen once
+      requirements are known): **`subscription-visit`** — batch onto the
+      next recurring handyman visit; the default for small maintenance
+      items (air filters, garage-door rubbers, well-test kit) and the core
+      of the subscription's value; **`diy`** — homeowner does it, we
+      supply the materials list; **`specialist`** — dispatch a specific
+      trade (HVAC, plumber); **`project-quote`** — needs estimate(s), with
+      a **`bundleTag`** grouping into efficient packages (window washing +
+      gutter cleaning = one truck roll).
+      **(c) Visit manifest:** the next scheduled visit shows which
+      priorities it closes plus a consolidated materials/shopping list.
+      Resolution-proximity readout on Overview and Command Center: "8 open
+      → 5 ready to action → 4 close on the next visit."
+      Assistant gets set_resolution_path / add_requirement /
+      provide_requirement tools. Frontend-only; highest resolution
       proximity of anything on the list.
 - [ ] **Slice 6 — assistant as the always-on maintenance manager.** The
       assistant stops being a page you visit and becomes the persistent
