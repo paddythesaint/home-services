@@ -266,6 +266,14 @@ export default function Overview() {
         <Members uid={uid} profile={profile} currentEmail={user?.email} />
       </div>
 
+      <p className="text-xs text-ink-3 mt-4">
+        Have a prepared data bundle (photos + facts)?{" "}
+        <Link to="/import" className="underline">
+          Import it here
+        </Link>
+        .
+      </p>
+
       {editingProperty && (
         <Modal title="Edit property info" onClose={() => setEditingProperty(false)}>
           <DynamicForm
