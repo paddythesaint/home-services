@@ -83,6 +83,98 @@ Sequenced. Slice 1 shipped; the rest are ordered by dependency.
       themselves still deferred ("no financials yet"); this slice builds the
       *secured container* + the first non-financial business-only fields
       (client health, internal notes), and gates the Business nav to founders.
+## The action gap (founder product review, 7/3/26)
+The founder's own framing, and the right one: *"we're capturing lots of
+unstructured data and organizing it into views — what I want to bridge is
+the gap to the actions: who is performing what work, when they typically
+come."* The record is the moat; the pipeline from priority → resolved work
+is the revenue engine, and today it's a bare status field. Slices 5–8 below
+build that bridge.
+
+**Prioritization framework** (used to order them, and for future asks):
+three questions per candidate —
+1. **Resolution proximity** (corrected from "revenue proximity", 7/3/26) —
+   does it move an open priority toward *closed*? The subscription's value
+   is "regular maintenance you don't have to worry about": a handyman on a
+   recurring cadence closes many small items (air filters, garage-door
+   rubbers) with minimal labor and the right materials on the truck.
+   Revenue follows resolution; the metric is items resolved per visit /
+   per unit effort, not per-job revenue.
+2. **Founder utility this month** — will it get used on 895 Old Ballard
+   next week? Dogfooding is the only user research we have.
+3. **Cost & dependency** — frontend-only ships in a session; anything
+   touching security rules or needing a backend queues behind a decision.
+
+- [x] **Slice 5 — resolution pipeline on priorities (shipped 7/3/26).** The
+      organizing question per priority, in order: *what's needed to close
+      it out?* then *how does it get actioned?*
+      **(a) Closeout requirements:** a **`materialsNeeded[]`** list (part,
+      spec/size, source, status: needed → purchased → on the truck) and an
+      **`infoNeeded[]`** checklist (photo / fact / measurement asks with
+      open/provided status). When both are satisfied the priority is
+      **ready to action** — and the app can prompt the homeowner for
+      exactly what's missing ("snap a photo of the well cap").
+      **(b) Action disposition** (`resolutionPath`, chosen once
+      requirements are known): **`subscription-visit`** — batch onto the
+      next recurring handyman visit; the default for small maintenance
+      items (air filters, garage-door rubbers, well-test kit) and the core
+      of the subscription's value; **`diy`** — homeowner does it, we
+      supply the materials list; **`specialist`** — dispatch a specific
+      trade (HVAC, plumber); **`project-quote`** — needs estimate(s), with
+      a **`bundleTag`** grouping into efficient packages (window washing +
+      gutter cleaning = one truck roll).
+      **(c) Visit manifest:** the next scheduled visit shows which
+      priorities it closes plus a consolidated materials/shopping list.
+      Resolution-proximity readout on Overview and Command Center: "8 open
+      → 5 ready to action → 4 close on the next visit."
+      Assistant gets set_resolution_path / add_requirement /
+      provide_requirement tools. Frontend-only; highest resolution
+      proximity of anything on the list.
+- [ ] **Slice 6 — assistant as the always-on maintenance manager.** The
+      assistant stops being a page you visit and becomes the persistent
+      interface across the property lifecycle — "your maintenance manager
+      on call." (a) **Gap engine**: compute the record's highest-value
+      missing info (unverified systems, missing brands/ages/last-serviced,
+      open `infoNeeded` items from Slice 5) and have the assistant open
+      with the top gaps instead of a generic greeting; it keeps prompting
+      as the record evolves. (b) **Persist chat history** to Firestore
+      (absorbs the existing Product item) so the relationship is
+      continuous across devices/sessions. (c) IA decision, deferred until
+      (a) proves out: Overview currently pitches both Walkthrough and
+      Assistant up front — likely demote Walkthrough to a tool the
+      assistant suggests rather than a co-equal entry point. Frontend-only.
+- [ ] **Slice 7 — contractor profiles graduate to the business plane.**
+      Move Contractors from the Property section to **Business** in the nav
+      and promote it to a top-level `contractors/{id}` collection — the
+      central repository: one profile per contractor with points of
+      contact + details, trades, how sourced, **work history across all
+      properties (past and scheduled future)**, and **service cadence**
+      ("Dodson bi-monthly", "generator service every June") — which is
+      exactly the who-does-what-and-when data the action gap needs. Jobs
+      get a real `contractorId` FK, retiring Slice 3's string-matching
+      debt. The homeowner keeps a lighter per-property "your vendors" view
+      derived from their own jobs. This forces the Slice 4b founder-
+      identity decision (cross-property collection ⇒ founder-scoped rules)
+      — bundle the two.
+- [ ] **Slice 8 — exterior vision measurements (quote-readiness data).**
+      Run the uploaded exterior photos through Claude vision to estimate
+      **window count** (per-facade counts → deduped total, with confidence)
+      and **gutter linear footage** (roofline segments scaled against the
+      known footprint). Store as property facts flagged *estimated — verify*,
+      with provenance, and auto-fill Slice 5's `infoNeeded` measurement
+      asks. Honest feasibility: per-photo window counting is reliable;
+      cross-facade dedup needs care; gutter footage will be ±20–30% — fine
+      for ballpark quotes if labeled as an estimate. Uses the existing
+      browser-direct Claude call; no backend.
+
+**Sequencing rationale:** 5 is the bridge itself and everything else feeds
+it — 6 fills its info-needs conversationally, 7 gives the quotes somewhere
+to go, 8 fills the measurement asks automatically. 6 before 7 because it's
+frontend-only and touched daily, while 7 drags in the rules decision. 8 is
+an enhancer, not a blocker — but it's also the flashiest demo, so it can
+jump the queue when a pitch needs it. (Nav item from the same review —
+Property = homeowner view, Business = command center — already shipped.)
+
 - [ ] **Facts need provenance.** Add a lightweight `source` to facts (which
       document/photo/chat asserted it, and when) so the record is auditable —
       the roof story only made sense because we knew appraisal-said-X vs
@@ -105,8 +197,7 @@ Sequenced. Slice 1 shipped; the rest are ordered by dependency.
       covers most of it for now).
 - [ ] **Technician share access** — a scoped way for a visiting tech to see or
       add to the record without full owner login.
-- [ ] **Persist assistant chat history** to Firestore so a session survives a
-      page refresh / continues across devices.
+- [ ] ~~Persist assistant chat history~~ — absorbed into **Slice 6** above.
 
 ## Engineering
 - [ ] Proper backend (Cloud Functions or similar) — unblocks the three items

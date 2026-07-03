@@ -2,7 +2,30 @@ import { useState } from "react"
 import { useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import { todayLabel } from "../dates"
-import { Card, PageHeader, UrgencyBadge, Button, Modal, DynamicForm } from "../components"
+import {
+  RESOLUTION_PATHS,
+  PATH_META,
+  MATERIAL_STATUSES,
+  MATERIAL_STATUS_LABEL,
+  INFO_TYPES,
+  isOpenPriority,
+  materialSatisfied,
+  infoSatisfied,
+  openRequirements,
+  requirementId,
+  resolutionCounts,
+  visitManifest,
+  quoteBundles,
+} from "../resolution"
+import {
+  Card,
+  PageHeader,
+  UrgencyBadge,
+  StatTile,
+  Button,
+  Modal,
+  DynamicForm,
+} from "../components"
 
 const fields = [
   { name: "title", label: "Title", type: "text" },
@@ -18,13 +41,315 @@ const fields = [
   },
 ]
 
-// Items predate the status field, so absence means "open".
-const isOpen = (item) => !item.status || item.status === "open" || item.status === "scheduled"
-
 const DISPOSITION_LABEL = {
   scheduled: "Scheduled",
   resolved: "Resolved",
   dismissed: "Dismissed",
+}
+
+function ReadinessChip({ item }) {
+  const open = openRequirements(item)
+  return open.count === 0 ? (
+    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-2 whitespace-nowrap">
+      <span
+        className="w-2 h-2 rounded-full shrink-0"
+        style={{ background: "var(--color-status-good)" }}
+        aria-hidden="true"
+      />
+      Ready to action
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-2 whitespace-nowrap">
+      <span
+        className="w-2 h-2 rounded-full shrink-0"
+        style={{ background: "var(--color-status-warn)" }}
+        aria-hidden="true"
+      />
+      {open.count} needed to close
+    </span>
+  )
+}
+
+const inputClass =
+  "border border-line rounded-lg px-2 py-1 bg-surface text-ink text-xs focus:outline-none focus:border-brand-400"
+
+// The closeout block on each open priority: how it gets actioned, and what
+// (materials / info) is still needed before it can be closed.
+function ResolutionSection({ item, update }) {
+  const [addingMaterial, setAddingMaterial] = useState(false)
+  const [addingInfo, setAddingInfo] = useState(false)
+  const [matName, setMatName] = useState("")
+  const [matSpec, setMatSpec] = useState("")
+  const [infoAsk, setInfoAsk] = useState("")
+  const [infoType, setInfoType] = useState("fact")
+  const [providing, setProviding] = useState(null) // info requirement id
+  const [answer, setAnswer] = useState("")
+  const [bundleDraft, setBundleDraft] = useState(item.bundleTag || "")
+
+  const materials = item.materialsNeeded || []
+  const info = item.infoNeeded || []
+
+  function saveMaterial() {
+    if (!matName.trim()) return
+    update(item.id, {
+      materialsNeeded: [
+        ...materials,
+        { id: requirementId(), item: matName.trim(), spec: matSpec.trim(), status: "needed" },
+      ],
+    })
+    setMatName("")
+    setMatSpec("")
+    setAddingMaterial(false)
+  }
+
+  function saveInfo() {
+    if (!infoAsk.trim()) return
+    update(item.id, {
+      infoNeeded: [
+        ...info,
+        { id: requirementId(), ask: infoAsk.trim(), type: infoType, status: "open" },
+      ],
+    })
+    setInfoAsk("")
+    setInfoType("fact")
+    setAddingInfo(false)
+  }
+
+  function cycleMaterial(m) {
+    const next =
+      MATERIAL_STATUSES[(MATERIAL_STATUSES.indexOf(m.status) + 1) % MATERIAL_STATUSES.length]
+    update(item.id, {
+      materialsNeeded: materials.map((x) => (x.id === m.id ? { ...x, status: next } : x)),
+    })
+  }
+
+  function provideInfo(i) {
+    update(item.id, {
+      infoNeeded: info.map((x) =>
+        x.id === i.id ? { ...x, status: "provided", answer: answer.trim() } : x
+      ),
+    })
+    setProviding(null)
+    setAnswer("")
+  }
+
+  return (
+    <div className="mt-3 pt-3 border-t border-line">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-ink-3">How it gets done:</span>
+          <select
+            className={inputClass}
+            value={item.resolutionPath || ""}
+            onChange={(e) => update(item.id, { resolutionPath: e.target.value })}
+          >
+            <option value="">— choose —</option>
+            {RESOLUTION_PATHS.map((p) => (
+              <option key={p} value={p}>
+                {PATH_META[p].label}
+              </option>
+            ))}
+          </select>
+          {item.resolutionPath === "project-quote" && (
+            <input
+              className={inputClass}
+              placeholder="Bundle (e.g. Exterior package)"
+              value={bundleDraft}
+              onChange={(e) => setBundleDraft(e.target.value)}
+              onBlur={() => update(item.id, { bundleTag: bundleDraft.trim() })}
+              onKeyDown={(e) => e.key === "Enter" && e.target.blur()}
+            />
+          )}
+          {item.resolutionPath && (
+            <span className="text-xs text-ink-3 hidden md:inline">
+              {PATH_META[item.resolutionPath]?.detail}
+            </span>
+          )}
+        </div>
+        <ReadinessChip item={item} />
+      </div>
+
+      {(materials.length > 0 || info.length > 0) && (
+        <ul className="mt-2.5 flex flex-col gap-1.5">
+          {materials.map((m) => (
+            <li key={m.id} className="flex items-center gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => cycleMaterial(m)}
+                title="Click to advance: needed → purchased → on the truck"
+                className={`shrink-0 rounded-full px-2 py-0.5 font-medium border ${
+                  materialSatisfied(m)
+                    ? "border-line text-ink-3 bg-brand-100"
+                    : "border-amber-300 text-amber-900 bg-amber-50"
+                }`}
+              >
+                {MATERIAL_STATUS_LABEL[m.status] || "Needed"}
+              </button>
+              <span className={materialSatisfied(m) ? "text-ink-3" : "text-ink-2"}>
+                {m.item}
+                {m.spec && <span className="text-ink-3"> — {m.spec}</span>}
+              </span>
+              <button
+                type="button"
+                aria-label="Remove material"
+                className="text-ink-3 hover:text-red-600 ml-auto"
+                onClick={() =>
+                  update(item.id, { materialsNeeded: materials.filter((x) => x.id !== m.id) })
+                }
+              >
+                &times;
+              </button>
+            </li>
+          ))}
+          {info.map((i) => (
+            <li key={i.id} className="flex items-center gap-2 text-xs flex-wrap">
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 font-medium border ${
+                  infoSatisfied(i)
+                    ? "border-line text-ink-3 bg-brand-100"
+                    : "border-amber-300 text-amber-900 bg-amber-50"
+                }`}
+              >
+                {infoSatisfied(i) ? "Provided" : i.type === "photo" ? "Photo needed" : i.type === "measurement" ? "Measurement needed" : "Info needed"}
+              </span>
+              <span className={infoSatisfied(i) ? "text-ink-3" : "text-ink-2"}>
+                {i.ask}
+                {i.answer && <span className="text-ink-3"> — {i.answer}</span>}
+              </span>
+              {!infoSatisfied(i) &&
+                (providing === i.id ? (
+                  <span className="flex items-center gap-1">
+                    <input
+                      autoFocus
+                      className={inputClass}
+                      placeholder={i.type === "photo" ? "Where is it filed? (optional)" : "Answer"}
+                      value={answer}
+                      onChange={(e) => setAnswer(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && provideInfo(i)}
+                    />
+                    <button
+                      type="button"
+                      className="text-brand-600 font-medium hover:text-brand-800"
+                      onClick={() => provideInfo(i)}
+                    >
+                      Save
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="text-brand-600 font-medium hover:text-brand-800"
+                    onClick={() => {
+                      setProviding(i.id)
+                      setAnswer("")
+                    }}
+                  >
+                    Provide
+                  </button>
+                ))}
+              <button
+                type="button"
+                aria-label="Remove info requirement"
+                className="text-ink-3 hover:text-red-600 ml-auto"
+                onClick={() => update(item.id, { infoNeeded: info.filter((x) => x.id !== i.id) })}
+              >
+                &times;
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="mt-2 flex flex-wrap items-center gap-3">
+        {addingMaterial ? (
+          <span className="flex flex-wrap items-center gap-1.5">
+            <input
+              autoFocus
+              className={inputClass}
+              placeholder="Material / part"
+              value={matName}
+              onChange={(e) => setMatName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && saveMaterial()}
+            />
+            <input
+              className={inputClass}
+              placeholder="Spec / where to buy (optional)"
+              value={matSpec}
+              onChange={(e) => setMatSpec(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && saveMaterial()}
+            />
+            <button
+              type="button"
+              className="text-xs text-brand-600 font-medium hover:text-brand-800"
+              onClick={saveMaterial}
+            >
+              Add
+            </button>
+            <button
+              type="button"
+              className="text-xs text-ink-3 hover:text-ink"
+              onClick={() => setAddingMaterial(false)}
+            >
+              Cancel
+            </button>
+          </span>
+        ) : (
+          <button
+            type="button"
+            className="text-xs text-ink-3 hover:text-ink"
+            onClick={() => setAddingMaterial(true)}
+          >
+            + Material needed
+          </button>
+        )}
+        {addingInfo ? (
+          <span className="flex flex-wrap items-center gap-1.5">
+            <input
+              autoFocus
+              className={inputClass}
+              placeholder="What do we need to know / see?"
+              value={infoAsk}
+              onChange={(e) => setInfoAsk(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && saveInfo()}
+            />
+            <select
+              className={inputClass}
+              value={infoType}
+              onChange={(e) => setInfoType(e.target.value)}
+            >
+              {INFO_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="text-xs text-brand-600 font-medium hover:text-brand-800"
+              onClick={saveInfo}
+            >
+              Add
+            </button>
+            <button
+              type="button"
+              className="text-xs text-ink-3 hover:text-ink"
+              onClick={() => setAddingInfo(false)}
+            >
+              Cancel
+            </button>
+          </span>
+        ) : (
+          <button
+            type="button"
+            className="text-xs text-ink-3 hover:text-ink"
+            onClick={() => setAddingInfo(true)}
+          >
+            + Info needed
+          </button>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default function PriorityList() {
@@ -36,8 +361,11 @@ export default function PriorityList() {
   const [resolveMode, setResolveMode] = useState("resolved")
   const [resolveNote, setResolveNote] = useState("")
 
-  const openItems = items.filter(isOpen)
-  const closedItems = items.filter((i) => !isOpen(i))
+  const openItems = items.filter(isOpenPriority)
+  const closedItems = items.filter((i) => !isOpenPriority(i))
+  const counts = resolutionCounts(items)
+  const manifest = visitManifest(items)
+  const bundles = quoteBundles(items).filter((b) => b.tag !== "Ungrouped" || b.items.length > 1)
 
   function disposition(item, status) {
     setResolving(item)
@@ -58,9 +386,93 @@ export default function PriorityList() {
     <div>
       <PageHeader
         title="90-Day Priority List"
-        subtitle="Ranked recommendations for what to tackle next on your property."
+        subtitle="Ranked recommendations — and for each one, what's needed to close it out and how it gets done."
         action={<Button onClick={() => setEditing("new")}>+ Add item</Button>}
       />
+
+      <div className="grid grid-cols-3 gap-3 mb-4">
+        <StatTile label="Open" value={counts.open} sub="Next 90 days" />
+        <StatTile
+          label="Ready to action"
+          value={counts.ready}
+          sub="Nothing missing to close"
+        />
+        <StatTile
+          label="Next visit closes"
+          value={counts.nextVisit}
+          sub="Batched on the subscription"
+        />
+      </div>
+
+      {manifest.items.length > 0 && (
+        <div className="mb-4">
+          <Card title="Next visit manifest">
+            <p className="text-xs text-ink-3 mb-2">
+              The recurring visit closes {manifest.items.length} item
+              {manifest.items.length === 1 ? "" : "s"}
+              {manifest.materials.length > 0 && " — pack the truck with the list below"}.
+            </p>
+            <ul className="divide-y divide-line">
+              {manifest.items.map((p) => (
+                <li key={p.id} className="py-2 text-sm text-ink flex items-start justify-between gap-3">
+                  <span>{p.title}</span>
+                  <ReadinessChip item={p} />
+                </li>
+              ))}
+            </ul>
+            {manifest.materials.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-line">
+                <p className="text-xs font-semibold text-ink-2 mb-1.5">Materials list</p>
+                <ul className="flex flex-col gap-1">
+                  {manifest.materials.map((m) => (
+                    <li key={m.id} className="text-xs text-ink-2 flex items-center gap-2">
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{
+                          background: materialSatisfied(m)
+                            ? "var(--color-status-good)"
+                            : "var(--color-status-warn)",
+                        }}
+                        aria-hidden="true"
+                      />
+                      {m.item}
+                      {m.spec && <span className="text-ink-3">— {m.spec}</span>}
+                      <span className="text-ink-3 ml-auto">
+                        {MATERIAL_STATUS_LABEL[m.status]} · {m.priorityTitle}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {bundles.length > 0 && (
+        <div className="mb-4">
+          <Card title="Quote packages">
+            <p className="text-xs text-ink-3 mb-2">
+              Related quotable work grouped so one visit covers it.
+            </p>
+            <div className="flex flex-col gap-2">
+              {bundles.map((b) => (
+                <div key={b.tag} className="text-sm">
+                  <p className="font-medium text-ink">
+                    {b.tag}{" "}
+                    <span className="text-xs font-normal text-ink-3">
+                      · {b.items.length} item{b.items.length === 1 ? "" : "s"}
+                    </span>
+                  </p>
+                  <p className="text-xs text-ink-3">
+                    {b.items.map((p) => p.title).join(" · ")}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      )}
 
       {openItems.length === 0 ? (
         <Card>
@@ -142,6 +554,7 @@ export default function PriorityList() {
                   </div>
                 </div>
               </div>
+              <ResolutionSection item={item} update={update} />
             </Card>
           ))}
         </div>

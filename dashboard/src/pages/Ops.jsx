@@ -3,6 +3,7 @@ import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import { fetchMemberProperties } from "../firestoreApi"
 import { todayISO, isoToLabel, todayLabel } from "../dates"
+import { isReadyToAction } from "../resolution"
 import { Card, PageHeader, StatTile, UrgencyBadge, ConditionBadge } from "../components"
 
 const isOpen = (p) => !p.status || p.status === "open" || p.status === "scheduled"
@@ -18,6 +19,10 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
 
   const openPriorities = priorityApi.items.filter(isOpen)
   const highPriorities = openPriorities.filter((p) => p.urgency === "high")
+  const readyPriorities = openPriorities.filter(isReadyToAction)
+  const nextVisitPriorities = openPriorities.filter(
+    (p) => p.resolutionPath === "subscription-visit"
+  )
   const overdueChecks = systems.filter((s) => s.nextDue && s.nextDue <= todayISO())
   const urgentSystems = systems.filter((s) => s.condition === "urgent")
   const scheduledJobs = jobs.filter((j) => j.status === "scheduled")
@@ -27,6 +32,8 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
     onMetrics(propertyId, {
       open: openPriorities.length,
       high: highPriorities.length,
+      ready: readyPriorities.length,
+      nextVisit: nextVisitPriorities.length,
       overdue: overdueChecks.length,
       urgent: urgentSystems.length,
       scheduled: scheduledJobs.length,
@@ -36,6 +43,8 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
     propertyId,
     openPriorities.length,
     highPriorities.length,
+    readyPriorities.length,
+    nextVisitPriorities.length,
     overdueChecks.length,
     urgentSystems.length,
     scheduledJobs.length,
@@ -85,6 +94,10 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
         </div>
         <div className="flex flex-wrap justify-end gap-x-3 gap-y-0.5 text-xs text-ink-2">
           <span>{openPriorities.length} open</span>
+          {readyPriorities.length > 0 && <span>{readyPriorities.length} ready</span>}
+          {nextVisitPriorities.length > 0 && (
+            <span>{nextVisitPriorities.length} next visit</span>
+          )}
           {overdueChecks.length > 0 && (
             <span className="text-status-critical">{overdueChecks.length} overdue</span>
           )}
@@ -167,12 +180,14 @@ export default function Ops() {
     (a, m) => ({
       open: a.open + m.open,
       high: a.high + m.high,
+      ready: a.ready + (m.ready || 0),
+      nextVisit: a.nextVisit + (m.nextVisit || 0),
       overdue: a.overdue + m.overdue,
       urgent: a.urgent + m.urgent,
       scheduled: a.scheduled + m.scheduled,
       completed: a.completed + m.completed,
     }),
-    { open: 0, high: 0, overdue: 0, urgent: 0, scheduled: 0, completed: 0 }
+    { open: 0, high: 0, ready: 0, nextVisit: 0, overdue: 0, urgent: 0, scheduled: 0, completed: 0 }
   )
 
   const attentionFeed = Object.values(attention).flat().sort((a, b) => rank(b.urgency) - rank(a.urgency))
@@ -197,7 +212,11 @@ export default function Ops() {
         <>
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
             <StatTile label="Properties" value={state.list.length} sub="Under management" />
-            <StatTile label="Open work" value={totals.open} sub={`${totals.high} high urgency`} />
+            <StatTile
+              label="Open work"
+              value={totals.open}
+              sub={`${totals.high} high · ${totals.ready} ready · ${totals.nextVisit} next visit`}
+            />
             <StatTile label="Overdue checks" value={totals.overdue} sub="SLA risk" />
             <StatTile label="Urgent systems" value={totals.urgent} sub="Needs attention" />
             <StatTile label="Scheduled" value={totals.scheduled} sub="Jobs in flight" />
