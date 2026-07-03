@@ -45,11 +45,17 @@ Sequenced. Slice 1 shipped; the rest are ordered by dependency.
       owner, then hands off to peer membership. The `members` primitive is
       shared by both; only *who may add whom* differs. The business plane is
       Slice 4 (below), sitting above property membership, not inside it.
-- [ ] **Slice 3 — contractor entities.** We've captured Monticello Air,
-      Charlottesville Generators, Dodson, Young & Rannigan, Insured Roofs, Four
-      Seasons as strings inside jobs. Promote to a top-level contractors
-      collection (name, phone, trades, jobs performed, how sourced) — this is
-      literally the business plan's contractor DB, pre-seeded by your house.
+- [x] **Slice 3 — contractor entities (shipped 7/2/26).** New **Contractors**
+      page (Property nav): a `properties/{id}/contractors` subcollection with
+      name, trades, phone, how-sourced, notes, and each vendor's on-record jobs
+      (matched from job-history `sub` text). One-click **Import from jobs**
+      parses distinct vendors out of job history — splitting name from phone,
+      guessing trades from the job category, deduping against the roster and
+      against each other — into a review list you check off before adding.
+      Command Center's contractor glimpse now links here. *Still string-based:*
+      jobs reference contractors by `sub` text, not a contractor id — a proper
+      FK (and promoting this to a cross-property network store) pairs with the
+      business plane in Slice 4b.
 - [x] **Slice 4 — operator/ops + business command center (shipped 7/2/26).**
       `/ops` ("Business" in nav): membership-scoped portfolio with performance
       tiles (properties, open work, overdue checks, urgent systems, jobs
