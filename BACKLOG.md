@@ -105,7 +105,7 @@ three questions per candidate —
 3. **Cost & dependency** — frontend-only ships in a session; anything
    touching security rules or needing a backend queues behind a decision.
 
-- [ ] **Slice 5 — resolution pipeline on priorities (BUILD NEXT).** The
+- [x] **Slice 5 — resolution pipeline on priorities (shipped 7/3/26).** The
       organizing question per priority, in order: *what's needed to close
       it out?* then *how does it get actioned?*
       **(a) Closeout requirements:** a **`materialsNeeded[]`** list (part,

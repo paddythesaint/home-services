@@ -222,6 +222,58 @@ export const assistantTools = [
     },
   },
   {
+    name: "set_resolution_path",
+    description:
+      "Set how an open priority gets actioned: 'subscription-visit' (batched onto the recurring handyman visit — the default for small maintenance items like filters, seals, test kits), 'diy' (homeowner does it with a supplied materials list), 'specialist' (dispatch a specific trade like HVAC or plumbing), or 'project-quote' (needs an estimate — set bundleTag to group related quotable work, e.g. 'Exterior package' for gutters + windows).",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        path: {
+          type: "string",
+          enum: ["subscription-visit", "diy", "specialist", "project-quote"],
+        },
+        bundleTag: {
+          type: "string",
+          description: "For project-quote: group name for bundled quoting",
+        },
+      },
+      required: ["id", "path"],
+    },
+  },
+  {
+    name: "add_requirement",
+    description:
+      "Record something needed before a priority can be closed out. kind 'material' = a part or product (give item, plus spec/size/where-to-buy in spec). kind 'info' = something the homeowner must supply (give ask, and infoType: fact, photo, or measurement). Capturing these is what makes an item actionable or accurately quotable.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Priority id" },
+        kind: { type: "string", enum: ["material", "info"] },
+        item: { type: "string", description: "Material/part name (kind=material)" },
+        spec: { type: "string", description: "Spec, size, or where to buy (kind=material)" },
+        ask: { type: "string", description: "What we need to know or see (kind=info)" },
+        infoType: { type: "string", enum: ["fact", "photo", "measurement"] },
+      },
+      required: ["id", "kind"],
+    },
+  },
+  {
+    name: "update_requirement",
+    description:
+      "Mark a closeout requirement satisfied or advance its status. Materials: 'purchased' or 'on-truck'. Info items: 'provided' (include the answer the user gave). Requirement ids are in the property record snapshot.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Priority id" },
+        requirementId: { type: "string" },
+        status: { type: "string", enum: ["purchased", "on-truck", "provided"] },
+        answer: { type: "string", description: "The provided info/measurement, if any" },
+      },
+      required: ["id", "requirementId", "status"],
+    },
+  },
+  {
     name: "save_photo",
     description:
       "File the photo(s) the user attached to their latest message under a specific system's photo gallery on the Health Report. Use after identifying which system the photo shows (add_system first if it's a new system).",
@@ -288,6 +340,21 @@ export function buildSystemPrompt({ profile, systems, priorities, jobs, calendar
         urgency: p.urgency,
         status: p.status || "open",
         reason: p.reason,
+        resolutionPath: p.resolutionPath || null,
+        bundleTag: p.bundleTag || null,
+        materialsNeeded: (p.materialsNeeded || []).map((m) => ({
+          id: m.id,
+          item: m.item,
+          spec: m.spec || null,
+          status: m.status,
+        })),
+        infoNeeded: (p.infoNeeded || []).map((i) => ({
+          id: i.id,
+          ask: i.ask,
+          type: i.type,
+          status: i.status,
+          answer: i.answer || null,
+        })),
       })),
     recentJobs: jobs.slice(-8).map((j) => ({
       date: j.date,
@@ -312,6 +379,7 @@ How to behave:
 - History vs. state: use log_activity for things that HAPPENED at a point in time (a reading, a service visit, an observation) — these accumulate on a timeline and must NOT overwrite the note. Use update_system only for the current-state fields (condition, brand, note). Example: if the user says "radon monitor reads 1.8 in the master, we've moved it around and it's low everywhere", log_activity a reading (value 1.8, unit pCi/L), consider set_recurring_check for ongoing monitoring, and update_system to set condition good — don't cram the reading into the note.
 - When the user describes ongoing monitoring or a maintenance cadence ("check quarterly", "annual service"), use set_recurring_check.
 - When a priority is done or moot, use resolve_priority (resolved/dismissed) rather than leaving it or asking to delete it.
+- Think resolution-first about open priorities: the question is "what's needed to close this out, and how does it get done?" Capture closeout requirements with add_requirement — materials with specs (add_requirement kind=material) and facts/photos/measurements the homeowner must supply (kind=info) — then set the action path with set_resolution_path. Small recurring maintenance (filters, seals, test kits) defaults to subscription-visit; it gets batched onto the regular handyman visit. When the user answers an open info ask or says they bought/have a part, mark it with update_requirement. If an open priority comes up in conversation and its requirements are unknown, ask one focused question to pin them down.
 - Never invent facts. If unsure what the user meant, ask.
 - The user may attach photos — nameplates, equipment, rooms, problem areas. Read them carefully: extract brand, model, serial, and manufacture/install year from nameplates (decode date-of-manufacture from serial formats when you're confident), note visible condition issues, record everything via tools, and file the image with save_photo under the system it shows.
 

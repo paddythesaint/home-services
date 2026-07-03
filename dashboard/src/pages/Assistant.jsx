@@ -5,6 +5,7 @@ import { callClaude, assistantTools, buildSystemPrompt } from "../assistantApi"
 import { compressImage } from "../photoUtils"
 import { addPhoto, addItem } from "../firestoreApi"
 import { todayLabel, todayISO, addMonthsISO } from "../dates"
+import { requirementId, PATH_META } from "../resolution"
 import { Card, Button } from "../components"
 
 // The API requires every assistant tool_use block to be answered by a
@@ -219,6 +220,64 @@ export default function Assistant() {
         return freq === 0
           ? `Removed recurring check on ${item?.category || "system"}`
           : `Set ${item?.category || "system"} to check every ${freq} month${freq === 1 ? "" : "s"}`
+      }
+      case "set_resolution_path": {
+        const patch = { resolutionPath: args.path }
+        if (args.bundleTag !== undefined) patch.bundleTag = args.bundleTag
+        await priorityApi.update(args.id, patch)
+        const item = priorityApi.items.find((i) => i.id === args.id)
+        return `${item?.title || "Priority"} → ${PATH_META[args.path]?.label || args.path}`
+      }
+      case "add_requirement": {
+        const item = priorityApi.items.find((i) => i.id === args.id)
+        if (!item) throw new Error("Priority not found")
+        if (args.kind === "material") {
+          await priorityApi.update(args.id, {
+            materialsNeeded: [
+              ...(item.materialsNeeded || []),
+              {
+                id: requirementId(),
+                item: args.item || "",
+                spec: args.spec || "",
+                status: "needed",
+              },
+            ],
+          })
+          return `Material needed for ${item.title}: ${args.item}`
+        }
+        await priorityApi.update(args.id, {
+          infoNeeded: [
+            ...(item.infoNeeded || []),
+            {
+              id: requirementId(),
+              ask: args.ask || "",
+              type: args.infoType || "fact",
+              status: "open",
+            },
+          ],
+        })
+        return `Info needed for ${item.title}: ${args.ask}`
+      }
+      case "update_requirement": {
+        const item = priorityApi.items.find((i) => i.id === args.id)
+        if (!item) throw new Error("Priority not found")
+        const inMaterials = (item.materialsNeeded || []).some((m) => m.id === args.requirementId)
+        if (inMaterials) {
+          await priorityApi.update(args.id, {
+            materialsNeeded: item.materialsNeeded.map((m) =>
+              m.id === args.requirementId ? { ...m, status: args.status } : m
+            ),
+          })
+        } else {
+          await priorityApi.update(args.id, {
+            infoNeeded: (item.infoNeeded || []).map((i) =>
+              i.id === args.requirementId
+                ? { ...i, status: "provided", ...(args.answer ? { answer: args.answer } : {}) }
+                : i
+            ),
+          })
+        }
+        return `Requirement updated on ${item.title}`
       }
       case "remove_priority": {
         const item = priorityApi.items.find((i) => i.id === args.id)

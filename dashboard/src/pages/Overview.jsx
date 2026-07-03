@@ -8,6 +8,7 @@ import { closingDocsInsights } from "../documentInsights"
 import { recordsIndexInsights } from "../recordsIndexInsights"
 import { energyAuditInsights } from "../energyAuditInsights"
 import { todayISO, isoToLabel } from "../dates"
+import { resolutionCounts } from "../resolution"
 import {
   Card,
   PageHeader,
@@ -157,7 +158,12 @@ export default function Overview() {
         <StatTile
           label="Open priorities"
           value={openPriorities.length}
-          sub="Next 90 days"
+          sub={(() => {
+            const c = resolutionCounts(priorityItems)
+            return c.open > 0
+              ? `${c.ready} ready to action · ${c.nextVisit} on next visit`
+              : "Next 90 days"
+          })()}
         />
         <StatTile
           label="Jobs completed"
