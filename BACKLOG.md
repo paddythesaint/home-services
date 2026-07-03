@@ -4,11 +4,14 @@ Items parked for future sessions, roughly in priority order. Add freely;
 prune when done.
 
 ## Parked ideas to revisit
-- [ ] **Concept to review (7/2/26)** — interesting concept the founder flagged
-      to explore later:
+- [~] **Concept to review (7/2/26)** — flagged X post:
       https://x.com/everestchris6/status/2072687270709309589
-      (not yet reviewed — open the link together and assess fit for the
-      product when we pick this up).
+      Picked up 7/3/26: the post itself is login-walled and couldn't be
+      retrieved, but the account's theme (autonomous agents mining public
+      data → insight → automated action/outreach) seeded a full idea
+      backlog — see **INSIGHT-IDEAS.md**. Still owed: the founder pastes
+      the actual tweet text/screenshot so the specific concept gets slotted
+      in.
 
 ## Design
 - [ ] **Design overhaul (paused 7/1/26).** Current design isn't hitting the
