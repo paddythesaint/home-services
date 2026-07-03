@@ -7,6 +7,56 @@ import { addPhoto, addItem } from "../firestoreApi"
 import { todayLabel, todayISO, addMonthsISO } from "../dates"
 import { Card, Button } from "../components"
 
+// The API requires every assistant tool_use block to be answered by a
+// tool_result in the very next message — one dangling pair poisons the whole
+// conversation (every later send 400s). A turn can legitimately end dangling:
+// the response hit max_tokens before the loop executed the tools, or a network
+// failure interrupted a multi-round turn. Patch those with synthetic error
+// results (never executing a possibly-truncated call) so history stays
+// sendable. Consecutive same-role messages are fine — the API merges them.
+function repairDanglingToolUses(messages) {
+  const out = []
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i]
+    out.push(msg)
+    if (msg.role !== "assistant" || !Array.isArray(msg.content)) continue
+    const ids = msg.content.filter((b) => b.type === "tool_use").map((b) => b.id)
+    if (ids.length === 0) continue
+    const next = messages[i + 1]
+    const answered = Array.isArray(next?.content)
+      ? next.content.filter((b) => b.type === "tool_result").map((b) => b.tool_use_id)
+      : []
+    const missing = ids.filter((id) => !answered.includes(id))
+    if (missing.length === 0) continue
+    out.push({
+      role: "user",
+      content: missing.map((id) => ({
+        type: "tool_result",
+        tool_use_id: id,
+        is_error: true,
+        content:
+          "This tool call was interrupted and never ran. Re-issue it if it's still needed.",
+      })),
+    })
+  }
+  return out
+}
+
+// Image bytes stay out of persisted history — facts were already extracted
+// the turn they were sent, and resending photos every turn balloons cost.
+function stripImages(messages) {
+  return messages.map((m) =>
+    Array.isArray(m.content)
+      ? {
+          ...m,
+          content: m.content.map((b) =>
+            b.type === "image" ? { type: "text", text: "[photo was attached here]" } : b
+          ),
+        }
+      : m
+  )
+}
+
 const GREETING =
   "Hi — I'm your property assistant. Tell me about any part of the house and I'll record it as we talk: \"the water heater is a 2019 Rheem in the garage\", \"we had the septic pumped last fall\", \"what should I check next?\" You can also snap a photo of any nameplate or piece of equipment with the camera button and I'll read it. Where do you want to start — or should I pick the biggest gap in the record?"
 
@@ -225,7 +275,7 @@ export default function Assistant() {
           ]
         : text
 
-    let messages = [...apiMessages, { role: "user", content }]
+    let messages = repairDanglingToolUses([...apiMessages, { role: "user", content }])
     const system = buildSystemPrompt({
       profile,
       systems: healthApi.items,
@@ -274,24 +324,16 @@ export default function Assistant() {
         }
         messages = [...messages, { role: "user", content: results }]
       }
-      // Keep image bytes out of persisted history — facts were already
-      // extracted this turn, and resending photos every turn balloons cost.
-      setApiMessages(
-        messages.map((m) =>
-          Array.isArray(m.content)
-            ? {
-                ...m,
-                content: m.content.map((b) =>
-                  b.type === "image"
-                    ? { type: "text", text: "[photo was attached here]" }
-                    : b
-                ),
-              }
-            : m
-        )
-      )
+      // Repair covers the turn ending with unanswered tool_use — e.g. the
+      // round cap was hit, or stop_reason wasn't "tool_use" (max_tokens cut
+      // the response off) while tool_use blocks were present.
+      setApiMessages(stripImages(repairDanglingToolUses(messages)))
     } catch (err) {
       console.error(err)
+      // Persist what succeeded before the failure: earlier rounds may have
+      // already executed tools and written to the record, so keeping the
+      // (repaired) partial history keeps the conversation consistent with it.
+      setApiMessages(stripImages(repairDanglingToolUses(messages)))
       setUiMessages((m) => [
         ...m,
         {

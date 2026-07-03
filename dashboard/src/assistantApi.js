@@ -16,7 +16,10 @@ export async function callClaude(apiKey, system, messages, tools) {
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 1024,
+      // Generous cap — output is billed as used, not by the cap. A low cap
+      // truncates photo turns mid-tool-call (stop_reason "max_tokens"),
+      // which is how histories end up with unanswered tool_use blocks.
+      max_tokens: 16000,
       system,
       messages,
       tools,
