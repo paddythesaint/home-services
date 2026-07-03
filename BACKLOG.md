@@ -4,14 +4,14 @@ Items parked for future sessions, roughly in priority order. Add freely;
 prune when done.
 
 ## Parked ideas to revisit
-- [~] **Concept to review (7/2/26)** — flagged X post:
-      https://x.com/everestchris6/status/2072687270709309589
-      Picked up 7/3/26: the post itself is login-walled and couldn't be
-      retrieved, but the account's theme (autonomous agents mining public
-      data → insight → automated action/outreach) seeded a full idea
-      backlog — see **INSIGHT-IDEAS.md**. Still owed: the founder pastes
-      the actual tweet text/screenshot so the specific concept gets slotted
-      in.
+- [x] **Concept to review (7/2/26) — done 7/3/26.** The flagged X post
+      (patio-shade lead-gen: scrape sold homes → vision-find unshaded
+      patios → measure sun from satellite data → render the pergola into
+      the owner's photo → mail a postcard with a QR heat report) is
+      reviewed and folded into **INSIGHT-IDEAS.md** as ideas #14–17
+      (deficiency-detection lead qualification, quantified-diagnosis +
+      render-the-fix outreach, postcard→QR claim pages, and demand-gen as
+      a contractor-side revenue line).
 
 ## Design
 - [ ] **Design overhaul (paused 7/1/26).** Current design isn't hitting the

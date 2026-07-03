@@ -181,6 +181,77 @@ The single richest public source — one dataset, four use cases:
 
 ---
 
+## From the X concept (reviewed 7/3/26)
+
+The seeded post (@everestchris6): an agent scrapes every home sold in a
+metro in the last 12 months, vision-reads the listing photos to find patios
+with zero shade (skipping the 64% that already have cover), measures sun on
+each patio hour-by-hour from Google's satellite/solar data, renders a
+louvered pergola into the owner's actual backyard photo, and mails a
+postcard — "your patio takes 11 hours of direct sun a day; Saturday it hits
+97°" — with a QR to an address-specific heat report and booking link.
+Installs run $6.5k–18k; the system is sold to contractors. Mechanics worth
+stealing, as new backlog entries:
+
+### 14. Deficiency-detection lead qualification (the inversion)
+- **Use case:** everything in Tier 2 finds *prospects*; this finds
+  *problems*. Vision-scan recent-sale listing photos / aerial imagery for a
+  specific fixable deficiency and keep only those homes: no whole-home
+  generator on a rural well-powered lot (Albemarle outage country — $10k+
+  installs, and 895 Old Ballard's own generator proves the local market),
+  no gutter guards under heavy tree canopy, aging/unfenced yards, gravel or
+  cracked driveways, unshaded west-facing decks. Each is one trade, one
+  campaign.
+- **Data:** listing photos (per #8), county orthoimagery / Google satellite
+  (per #11), Claude vision to classify presence/absence.
+- **Build:** #6's sold-home feed + #11's imagery + a per-campaign vision
+  prompt. The classifier is genuinely easy now; the pipeline glue is the work.
+- **Value:** Lead-gen (for us or our contractors — see #17).
+  **Difficulty: Medium.**
+
+### 15. Quantified-diagnosis hooks + render-the-fix creative
+- **Use case:** outreach that leads with a measured fact about *their*
+  house ("your parcel lost power 6 times last year", "11 hours of direct
+  sun", "3 storm events crossed your roof since 2024") and shows the fix
+  rendered into their own listing/aerial photo (pergola on their deck,
+  generator beside their wall, guards on their gutters). Specificity is the
+  whole trick — it reads as diagnosis, not advertising.
+- **Data:** Google Solar API (hour-by-hour irradiance, cheap per-call),
+  PowerOutage.us / Dominion & REC outage maps, NOAA events (#1), plus
+  image generation for the render.
+- **Build:** per-campaign measurement queries + an image-gen step with the
+  owner's photo as the base. Render quality needs human review at first.
+- **Value:** Lead-gen conversion multiplier on #6/#14.
+  **Difficulty: Medium** (each measurement source is easy; the render loop
+  needs taste).
+
+### 16. Postcard + QR → address-specific claim page
+- **Use case:** the offline delivery for #6's "we already built your
+  profile": a mailed postcard with one house-specific fact and a QR that
+  opens `/report/{parcel}` — the pre-built mini health report with a
+  claim/booking CTA. Mail cuts through where email can't (new movers are
+  drowning in email but read their mail), and print-and-mail APIs make it
+  code, not errands.
+- **Data:** none new — packaging for #6/#14/#15. Lob-style print API
+  (~$1/postcard), public report pages need a share-token route (relates to
+  the technician-share-access backlog item).
+- **Build:** public read-only report route + postcard template + mail API.
+- **Value:** Lead-gen. **Difficulty: Low–Medium** (cost per send, not per
+  build).
+
+### 17. Demand-gen-as-a-service for the contractor network (business model)
+- **Use case:** the post's real insight is *who pays*: the contractor. We
+  now have a vetted contractor roster (Slice 3); running #14/#15/#16
+  campaigns *on their behalf* — "we found 40 Albemarle homes without
+  generators on well water; here are booked estimates" — is a second
+  revenue line (fee per booked job or campaign retainer) that also feeds
+  our marketplace flywheel: their jobs land in client job histories, which
+  enrich profiles, which improve targeting.
+- **Data/build:** none beyond #14–16; this is packaging + pricing.
+- **Value:** Business model (revenue diversification before homeowner
+  subscriptions scale). **Difficulty: Low tech, High go-to-market** —
+  needs real campaign results first.
+
 ## Suggested sequencing
 1. **#3 recalls + #4 lifespan forecast** — days of work, no backend, big
    client-visible payoff; #4 also clears a business-plan deliverable.
@@ -192,14 +263,14 @@ The single richest public source — one dataset, four use cases:
    seed-profile flow is polished, since it *is* the pitch.
 5. **#9 license verification** — cheap, and Slice 3's contractor records
    are sitting there waiting for it.
+6. **#14–17 (the X-concept campaign stack)** — after #6's sold-home feed
+   exists, pick ONE deficiency campaign (whole-home generators on rural
+   lots is the strongest Charlottesville fit) and run it end-to-end
+   manually before automating anything. Its results decide whether #17
+   becomes a revenue line.
 
 ## Open questions
-- The specific X post that seeded this
-  (https://x.com/everestchris6/status/2072687270709309589) couldn't be
-  retrieved (login-walled); the account's theme is autonomous agents that
-  mine public data for prospecting. Paste the text/screenshot and we'll
-  slot the specific concept in.
-- Outreach automation (#6, #7c, #10) needs a consent/compliance pass
+- Outreach automation (#6, #7c, #10, #14–16) needs a consent/compliance pass
   (CAN-SPAM, VA telemarketing rules) before anything sends on autopilot.
 - Several ideas need the proper backend (Cloud Functions) already in the
   engineering backlog — they're another reason to prioritize it.
