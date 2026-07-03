@@ -9,6 +9,7 @@ import HealthReport from "./pages/HealthReport"
 import CareCalendar from "./pages/CareCalendar"
 import PriorityList from "./pages/PriorityList"
 import JobHistory from "./pages/JobHistory"
+import Contractors from "./pages/Contractors"
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
               <Route path="care-calendar" element={<CareCalendar />} />
               <Route path="priority-list" element={<PriorityList />} />
               <Route path="job-history" element={<JobHistory />} />
+              <Route path="contractors" element={<Contractors />} />
               <Route path="ops" element={<Ops />} />
             </Route>
           </Routes>

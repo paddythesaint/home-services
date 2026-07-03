@@ -266,8 +266,12 @@ export default function Ops() {
                     ))}
                   </div>
                   <p className="text-xs text-ink-3 mt-3">
-                    Pulled from job history. Promoting these to full contractor records
-                    (trades, phone, jobs, ratings, pay) is a planned next step.
+                    Pulled from job history. Manage full records — trades, phone, sourcing,
+                    jobs — on each property's{" "}
+                    <Link to="/contractors" className="underline">
+                      Contractors
+                    </Link>{" "}
+                    page.
                   </p>
                 </>
               )}

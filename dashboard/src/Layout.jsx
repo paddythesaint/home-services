@@ -12,6 +12,7 @@ const icons = {
   priorities: <path d="M4 21V4m0 0s1-1.5 5-1.5S14 4 14 4s1 1.5 5 1.5c1 0 1.5-.25 1.5-.25v10.5s-.5.25-1.5.25c-4 0-5-1.5-5-1.5s-1-1.5-5-1.5-5 1.5-5 1.5" />,
   history: <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />,
   ops: <path d="M3 3v18h18M7 15l3-3 3 3 5-6" />,
+  contractors: <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />,
 }
 
 function NavIcon({ name }) {
@@ -44,6 +45,7 @@ const navSections = [
       { to: "/care-calendar", label: "Care Calendar", icon: "calendar" },
       { to: "/priority-list", label: "90-Day Priorities", icon: "priorities" },
       { to: "/job-history", label: "Job History", icon: "history" },
+      { to: "/contractors", label: "Contractors", icon: "contractors" },
     ],
   },
   {
