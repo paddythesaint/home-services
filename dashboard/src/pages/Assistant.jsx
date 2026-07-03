@@ -3,9 +3,10 @@ import { useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import { callClaude, assistantTools, buildSystemPrompt } from "../assistantApi"
 import { compressImage } from "../photoUtils"
-import { addPhoto, addItem } from "../firestoreApi"
+import { addPhoto, addItem, loadAssistantChat, saveAssistantChat } from "../firestoreApi"
 import { todayLabel, todayISO, addMonthsISO } from "../dates"
 import { requirementId, PATH_META } from "../resolution"
+import { computeGaps } from "../gaps"
 import { Card, Button } from "../components"
 
 // The API requires every assistant tool_use block to be answered by a
@@ -41,6 +42,20 @@ function repairDanglingToolUses(messages) {
     })
   }
   return out
+}
+
+// Cap persisted API history. Cut only at a plain-text user turn so
+// tool_use/tool_result pairs are never split across the boundary.
+function trimApiMessages(messages, max = 80, keep = 60) {
+  if (messages.length <= max) return messages
+  let idx = messages.length - keep
+  while (
+    idx < messages.length &&
+    !(messages[idx].role === "user" && typeof messages[idx].content === "string")
+  ) {
+    idx++
+  }
+  return idx < messages.length ? messages.slice(idx) : messages
 }
 
 // Image bytes stay out of persisted history — facts were already extracted
@@ -127,9 +142,50 @@ export default function Assistant() {
   const [input, setInput] = useState("")
   const [pending, setPending] = useState([]) // attached photo dataUrls, not yet sent
   const [busy, setBusy] = useState(false)
+  const [historyLoaded, setHistoryLoaded] = useState(false)
   const scrollRef = useRef(null)
   const fileRef = useRef(null)
   const turnPhotosRef = useRef([]) // photos in the message currently being processed
+
+  const gaps = computeGaps(healthApi.items, priorityApi.items)
+
+  // Restore the saved conversation once per property — the maintenance
+  // manager relationship is continuous across sessions and devices.
+  useEffect(() => {
+    let active = true
+    loadAssistantChat(uid)
+      .then((saved) => {
+        if (!active) return
+        if (saved?.uiMessages?.length) {
+          setUiMessages(saved.uiMessages)
+          setApiMessages(saved.apiMessages || [])
+        }
+        setHistoryLoaded(true)
+      })
+      .catch(() => active && setHistoryLoaded(true))
+    return () => {
+      active = false
+    }
+  }, [uid])
+
+  // Persist after each completed turn (apiMessages changes once per turn).
+  useEffect(() => {
+    if (!historyLoaded || apiMessages.length === 0) return
+    saveAssistantChat(uid, {
+      uiMessages: uiMessages.map(({ role, text }) => ({ role, text: text || "[photo]" })),
+      apiMessages: trimApiMessages(apiMessages),
+      updatedAt: Date.now(),
+    }).catch(console.error)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiMessages])
+
+  function clearChat() {
+    setUiMessages([{ role: "assistant", text: GREETING }])
+    setApiMessages([])
+    saveAssistantChat(uid, { uiMessages: [], apiMessages: [], updatedAt: Date.now() }).catch(
+      console.error
+    )
+  }
 
   async function attachFiles(e) {
     const files = [...(e.target.files || [])]
@@ -435,13 +491,22 @@ export default function Assistant() {
             Everything you tell it is saved to the record as you talk.
           </p>
         </div>
-        <button
-          type="button"
-          className="text-xs text-ink-3 hover:text-ink underline shrink-0"
-          onClick={() => saveProfile({ anthropicApiKey: "" })}
-        >
-          Change API key
-        </button>
+        <div className="flex gap-3 shrink-0">
+          <button
+            type="button"
+            className="text-xs text-ink-3 hover:text-ink underline"
+            onClick={clearChat}
+          >
+            Clear chat
+          </button>
+          <button
+            type="button"
+            className="text-xs text-ink-3 hover:text-ink underline"
+            onClick={() => saveProfile({ anthropicApiKey: "" })}
+          >
+            Change API key
+          </button>
+        </div>
       </div>
 
       <div
@@ -491,6 +556,27 @@ export default function Assistant() {
           </div>
         )}
       </div>
+
+      {gaps.length > 0 && (
+        <div className="flex items-center gap-1.5 mt-3 overflow-x-auto">
+          <span className="text-xs text-ink-3 shrink-0">Open gaps:</span>
+          {gaps.slice(0, 3).map((g) => (
+            <button
+              key={g.label}
+              type="button"
+              disabled={busy}
+              onClick={() => setInput(g.ask)}
+              title="Click to draft a message about this gap"
+              className="text-xs bg-brand-100 hover:bg-brand-200 text-ink-2 rounded-full px-3 py-1 whitespace-nowrap shrink-0 disabled:opacity-50"
+            >
+              {g.label.length > 60 ? `${g.label.slice(0, 57)}…` : g.label}
+            </button>
+          ))}
+          {gaps.length > 3 && (
+            <span className="text-xs text-ink-3 shrink-0">+{gaps.length - 3} more</span>
+          )}
+        </div>
+      )}
 
       {pending.length > 0 && (
         <div className="flex gap-2 mt-3">

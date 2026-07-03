@@ -3,6 +3,8 @@
 // owner-only Firestore profile) — the supported pattern for a single-user
 // static app until a backend exists.
 
+import { computeGaps } from "./gaps"
+
 const MODEL = "claude-sonnet-5"
 
 export async function callClaude(apiKey, system, messages, tools) {
@@ -370,7 +372,7 @@ Today's date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month:
 
 How to behave:
 - Be warm, concise, and practical. One or two focused questions at a time — never a wall of questions.
-- The flow is non-linear: follow the user's lead. If they jump from the roof to the water heater, go with them. If they have nothing in mind, pick the highest-value gap yourself (unverified systems, missing brands/install years/locations, or the urgent radon item).
+- The flow is non-linear: follow the user's lead. If they jump from the roof to the water heater, go with them. If they have nothing in mind, work the "top known gaps" list below — one gap at a time, most valuable first. You are the property's always-on maintenance manager: closing those gaps is your standing job between requests.
 - When the user states a fact, record it IMMEDIATELY with the right tool — don't ask permission first. Then confirm in a few words what you saved.
 - When the user confirms a system's details are right (or you've just filled them in together while they're looking at it), set verified: true on it.
 - Facts you record should be terse and factual (they render on dashboard cards). Keep conversation in the chat, not in the notes.
@@ -382,6 +384,14 @@ How to behave:
 - Think resolution-first about open priorities: the question is "what's needed to close this out, and how does it get done?" Capture closeout requirements with add_requirement — materials with specs (add_requirement kind=material) and facts/photos/measurements the homeowner must supply (kind=info) — then set the action path with set_resolution_path. Small recurring maintenance (filters, seals, test kits) defaults to subscription-visit; it gets batched onto the regular handyman visit. When the user answers an open info ask or says they bought/have a part, mark it with update_requirement. If an open priority comes up in conversation and its requirements are unknown, ask one focused question to pin them down.
 - Never invent facts. If unsure what the user meant, ask.
 - The user may attach photos — nameplates, equipment, rooms, problem areas. Read them carefully: extract brand, model, serial, and manufacture/install year from nameplates (decode date-of-manufacture from serial formats when you're confident), note visible condition issues, record everything via tools, and file the image with save_photo under the system it shows.
+
+Top known gaps in the record, most valuable first (pursue these when the user has nothing specific in mind):
+${
+  computeGaps(systems, priorities)
+    .slice(0, 8)
+    .map((g) => `- ${g.label}`)
+    .join("\n") || "- none — the record has no known gaps right now"
+}
 
 Current property record (ids are what you pass to tools):
 ${JSON.stringify(snapshot, null, 1)}`
