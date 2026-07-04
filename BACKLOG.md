@@ -50,6 +50,19 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 12 — System status: production self-diagnostics (shipped 7/4/26)
+Rules are published by hand in the Firebase console and can drift from the
+repo's firestore.rules — a green deploy never proved the app worked. The
+Command Center now has a founder-only "System status" card that runs
+read-only permission probes (membership query, founder contractors
+collection, every property subcollection) and reports pass/fail with the
+exact fix. Alongside it, a global data-error bus: any denied subscription
+surfaces as a red banner in Layout instead of a silently empty page.
+Bonus: writing its tests exposed a real pre-existing Ops bug — an effect
+depending on freshly-filtered arrays re-set parent state on every render
+(invisible CPU burn in prod, livelock under act()); fixed by depending on
+the stable subscription arrays.
+
 ## Slice 10 — pulled the client-side AI assistant (removed 7/4/26)
 Founder decision (7/4/26): the Intake Assistant and Exterior Measurements
 pages both called the Anthropic API directly from the browser using a key

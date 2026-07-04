@@ -1,7 +1,9 @@
+import { useEffect, useState } from "react"
 import { NavLink, Outlet } from "react-router-dom"
 import { signOut } from "firebase/auth"
 import { auth } from "./firebase"
 import { useProperty, usePropertyId } from "./useProperty"
+import { subscribeDataErrors } from "./dataErrors"
 import { isFounder } from "./founders"
 
 const icons = {
@@ -64,8 +66,15 @@ function buildNavSections(founder) {
 export default function Layout({ user }) {
   const { status, propertyId } = usePropertyId(user)
   const { profile, save } = useProperty(propertyId)
-  const navSections = buildNavSections(isFounder(user?.email))
+  const founder = isFounder(user?.email)
+  const navSections = buildNavSections(founder)
   const allNavItems = navSections.flatMap((s) => s.items)
+
+  // Data-layer failures (usually permission-denied from stale published
+  // rules) surface as a banner — never as a silently empty page.
+  const [dataErrors, setDataErrors] = useState({})
+  useEffect(() => subscribeDataErrors(setDataErrors), [])
+  const failedCollections = [...new Set(Object.values(dataErrors).map((e) => e.collection))]
 
   if (status === "resolving" || (status === "ready" && !profile)) {
     return (
@@ -193,6 +202,16 @@ export default function Layout({ user }) {
           </div>
         </header>
         <main className="flex-1 p-4 md:p-8 max-w-6xl w-full mx-auto">
+          {failedCollections.length > 0 && (
+            <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg px-4 py-3 mb-4 text-sm">
+              <span className="font-medium">Some of your data couldn't load</span> (
+              {failedCollections.join(", ")}) — permission was denied, which usually means
+              the published Firestore rules are behind the app.{" "}
+              {founder
+                ? "Run the checks under System status on the Command Center to pinpoint it."
+                : "Let your service operator know."}
+            </div>
+          )}
           <Outlet context={{ uid: propertyId, profile, saveProfile: save, user }} />
         </main>
       </div>

@@ -6,6 +6,7 @@ import {
   removeItem,
   reorderItems,
 } from "./firestoreApi"
+import { reportDataError, clearDataError } from "./dataErrors"
 
 export function useItems(uid, collectionName) {
   const [items, setItems] = useState([])
@@ -13,10 +14,22 @@ export function useItems(uid, collectionName) {
 
   useEffect(() => {
     setLoading(true)
-    const unsubscribe = subscribeItems(uid, collectionName, (list) => {
-      setItems(list)
-      setLoading(false)
-    })
+    const key = `${uid}/${collectionName}`
+    const unsubscribe = subscribeItems(
+      uid,
+      collectionName,
+      (list) => {
+        setItems(list)
+        setLoading(false)
+        clearDataError(key)
+      },
+      (err) => {
+        // Surface instead of spinning forever — the banner in Layout picks
+        // this up so a denied read never renders as a silently empty page.
+        setLoading(false)
+        reportDataError(key, { collection: collectionName, code: err.code || String(err) })
+      }
+    )
     return unsubscribe
   }, [uid, collectionName])
 

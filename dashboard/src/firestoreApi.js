@@ -11,6 +11,7 @@ import {
   query,
   orderBy,
   where,
+  limit,
 } from "firebase/firestore"
 import { db } from "./firebase"
 
@@ -116,11 +117,18 @@ function collectionRef(uid, name) {
   return collection(db, "properties", uid, name)
 }
 
-export function subscribeItems(uid, name, callback) {
+export function subscribeItems(uid, name, callback, onError) {
   const q = query(collectionRef(uid, name), orderBy("order"))
-  return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
-  })
+  return onSnapshot(
+    q,
+    (snap) => {
+      callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+    },
+    (err) => {
+      console.error(`subscribeItems(${name}) failed:`, err.code || err)
+      onError?.(err)
+    }
+  )
 }
 
 export function addItem(uid, name, data) {
@@ -211,4 +219,82 @@ export function reorderItems(uid, name, itemA, itemB) {
     updateDoc(doc(db, "properties", uid, name, itemA.id), { order: itemB.order }),
     updateDoc(doc(db, "properties", uid, name, itemB.id), { order: itemA.order }),
   ])
+}
+
+// Live permission probes for the founder-only System status panel. Rules are
+// published by hand in the Firebase console and can drift from the repo's
+// firestore.rules — these cheap, read-only checks tell you which capabilities
+// are actually live in production. Nothing here writes or creates data.
+const PROBE_SUBCOLLECTIONS = [
+  "healthReport",
+  "careCalendar",
+  "priorityList",
+  "jobHistory",
+  "photos",
+  "activity",
+  "contractors",
+]
+
+const RULES_FIX =
+  "The published Firestore rules are behind the repo — publish dashboard/firestore.rules " +
+  "in the Firebase console (Firestore Database → Rules), then re-run these checks."
+
+export async function runDiagnostics(user) {
+  const results = []
+  const add = (key, label, ok, detail, fix) => results.push({ key, label, ok, detail, fix })
+
+  let properties = []
+  try {
+    properties = await fetchMemberProperties(user.email)
+    add(
+      "membership",
+      "Membership lookup",
+      true,
+      `${properties.length} propert${properties.length === 1 ? "y" : "ies"} visible`
+    )
+  } catch (err) {
+    add("membership", "Membership lookup", false, err.code || String(err), RULES_FIX)
+  }
+
+  try {
+    const snap = await getDocs(collection(db, "contractors"))
+    add(
+      "contractors-network",
+      "Contractor network (founder-only collection)",
+      true,
+      `${snap.size} profile${snap.size === 1 ? "" : "s"} readable`
+    )
+  } catch (err) {
+    add(
+      "contractors-network",
+      "Contractor network (founder-only collection)",
+      false,
+      err.code || String(err),
+      "The founder-only contractors rule isn't live — the Contractor Network page and the " +
+        "Job History contractor picker are broken in production until it is. " +
+        RULES_FIX
+    )
+  }
+
+  const pid = properties[0]?.id
+  if (pid) {
+    for (const name of PROBE_SUBCOLLECTIONS) {
+      try {
+        await getDocs(query(collection(db, "properties", pid, name), limit(1)))
+        add(`sub-${name}`, `Property data: ${name}`, true, "readable")
+      } catch (err) {
+        add(`sub-${name}`, `Property data: ${name}`, false, err.code || String(err), RULES_FIX)
+      }
+    }
+  } else {
+    add(
+      "sub-none",
+      "Property data",
+      false,
+      "no property visible to probe",
+      "Membership lookup returned nothing — fix that first."
+    )
+  }
+
+  return results
 }
