@@ -5,6 +5,7 @@ import PhotoSection from "../PhotoSection"
 import ActivitySection from "../ActivitySection"
 import { addItem } from "../firestoreApi"
 import { todayLabel, todayISO, isoToLabel, addMonthsISO } from "../dates"
+import { replacementHorizon, fmtMoneyRange } from "../benchmarks"
 import {
   Card,
   ConditionBadge,
@@ -155,6 +156,22 @@ export default function HealthReport() {
                     {system.lastVerified && ` · last ${isoToLabel(system.lastVerified)}`}
                   </p>
                 )}
+
+                {(() => {
+                  const h = replacementHorizon(system)
+                  if (!h) return null
+                  const warn = h.status === "in-window" || h.status === "past"
+                  return (
+                    <p className={`text-xs mt-2 ${warn ? "text-amber-800" : "text-ink-3"}`}>
+                      Year {h.age} of a typical {h.benchmark.lifeYears[0]}–
+                      {h.benchmark.lifeYears[1]} · replacement window {h.windowStart}–
+                      {h.windowEnd} · ~
+                      {fmtMoneyRange(h.benchmark.replaceCost, h.benchmark.costUnit)}
+                      {h.status === "past" && " — beyond typical life, budget replacement"}
+                      {h.status === "in-window" && " — in the window now"}
+                    </p>
+                  )
+                })()}
 
                 <div className="flex items-center gap-4 mt-3 pt-3 border-t border-line flex-wrap">
                   <Button variant="ghost" className="!px-0" onClick={() => setEditing(system)}>

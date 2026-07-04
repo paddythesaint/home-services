@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import { todayLabel } from "../dates"
+import { suggestRequirements } from "../requirementSuggestions"
 import {
   RESOLUTION_PATHS,
   PATH_META,
@@ -88,6 +89,25 @@ function ResolutionSection({ item, update }) {
 
   const materials = item.materialsNeeded || []
   const info = item.infoNeeded || []
+  const suggestions = suggestRequirements(item)
+
+  function addSuggestedMaterial(s) {
+    update(item.id, {
+      materialsNeeded: [
+        ...materials,
+        { id: requirementId(), item: s.item, spec: s.spec || "", status: "needed" },
+      ],
+    })
+  }
+
+  function addSuggestedInfo(s) {
+    update(item.id, {
+      infoNeeded: [
+        ...info,
+        { id: requirementId(), ask: s.ask, type: s.type || "fact", status: "open" },
+      ],
+    })
+  }
 
   function saveMaterial() {
     if (!matName.trim()) return
@@ -258,6 +278,34 @@ function ResolutionSection({ item, update }) {
             </li>
           ))}
         </ul>
+      )}
+
+      {(suggestions.materials.length > 0 || suggestions.info.length > 0) && (
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-ink-3">Typically needed for this:</span>
+          {suggestions.materials.map((s) => (
+            <button
+              key={`sm-${s.dedupeKey}`}
+              type="button"
+              title={s.spec ? `Material — ${s.spec}` : "Material"}
+              className="text-xs text-ink-2 border border-dashed border-line rounded-full px-2.5 py-0.5 hover:border-brand-400 hover:text-ink"
+              onClick={() => addSuggestedMaterial(s)}
+            >
+              + {s.item}
+            </button>
+          ))}
+          {suggestions.info.map((s) => (
+            <button
+              key={`si-${s.dedupeKey}`}
+              type="button"
+              title={s.type === "photo" ? "Photo ask" : s.type === "measurement" ? "Measurement ask" : "Info ask"}
+              className="text-xs text-ink-2 border border-dashed border-line rounded-full px-2.5 py-0.5 hover:border-brand-400 hover:text-ink"
+              onClick={() => addSuggestedInfo(s)}
+            >
+              + {s.ask}
+            </button>
+          ))}
+        </div>
       )}
 
       <div className="mt-2 flex flex-wrap items-center gap-3">
