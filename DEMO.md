@@ -151,7 +151,7 @@ the walkthrough.
 
 ## After the demo
 
-Send him INTAKE.md, book his walkthrough, and let the onboarding
+Work through INTAKE.md together (founders can fill it directly — real clients get the welcome-call treatment instead), book his walkthrough, and let the onboarding
 checklist drive the rest. The goal isn't applause — it's his house in
 the system by next week, because two real homes under management is the
 proof, and the third will be someone who isn't a founder.
