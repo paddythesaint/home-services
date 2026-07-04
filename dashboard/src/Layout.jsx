@@ -6,7 +6,7 @@ import { useProperty, usePropertyId } from "./useProperty"
 import { fetchMemberProperties } from "./firestoreApi"
 import { subscribeDataErrors } from "./dataErrors"
 import { isFounder } from "./founders"
-import { viewFor } from "./roles"
+import { viewFor, getViewAs, setViewAs, ROLE_LABELS } from "./roles"
 
 const icons = {
   overview: <path d="M3 10.5L12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5" />,
@@ -77,6 +77,16 @@ function buildNavSections(view) {
 export default function Layout({ user }) {
   const { status, propertyId } = usePropertyId(user)
   const founder = isFounder(user?.email)
+
+  // Founder "View as": borrow another role's lens (persists until changed).
+  // The state mirror only exists to re-render the tree — viewFor() reads
+  // the stored choice itself, so pages pick it up on the same render.
+  const [viewAs, setViewAsState] = useState(getViewAs)
+  function changeViewAs(role) {
+    setViewAs(role)
+    setViewAsState(role)
+  }
+
   const view = viewFor(user?.email)
   const navSections = buildNavSections(view)
   const allNavItems = navSections.flatMap((s) => s.items)
@@ -257,6 +267,22 @@ export default function Layout({ user }) {
               </select>
             </div>
           )}
+          {founder && (
+            <div className="px-3 pb-2">
+              <select
+                value={viewAs}
+                onChange={(e) => changeViewAs(e.target.value)}
+                className="w-full bg-brand-800 text-brand-50 text-xs rounded-md px-2 py-1.5 border border-brand-700"
+                aria-label="View as"
+              >
+                {Object.entries(ROLE_LABELS).map(([role, label]) => (
+                  <option key={role} value={role}>
+                    View as: {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <nav className="flex gap-1.5 overflow-x-auto px-3 pb-2.5">
             {allNavItems.map((item) => (
               <NavLink
@@ -284,19 +310,52 @@ export default function Layout({ user }) {
               {profile.clientName ? `${profile.clientName} Family` : user.displayName}
             </p>
           </div>
-          {view.showBilling && (
-            <div className="text-right text-xs text-ink-2">
-              <p>
-                Next invoice{" "}
-                <span className="font-semibold text-ink">
-                  {profile.nextInvoiceDate || "—"}
-                </span>
-              </p>
-              <p className="text-ink-3">${profile.monthlyRate || 0}/mo</p>
-            </div>
-          )}
+          <div className="flex items-center gap-6">
+            {founder && (
+              <label className="flex items-center gap-2 text-xs text-ink-3">
+                View as
+                <select
+                  value={viewAs}
+                  onChange={(e) => changeViewAs(e.target.value)}
+                  className="border border-line rounded-md px-2 py-1 text-xs bg-surface text-ink"
+                >
+                  {Object.entries(ROLE_LABELS).map(([role, label]) => (
+                    <option key={role} value={role}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {view.showBilling && (
+              <div className="text-right text-xs text-ink-2">
+                <p>
+                  Next invoice{" "}
+                  <span className="font-semibold text-ink">
+                    {profile.nextInvoiceDate || "—"}
+                  </span>
+                </p>
+                <p className="text-ink-3">${profile.monthlyRate || 0}/mo</p>
+              </div>
+            )}
+          </div>
         </header>
         <main className="flex-1 p-4 md:p-8 max-w-6xl w-full mx-auto">
+          {view.preview && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg px-4 py-2.5 mb-4 text-sm flex items-center justify-between gap-3">
+              <p>
+                Previewing as <span className="font-semibold">{ROLE_LABELS[view.role]}</span>{" "}
+                — you're still signed in as yourself; this only changes what's shown.
+              </p>
+              <button
+                type="button"
+                className="text-xs font-medium underline underline-offset-2 shrink-0"
+                onClick={() => changeViewAs("founder")}
+              >
+                Back to founder view
+              </button>
+            </div>
+          )}
           {failedCollections.length > 0 && (
             <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg px-4 py-3 mb-4 text-sm">
               <span className="font-medium">Some of your data couldn't load</span> (

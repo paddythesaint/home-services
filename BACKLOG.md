@@ -50,6 +50,19 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 25 — founder "View as" switcher (7/4/26)
+Owner's idea, same day as Slice 24: a top-ribbon "View as" picker so a
+founder can borrow any role's lens — homeowner, relationship,
+technician — without signing in as them. Persists (localStorage)
+across pages, property switches, and reloads until changed; defaults
+to the full founder view. An amber "Previewing as…" banner with a
+one-click reset makes the borrowed lens unmistakable. Faithful at the
+page level too: every founder gate (Command Center, Contractor
+Network, profile pages, photo audit, job-history links, onboarding
+checklist) now reads the effective view, so previewing homeowner shows
+the real refusal cards, not just a trimmed nav. Presentation only —
+it never grants anything, only hides, and non-founders are unaffected.
+
 ## Slice 24 — role-based views, phase 1 (7/4/26)
 Answer to "when someone else logs in, they see everything and it might
 be overwhelming." roles.js resolves a viewing role from the signed-in

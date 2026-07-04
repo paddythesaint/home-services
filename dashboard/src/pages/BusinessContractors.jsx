@@ -7,7 +7,7 @@ import {
   fetchMemberProperties,
   updateItem,
 } from "../firestoreApi"
-import { isFounder } from "../founders"
+import { viewFor } from "../roles"
 import { norm, jobMatchesContractor, unlinkedMatches } from "../contractorMatching"
 import { contractorFields } from "../contractorShared"
 import { PropertyJobFeed } from "../PortfolioJobs"
@@ -219,7 +219,7 @@ function ImportPanel({ properties, existingNames, onImported }) {
 
 export default function BusinessContractors() {
   const { user } = useOutletContext()
-  const founder = isFounder(user?.email)
+  const founder = viewFor(user?.email).business
 
   const [state, setState] = useState({ status: "loading", contractors: [] })
   const [properties, setProperties] = useState([])

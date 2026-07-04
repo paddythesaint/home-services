@@ -7,7 +7,7 @@ import {
   fetchMemberProperties,
   updateItem,
 } from "../firestoreApi"
-import { isFounder } from "../founders"
+import { viewFor } from "../roles"
 import { jobMatchesContractor, unlinkedMatches, groupJobsByProperty } from "../contractorMatching"
 import { contractorFields } from "../contractorShared"
 import { PropertyJobFeed } from "../PortfolioJobs"
@@ -20,7 +20,7 @@ export default function ContractorProfile() {
   const { user } = useOutletContext()
   const { contractorId } = useParams()
   const navigate = useNavigate()
-  const founder = isFounder(user?.email)
+  const founder = viewFor(user?.email).business
 
   const [contractors, setContractors] = useState(null)
   const [properties, setProperties] = useState([])

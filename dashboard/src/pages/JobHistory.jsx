@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import { subscribeContractors } from "../firestoreApi"
-import { isFounder } from "../founders"
+import { viewFor } from "../roles"
 import { Card, PageHeader, StatusBadge, Button, Modal, DynamicForm } from "../components"
 
 const baseFields = [
@@ -27,7 +27,7 @@ export default function JobHistory() {
   const [editing, setEditing] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [contractors, setContractors] = useState([])
-  const founder = isFounder(user?.email)
+  const founder = viewFor(user?.email).business
   const orderedItems = [...items].reverse()
 
   // Founders get a picker into the shared contractor network, so new jobs

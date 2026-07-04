@@ -4,7 +4,7 @@ import { useItems } from "../useItems"
 import { fetchMemberProperties, createProperty, deletePropertyDeep } from "../firestoreApi"
 import { todayISO, isoToLabel, todayLabel } from "../dates"
 import { isReadyToAction } from "../resolution"
-import { isFounder } from "../founders"
+import { viewFor } from "../roles"
 import SystemStatus from "../SystemStatus"
 import {
   Card,
@@ -204,7 +204,7 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
 export default function Ops() {
   const { user, setActiveProperty, refreshPortfolio } = useOutletContext()
   const navigate = useNavigate()
-  const founder = isFounder(user?.email)
+  const founder = viewFor(user?.email).business
   const [state, setState] = useState({ status: "loading", list: [] })
   const [metrics, setMetrics] = useState({})
   const [attention, setAttention] = useState({})
@@ -401,7 +401,7 @@ export default function Ops() {
                 <>
                   <div className="flex flex-wrap gap-2">
                     {allContractors.map((name) =>
-                      isFounder(user?.email) ? (
+                      founder ? (
                         <Link
                           key={name}
                           to="/contractor-network"
@@ -421,7 +421,7 @@ export default function Ops() {
                   </div>
                   <p className="text-xs text-ink-3 mt-3">
                     Pulled from job history.{" "}
-                    {isFounder(user?.email) ? (
+                    {founder ? (
                       <>
                         Manage the full network — contacts, cadence, cross-property jobs —
                         in the{" "}
