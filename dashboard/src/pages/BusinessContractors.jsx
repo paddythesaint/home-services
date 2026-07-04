@@ -17,6 +17,7 @@ import {
   unlinkedMatches,
   groupJobsByProperty,
 } from "../contractorMatching"
+import { DIRECTORY_COUNT, directoryCandidates } from "../contractorDirectory"
 import { Card, PageHeader, Button, Modal, DynamicForm } from "../components"
 
 const fields = [
@@ -24,6 +25,7 @@ const fields = [
   { name: "trades", label: "Trades", type: "text", placeholder: "e.g. HVAC, Roofing" },
   { name: "phone", label: "Phone", type: "text" },
   { name: "email", label: "Email", type: "text" },
+  { name: "website", label: "Website", type: "text" },
   {
     name: "cadence",
     label: "Service cadence",
@@ -42,6 +44,106 @@ function PropertyJobFeed({ propertyId, propertyLabel, onJobs }) {
     onJobs(propertyId, items.map((j) => ({ ...j, propertyId, propertyLabel })))
   }, [propertyId, propertyLabel, items])
   return null
+}
+
+// The founder-researched Charlottesville directory (contractorDirectory.js):
+// browse by trade, tick, add as real network profiles. Deduped by name
+// against the live network, so it's re-openable any time without doubles.
+function DirectoryPanel({ existingNames }) {
+  const [open, setOpen] = useState(false)
+  const [selected, setSelected] = useState(new Set())
+  const [adding, setAdding] = useState(false)
+  const [addedCount, setAddedCount] = useState(0)
+
+  const candidates = directoryCandidates(existingNames)
+  const remaining = candidates.reduce((n, c) => n + c.providers.length, 0)
+
+  const toggle = (name) =>
+    setSelected((prev) => {
+      const next = new Set(prev)
+      next.has(name) ? next.delete(name) : next.add(name)
+      return next
+    })
+
+  async function addSelected() {
+    setAdding(true)
+    let n = 0
+    for (const cat of candidates) {
+      for (const p of cat.providers) {
+        if (!selected.has(p.name)) continue
+        await addContractor(p)
+        n += 1
+      }
+    }
+    setAddedCount(n)
+    setSelected(new Set())
+    setAdding(false)
+  }
+
+  if (!open) {
+    return (
+      <Card>
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-sm text-ink-2">
+            Charlottesville contractor directory — {DIRECTORY_COUNT} researched providers
+            across {remaining > 0 ? "10 trades" : "every trade"}, ready to add to the
+            network.{" "}
+            {addedCount > 0 && (
+              <span className="font-medium text-ink">Added {addedCount}.</span>
+            )}
+          </p>
+          <Button variant="subtle" onClick={() => setOpen(true)} disabled={remaining === 0}>
+            {remaining === 0 ? "All added" : "Browse directory"}
+          </Button>
+        </div>
+      </Card>
+    )
+  }
+
+  return (
+    <Card title="Charlottesville directory">
+      <p className="text-xs text-ink-3 mb-2">
+        Researched from public sources, July 2026 — every entry is tagged "verify contact
+        before first use." Providers already in the network aren't shown.
+      </p>
+      <div className="max-h-96 overflow-y-auto pr-1">
+        {candidates.map((cat) => (
+          <div key={cat.category} className="mb-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-3 mb-1">
+              {cat.category}
+            </p>
+            <ul className="divide-y divide-line">
+              {cat.providers.map((p) => (
+                <li key={p.name} className="py-1.5 flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    className="mt-1 accent-brand-700"
+                    checked={selected.has(p.name)}
+                    onChange={() => toggle(p.name)}
+                  />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-ink">{p.name}</p>
+                    <p className="text-xs text-ink-3">
+                      {[p.phone, p.email, p.website && "website"].filter(Boolean).join(" · ") ||
+                        "contact via website"}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-end gap-2 mt-3 pt-3 border-t border-line">
+        <Button variant="subtle" onClick={() => setOpen(false)}>
+          Close
+        </Button>
+        <Button onClick={addSelected} disabled={adding || selected.size === 0}>
+          {adding ? "Adding…" : `Add ${selected.size || ""} to network`}
+        </Button>
+      </div>
+    </Card>
+  )
 }
 
 function ImportPanel({ properties, existingNames, onImported }) {
@@ -248,7 +350,8 @@ export default function BusinessContractors() {
         </div>
       )}
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-col gap-3">
+        <DirectoryPanel existingNames={contractors.map((c) => c.name)} />
         <ImportPanel
           properties={properties}
           existingNames={contractors.map((c) => norm(c.name))}
@@ -280,6 +383,19 @@ export default function BusinessContractors() {
                     <p className="font-semibold text-ink">{c.name}</p>
                     <p className="text-sm text-ink-2">
                       {[c.trades, c.phone, c.email].filter(Boolean).join(" · ") || "—"}
+                      {c.website && (
+                        <>
+                          {" · "}
+                          <a
+                            href={c.website}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-brand-600 hover:text-brand-800 underline"
+                          >
+                            website
+                          </a>
+                        </>
+                      )}
                     </p>
                     {c.cadence && (
                       <p className="text-xs text-ink-3 mt-1">Cadence: {c.cadence}</p>

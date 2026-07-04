@@ -50,6 +50,18 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 21 — Charlottesville contractor directory (shipped 7/4/26)
+The founder's web research (72 providers across 10 trades — electrical,
+HVAC, plumbing, landscaping, pest, exterior cleaning, roofing, tree,
+septic/well, garage doors) now ships in the product as
+contractorDirectory.js. The Contractor Network page gained a "Browse
+directory" panel: grouped by trade, tick providers, one click adds them
+as real network profiles — deduped by name against the live network so
+it's re-openable without doubles, every entry sourced "verify contact
+before first use." Contractor profiles also gained a website field
+(form + card link). The bench for dispatching beyond the two known
+vendors now exists in-product.
+
 ## Slice 20 — backend foundation: auth-verified AI proxy (shipped 7/4/26)
 The un-parking of the AI layer. `functions/` holds one Cloud Functions v2
 HTTPS endpoint: verifies the caller's Firebase ID token, requires founder
