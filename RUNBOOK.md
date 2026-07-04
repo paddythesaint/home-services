@@ -64,18 +64,22 @@ console visit, no local CLI. It depends on three GitHub repo secrets:
 **Verify:** Command Center → System status → Run checks → the
 "Backend (AI proxy)" row should be green ("reachable · key configured").
 
-**If the first deploy fails**, open the run under GitHub → Actions →
-"Deploy backend functions" and read the last red lines:
-- *"…API has not been used in project… before or it is disabled"* — the
-  deploy needs Cloud APIs enabled once. Open the URL in the error message
-  (or console.cloud.google.com → APIs & Services), enable Cloud
-  Functions, Cloud Build, Cloud Run, and Artifact Registry, then re-run
-  the workflow (Actions → the workflow → Run workflow).
-- *"Permission denied" / "does not have permission"* — the service
-  account needs deploy roles once: console.cloud.google.com → IAM →
-  find the `firebase-adminsdk-…` account → Edit → add roles
-  **Cloud Functions Admin**, **Cloud Run Admin**, and
-  **Service Account User**, then re-run the workflow.
+**First-deploy setup — the path that actually happened (7/4/26).** The
+first deploy peels one-time gates in sequence; each failed run's last
+red log line names the next one. The full set that got run #5 green:
+1. **IAM roles** on the `firebase-adminsdk-…` service account
+   (console.cloud.google.com → IAM & Admin → IAM → pencil-edit the row):
+   **Editor**, **Service Account User**, **Cloud Functions Admin**, and
+   **Cloud Run Admin**. Editor alone is NOT enough — it deliberately
+   lacks `setIamPolicy`, which deploying a public HTTPS function needs;
+   that's what the two Admin roles provide.
+2. **Cloud Billing API** — the one API the deploy can't self-enable.
+   The error message contains the exact enable URL; click Enable, wait
+   ~2 minutes, re-run. (The deploy self-enabled the other seven: Cloud
+   Functions, Cloud Build, Artifact Registry, Pub/Sub, Storage,
+   Eventarc, Cloud Run.)
+3. Re-run via GitHub → Actions → "Deploy backend functions" → Run
+   workflow. All of this is one-time; subsequent deploys just work.
 
 ## Keeping this true in the future
 
