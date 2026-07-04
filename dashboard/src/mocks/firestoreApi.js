@@ -107,7 +107,21 @@ function filterSystem(uid, name, systemId) {
   return structuredClone(entries)
 }
 
-export function subscribeItems(uid, name, callback) {
+// Simulate a permission denial for one collection (or the contractor
+// network) to preview failure states: VITE_MOCK_DENY=jobHistory, etc.
+const MOCK_DENY = import.meta.env?.VITE_MOCK_DENY || ""
+
+const deniedError = () => {
+  const err = new Error("Missing or insufficient permissions (mock)")
+  err.code = "permission-denied"
+  return err
+}
+
+export function subscribeItems(uid, name, callback, onError) {
+  if (MOCK_DENY === name) {
+    onError?.(deniedError())
+    return () => {}
+  }
   const off = on(`items:${uid}:${name}`, callback)
   callback(
     structuredClone([...coll(uid, name)].sort((a, b) => (a.order || 0) - (b.order || 0)))
@@ -161,7 +175,11 @@ export function removePhoto(uid, id) {
   return removeItem(uid, "photos", id)
 }
 
-export function subscribeContractors(callback, onError) { // eslint-disable-line no-unused-vars
+export function subscribeContractors(callback, onError) {
+  if (MOCK_DENY === "contractors-network") {
+    onError?.(deniedError())
+    return () => {}
+  }
   const off = on("contractors", callback)
   callback(structuredClone(store.contractors))
   return off
@@ -203,6 +221,53 @@ export async function seedCollections(uid, collections) {
     }
     emitItems(uid, name)
   }
+}
+
+// Mirrors the real runDiagnostics shape. Everything passes unless
+// VITE_MOCK_DENY names a collection, which fails its matching probe —
+// handy for previewing the failure UI.
+export async function runDiagnostics(user) {
+  const properties = await fetchMemberProperties(user.email)
+  const results = [
+    {
+      key: "membership",
+      label: "Membership lookup",
+      ok: true,
+      detail: `${properties.length} properties visible`,
+    },
+    {
+      key: "contractors-network",
+      label: "Contractor network (founder-only collection)",
+      ok: MOCK_DENY !== "contractors-network",
+      detail:
+        MOCK_DENY === "contractors-network"
+          ? "permission-denied"
+          : `${store.contractors.length} profiles readable`,
+      fix:
+        MOCK_DENY === "contractors-network"
+          ? "The founder-only contractors rule isn't live — publish dashboard/firestore.rules."
+          : undefined,
+    },
+  ]
+  for (const name of [
+    "healthReport",
+    "careCalendar",
+    "priorityList",
+    "jobHistory",
+    "photos",
+    "activity",
+    "contractors",
+  ]) {
+    const denied = MOCK_DENY === name
+    results.push({
+      key: `sub-${name}`,
+      label: `Property data: ${name}`,
+      ok: !denied,
+      detail: denied ? "permission-denied" : "readable",
+      fix: denied ? "Publish dashboard/firestore.rules in the Firebase console." : undefined,
+    })
+  }
+  return results
 }
 
 export function reorderItems(uid, name, itemA, itemB) {

@@ -5,6 +5,7 @@ import { fetchMemberProperties } from "../firestoreApi"
 import { todayISO, isoToLabel, todayLabel } from "../dates"
 import { isReadyToAction } from "../resolution"
 import { isFounder } from "../founders"
+import SystemStatus from "../SystemStatus"
 import { Card, PageHeader, StatTile, UrgencyBadge, ConditionBadge } from "../components"
 
 const isOpen = (p) => !p.status || p.status === "open" || p.status === "scheduled"
@@ -72,7 +73,11 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
       })),
     ]
     onAttention(propertyId, items)
-  }, [propertyId, highPriorities, overdueChecks, profile.address])
+    // Depend on the stable subscription arrays, not the derived filters —
+    // fresh .filter() identities every render would re-fire this effect
+    // (and re-set parent state) on every single render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propertyId, priorityApi.items, systems, profile.address])
 
   useEffect(() => {
     const names = [
@@ -312,6 +317,12 @@ export default function Ops() {
             </Card>
           </div>
         </>
+      )}
+
+      {isFounder(user?.email) && (
+        <div className="mt-4">
+          <SystemStatus user={user} />
+        </div>
       )}
 
       <p className="text-xs text-ink-3 mt-4">
