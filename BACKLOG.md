@@ -50,6 +50,15 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 16 — new-property onboarding checklist (shipped overnight 7/4/26)
+Every non-seed property's Overview now carries a "Getting this home
+ready" card until its record is real: walk the property, build the system
+list, load a prepared bundle (optional; ImportBundle now stamps
+`bundleImportedOn`), log service history, invite the homeowner. Every
+done-state derives from the record — nothing is hand-ticked — and the
+card retires itself when the required steps are done. This is the
+"how does home #2 get onboarded" answer, visible in the product.
+
 ## Slice 15 — orphaned API-key scrub (shipped 7/4/26)
 The retired AI assistant (Slice 10) left the pasted Anthropic key sitting
 in `profile.anthropicApiKey`. System status now has a "Data hygiene"

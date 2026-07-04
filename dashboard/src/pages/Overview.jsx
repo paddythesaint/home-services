@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import SeedBanner from "../SeedBanner"
+import OnboardingChecklist from "../OnboardingChecklist"
 import InsightsBanner from "../InsightsBanner"
 import Members from "../Members"
 import { seedAddressHint } from "../seedData"
@@ -90,6 +91,10 @@ export default function Overview() {
       />
 
       {dashboardEmpty && isSeedProperty && <SeedBanner uid={uid} />}
+
+      {!isSeedProperty && (
+        <OnboardingChecklist profile={profile} systems={healthItems} jobs={jobItems} />
+      )}
 
       {!dashboardEmpty && isSeedProperty && !profile.insightsAppliedOn && (
         <InsightsBanner
