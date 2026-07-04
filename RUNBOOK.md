@@ -50,6 +50,33 @@ simply re-published unchanged. There is nothing to diff by hand.
 - Rules propagate in seconds-to-a-minute; re-run checks once before digging
   further.
 
+## The backend (Cloud Functions) — deployed by CI, not by hand
+
+Since Slice 20 the repo carries a backend (`functions/`): one HTTPS
+function that verifies the caller's Firebase sign-in, checks property
+membership, and proxies AI requests with the Anthropic key held
+server-side. It deploys automatically via GitHub Actions
+(`deploy-functions.yml`) whenever `functions/**` changes on main — no
+console visit, no local CLI. It depends on three GitHub repo secrets:
+`FIREBASE_SERVICE_ACCOUNT`, `ANTHROPIC_API_KEY`, and the existing
+`VITE_FIREBASE_PROJECT_ID`.
+
+**Verify:** Command Center → System status → Run checks → the
+"Backend (AI proxy)" row should be green ("reachable · key configured").
+
+**If the first deploy fails**, open the run under GitHub → Actions →
+"Deploy backend functions" and read the last red lines:
+- *"…API has not been used in project… before or it is disabled"* — the
+  deploy needs Cloud APIs enabled once. Open the URL in the error message
+  (or console.cloud.google.com → APIs & Services), enable Cloud
+  Functions, Cloud Build, Cloud Run, and Artifact Registry, then re-run
+  the workflow (Actions → the workflow → Run workflow).
+- *"Permission denied" / "does not have permission"* — the service
+  account needs deploy roles once: console.cloud.google.com → IAM →
+  find the `firebase-adminsdk-…` account → Edit → add roles
+  **Cloud Functions Admin**, **Cloud Run Admin**, and
+  **Service Account User**, then re-run the workflow.
+
 ## Keeping this true in the future
 
 Any PR that edits `dashboard/firestore.rules` must add a row to the table

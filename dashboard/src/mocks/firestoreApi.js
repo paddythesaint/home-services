@@ -300,6 +300,16 @@ export async function runDiagnostics(user) {
       fix: denied ? "Publish dashboard/firestore.rules in the Firebase console." : undefined,
     })
   }
+  results.push({
+    key: "backend",
+    label: "Backend (AI proxy)",
+    ok: MOCK_DENY !== "backend",
+    detail: MOCK_DENY === "backend" ? "unreachable (mock)" : "reachable · key configured (mock)",
+    fix:
+      MOCK_DENY === "backend"
+        ? "Check the 'Deploy backend functions' run under GitHub → Actions."
+        : undefined,
+  })
   return results
 }
 

@@ -36,6 +36,7 @@ describe("System status panel", () => {
     ).toBeInTheDocument()
     expect(screen.getByText(/Contractor network \(founder-only collection\)/)).toBeInTheDocument()
     expect(screen.getByText(/Property data: jobHistory/)).toBeInTheDocument()
+    expect(screen.getByText(/Backend \(AI proxy\)/)).toBeInTheDocument()
   })
 
   it("scrubs the orphaned anthropicApiKey field and reports the count", async () => {
