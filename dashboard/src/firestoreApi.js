@@ -13,6 +13,7 @@ import {
   where,
   limit,
   deleteField,
+  increment,
 } from "firebase/firestore"
 import { db } from "./firebase"
 import { callBackend } from "./backendApi"
@@ -167,8 +168,24 @@ export function subscribePhotos(uid, systemId, callback) {
   })
 }
 
-export function addPhoto(uid, data) {
-  return addDoc(collectionRef(uid, "photos"), data)
+// Photo writes keep a denormalized photoCount on the owning system so the
+// Health Report can show "Photos (3)" without loading image docs. The
+// count is cosmetic — failures to bump it never fail the photo write.
+async function bumpPhotoCount(uid, systemId, delta) {
+  if (!systemId) return
+  try {
+    await updateDoc(doc(db, "properties", uid, "healthReport", systemId), {
+      photoCount: increment(delta),
+    })
+  } catch {
+    /* system may have been deleted — the audit tool reconciles */
+  }
+}
+
+export async function addPhoto(uid, data) {
+  const ref = await addDoc(collectionRef(uid, "photos"), data)
+  await bumpPhotoCount(uid, data.systemId, 1)
+  return ref
 }
 
 // Per-system activity timeline (readings, actions, observations, service).
@@ -186,8 +203,22 @@ export function updatePhoto(uid, id, data) {
   return updateDoc(doc(db, "properties", uid, "photos", id), data)
 }
 
-export function removePhoto(uid, id) {
-  return deleteDoc(doc(db, "properties", uid, "photos", id))
+export async function removePhoto(uid, id, systemId) {
+  await deleteDoc(doc(db, "properties", uid, "photos", id))
+  await bumpPhotoCount(uid, systemId, -1)
+}
+
+// Every photo on the property, for the audit tool: counts per system,
+// orphans (photos whose system no longer exists), and count backfill.
+export async function fetchAllPhotos(uid) {
+  const snap = await getDocs(collectionRef(uid, "photos"))
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+}
+
+export function setPhotoCount(uid, systemId, count) {
+  return updateDoc(doc(db, "properties", uid, "healthReport", systemId), {
+    photoCount: count,
+  })
 }
 
 // Business-plane contractor network: a top-level collection, one profile
