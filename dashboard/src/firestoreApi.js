@@ -12,6 +12,7 @@ import {
   orderBy,
   where,
   limit,
+  deleteField,
 } from "firebase/firestore"
 import { db } from "./firebase"
 
@@ -232,6 +233,19 @@ export function reorderItems(uid, name, itemA, itemB) {
     updateDoc(doc(db, "properties", uid, name, itemA.id), { order: itemB.order }),
     updateDoc(doc(db, "properties", uid, name, itemB.id), { order: itemA.order }),
   ])
+}
+
+// Slice 10 removed the client-side AI features but left the pasted
+// Anthropic API key sitting in property profiles. One-time hygiene action
+// from the System status panel: deletes the field on every property the
+// caller can see. Returns how many keys were removed.
+export async function scrubOrphanedApiKeys(email) {
+  const properties = await fetchMemberProperties(email)
+  const holders = properties.filter((p) => p.anthropicApiKey)
+  for (const p of holders) {
+    await updateDoc(propertyDocRef(p.id), { anthropicApiKey: deleteField() })
+  }
+  return holders.length
 }
 
 // Live permission probes for the founder-only System status panel. Rules are

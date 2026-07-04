@@ -3,6 +3,8 @@ import { screen, fireEvent } from "@testing-library/react"
 import { renderPage } from "./renderPage"
 import Ops from "../pages/Ops"
 import { reportDataError, clearDataError, subscribeDataErrors, __resetDataErrors } from "../dataErrors"
+import { scrubOrphanedApiKeys, __getProfile } from "../mocks/firestoreApi"
+import { MOCK_FOUNDER } from "../mocks/fixtures"
 
 describe("dataErrors bus", () => {
   it("reports, dedupes, and clears; subscribers get current state immediately", () => {
@@ -34,6 +36,21 @@ describe("System status panel", () => {
     ).toBeInTheDocument()
     expect(screen.getByText(/Contractor network \(founder-only collection\)/)).toBeInTheDocument()
     expect(screen.getByText(/Property data: jobHistory/)).toBeInTheDocument()
+  })
+
+  it("scrubs the orphaned anthropicApiKey field and reports the count", async () => {
+    expect(__getProfile("prop-ballard").anthropicApiKey).toBeTruthy()
+    const count = await scrubOrphanedApiKeys(MOCK_FOUNDER.email)
+    expect(count).toBe(1)
+    expect(__getProfile("prop-ballard").anthropicApiKey).toBeUndefined()
+    // Idempotent: a second run finds nothing.
+    expect(await scrubOrphanedApiKeys(MOCK_FOUNDER.email)).toBe(0)
+  })
+
+  it("runs the scrub from the panel button", async () => {
+    renderPage(<Ops />)
+    fireEvent.click(await screen.findByText("Remove orphaned API keys"))
+    expect(await screen.findByText("Removed 1 stored key.")).toBeInTheDocument()
   })
 
   it("is hidden from non-founders", async () => {

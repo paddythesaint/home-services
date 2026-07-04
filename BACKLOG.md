@@ -50,6 +50,15 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 15 — orphaned API-key scrub (shipped 7/4/26)
+The retired AI assistant (Slice 10) left the pasted Anthropic key sitting
+in `profile.anthropicApiKey`. System status now has a "Data hygiene"
+action that deletes the field from every property the founder can see
+(idempotent — reports "None found" on re-run). **Owner action: click it
+once on the live site so no usable key lingers in Firestore — and since
+that key was stored and used client-side while the assistant existed,
+rotating it at console.anthropic.com is the belt-and-braces follow-up.**
+
 ## Slice 14 — RUNBOOK.md: one console visit for all pending rules (7/4/26)
 Every pending Firestore rules change (founder contractors from Slice 7,
 property-create from Slice 13) is staged in dashboard/firestore.rules;

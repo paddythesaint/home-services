@@ -24,6 +24,9 @@ export const fixtureData = {
         nextInvoiceDate: "Aug 1, 2026",
         walkthroughCompletedOn: "July 2, 2026",
         seedApplied: true,
+        // Orphaned by Slice 10's AI-feature removal — exercised by the
+        // System status "Data hygiene" scrub.
+        anthropicApiKey: "sk-ant-mock-orphaned-key",
         members: [
           { email: "paddythesaint@gmail.com", name: "Paddy", role: "owner" },
           { email: "sally@example.com", name: "Sally", role: "owner" },
