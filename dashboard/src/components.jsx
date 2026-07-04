@@ -3,10 +3,10 @@ import { useState } from "react"
 export function Card({ title, children, className = "" }) {
   return (
     <div
-      className={`bg-surface border border-line rounded-xl p-5 shadow-[0_1px_2px_rgba(11,11,11,0.04)] ${className}`}
+      className={`bg-surface border border-line rounded-2xl p-5 md:p-6 shadow-(--shadow-card) ${className}`}
     >
       {title && (
-        <h2 className="text-sm font-semibold text-ink mb-3 tracking-tight">{title}</h2>
+        <h2 className="text-[15px] font-semibold text-ink mb-3.5 tracking-tight">{title}</h2>
       )}
       {children}
     </div>
@@ -77,9 +77,9 @@ export function VerifiedBadge({ verified }) {
 // semibold value, optional secondary line. Values stay proportional-figure.
 export function StatTile({ label, value, sub }) {
   return (
-    <div className="bg-surface border border-line rounded-xl p-4 shadow-[0_1px_2px_rgba(11,11,11,0.04)]">
+    <div className="bg-surface border border-line rounded-2xl p-4 md:p-5 shadow-(--shadow-card)">
       <p className="text-xs font-medium text-ink-2">{label}</p>
-      <p className="text-2xl font-semibold text-ink mt-1 leading-tight">{value}</p>
+      <p className="font-display text-[28px] font-semibold text-ink mt-1 leading-tight">{value}</p>
       {sub && <p className="text-xs text-ink-3 mt-1">{sub}</p>}
     </div>
   )
@@ -124,8 +124,8 @@ export function PageHeader({ title, subtitle, action }) {
   return (
     <div className="mb-6 flex items-start justify-between gap-4">
       <div>
-        <h1 className="text-xl md:text-2xl font-semibold text-ink tracking-tight">{title}</h1>
-        {subtitle && <p className="text-sm text-ink-2 mt-1">{subtitle}</p>}
+        <h1 className="font-display text-2xl md:text-[32px] font-semibold text-ink leading-tight">{title}</h1>
+        {subtitle && <p className="text-sm text-ink-2 mt-1.5">{subtitle}</p>}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
@@ -134,15 +134,16 @@ export function PageHeader({ title, subtitle, action }) {
 
 export function Button({ children, variant = "primary", className = "", ...props }) {
   const variants = {
-    primary: "bg-brand-700 text-white hover:bg-brand-800",
-    subtle: "bg-brand-100 text-brand-800 hover:bg-brand-200",
-    ghost: "text-ink-2 hover:text-ink",
-    danger: "text-status-critical hover:opacity-75",
+    primary:
+      "bg-brand-700 text-white shadow-(--shadow-card) hover:bg-brand-800 hover:shadow-(--shadow-raised)",
+    subtle: "bg-brand-100 text-brand-900 hover:bg-brand-200",
+    ghost: "text-ink-2 hover:text-ink hover:bg-ink/5",
+    danger: "text-status-critical hover:bg-status-critical/10",
   }
   return (
     <button
       type="button"
-      className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 ${variants[variant]} ${className}`}
+      className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-plane disabled:opacity-50 disabled:pointer-events-none ${variants[variant]} ${className}`}
       {...props}
     >
       {children}
@@ -152,10 +153,10 @@ export function Button({ children, variant = "primary", className = "", ...props
 
 export function Modal({ title, onClose, children }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-surface rounded-xl shadow-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-line">
-          <h2 className="font-semibold text-ink">{title}</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-950/40 backdrop-blur-[2px] p-4">
+      <div className="bg-surface rounded-2xl shadow-(--shadow-raised) w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-line">
+          <h2 className="font-display text-lg font-semibold text-ink">{title}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -165,7 +166,7 @@ export function Modal({ title, onClose, children }) {
             &times;
           </button>
         </div>
-        <div className="p-5">{children}</div>
+        <div className="p-6">{children}</div>
       </div>
     </div>
   )
@@ -185,7 +186,7 @@ export function DynamicForm({ fields, initialValues = {}, onSubmit, submitLabel 
   }
 
   const inputClass =
-    "border border-line rounded-lg px-3 py-2 bg-surface text-ink focus:outline-none focus:border-brand-400"
+    "border border-line rounded-xl px-3.5 py-2.5 bg-surface text-ink transition-shadow focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/25"
 
   return (
     <form

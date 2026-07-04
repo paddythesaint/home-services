@@ -50,6 +50,25 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 26 — design foundations (7/4/26)
+First pass of the design overhaul ("modern, easy to use, pretty —
+between Google for buttons and Squarespace for pretty"). All through
+the shared token sheet + components, so it lands app-wide at once:
+- **Typography**: Fraunces (variable, self-hosted) for display —
+  page titles, stat figures, wordmark, modal titles — over Inter for
+  UI text. The warm-serif/clean-sans pairing.
+- **Buttons**: Material-quality pills — filled primary with soft
+  elevation, tonal subtle, ghost, tonal danger; focus rings, press
+  scale, disabled states.
+- **Surfaces**: white cards on a warm paper plane, rounded-2xl, quiet
+  two-layer shadows; blur-backdrop modals; friendlier inputs with
+  brand focus rings.
+- **Hero**: the owner's aerial drone shot as the Overview header for
+  the flagship home — address set in Fraunces over a green scrim
+  (bundled asset, 358KB optimized; per-property photos later).
+Still open for later passes: per-property hero photos, page-level
+layout rethinks, brand wordmark/logo, dark mode.
+
 ## Slice 25 — founder "View as" switcher (7/4/26)
 Owner's idea, same day as Slice 24: a top-ribbon "View as" picker so a
 founder can borrow any role's lens — homeowner, relationship,
