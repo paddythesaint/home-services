@@ -50,6 +50,15 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 18 — Portfolio admin: delete properties (shipped 7/4/26)
+Founder request after creating a typo property (891 Old Ballard): the
+Command Center now has a "Portfolio admin" card listing every property
+with a type-the-address-to-confirm delete. deletePropertyDeep() empties
+every known subcollection first (Firestore doesn't cascade), then
+removes the doc — membership write permission covers it, so no rules
+change. Member add/remove stays on each property's Overview ("People
+with access"), which already existed.
+
 ## Slice 17 — co-founder demo pack (shipped overnight 7/4/26)
 DEMO.md: the pre-demo morning checklist (rules publish, System status,
 key scrub), the pitch and two-planes story, a 15-minute click-path with

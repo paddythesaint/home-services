@@ -235,6 +235,24 @@ export function reorderItems(uid, name, itemA, itemB) {
   ])
 }
 
+// Founder admin: permanently delete a property. Firestore does NOT
+// cascade-delete subcollections when a doc is removed, so every known
+// subcollection is emptied first. Membership write permission covers all
+// of it — the founder is a member of anything they created. Returns how
+// many subcollection docs were removed.
+export async function deletePropertyDeep(pid) {
+  let removed = 0
+  for (const name of PROBE_SUBCOLLECTIONS) {
+    const snap = await getDocs(collection(db, "properties", pid, name))
+    for (const d of snap.docs) {
+      await deleteDoc(d.ref)
+      removed++
+    }
+  }
+  await deleteDoc(propertyDocRef(pid))
+  return removed
+}
+
 // Slice 10 removed the client-side AI features but left the pasted
 // Anthropic API key sitting in property profiles. One-time hygiene action
 // from the System status panel: deletes the field on every property the

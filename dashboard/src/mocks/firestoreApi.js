@@ -237,6 +237,14 @@ export async function seedCollections(uid, collections) {
   }
 }
 
+export async function deletePropertyDeep(pid) {
+  const p = store.properties[pid]
+  if (!p) return 0
+  const removed = Object.values(p.collections || {}).reduce((n, list) => n + list.length, 0)
+  delete store.properties[pid]
+  return removed
+}
+
 export async function scrubOrphanedApiKeys(email) {
   let count = 0
   for (const p of Object.values(store.properties)) {
