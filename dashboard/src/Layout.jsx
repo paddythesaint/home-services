@@ -20,6 +20,7 @@ const icons = {
   contractors: <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />,
   network: <path d="M12 2a3 3 0 100 6 3 3 0 000-6zM5 16a3 3 0 106 0 3 3 0 00-6 0zM13 16a3 3 0 106 0 3 3 0 00-6 0zM10.5 7.5L7 13.5M13.5 7.5L17 13.5M8 16h8" />,
   import: <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />,
+  workorders: <path d="M9 3h6a1 1 0 011 1v2H8V4a1 1 0 011-1zM8 6H6a2 2 0 00-2 2v11a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-2M9 12l2 2 4-4" />,
 }
 
 function NavIcon({ name }) {
@@ -67,6 +68,7 @@ function buildNavSections(view) {
       heading: "Business",
       items: [
         { to: "/ops", label: "Command Center", icon: "ops" },
+        { to: "/work-orders", label: "Work Orders", icon: "workorders" },
         { to: "/contractor-network", label: "Contractor Network", icon: "network" },
       ],
     })

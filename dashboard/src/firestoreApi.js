@@ -307,6 +307,7 @@ const PROBE_SUBCOLLECTIONS = [
   "careCalendar",
   "priorityList",
   "jobHistory",
+  "workOrders",
   "photos",
   "activity",
   "contractors",
