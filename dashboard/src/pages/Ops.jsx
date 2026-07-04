@@ -275,6 +275,26 @@ export default function Ops() {
     }
   }
 
+  // The Command Center is the business owners' plane. Members who land
+  // here by URL get a polite pointer home instead of the whole operation.
+  if (!founder) {
+    return (
+      <div>
+        <PageHeader title="Command Center" subtitle="Business owners only." />
+        <Card>
+          <p className="text-sm text-ink-2">
+            This is the business side of the operation and isn't part of your property
+            record.{" "}
+            <Link to="/" className="underline">
+              Back to your home's dashboard
+            </Link>
+            .
+          </p>
+        </Card>
+      </div>
+    )
+  }
+
   const totals = Object.values(metrics).reduce(
     (a, m) => ({
       open: a.open + m.open,

@@ -6,6 +6,7 @@ import { useProperty, usePropertyId } from "./useProperty"
 import { fetchMemberProperties } from "./firestoreApi"
 import { subscribeDataErrors } from "./dataErrors"
 import { isFounder } from "./founders"
+import { viewFor } from "./roles"
 
 const icons = {
   overview: <path d="M3 10.5L12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5" />,
@@ -40,36 +41,44 @@ function NavIcon({ name }) {
   )
 }
 
-function buildNavSections(founder) {
-  return [
+const PROPERTY_NAV = [
+  { key: "overview", to: "/", label: "Overview", icon: "overview", end: true },
+  { key: "walkthrough", to: "/walkthrough", label: "Walkthrough", icon: "walkthrough" },
+  { key: "import", to: "/import", label: "Import Bundle", icon: "import" },
+  { key: "health", to: "/health-report", label: "Health Report", icon: "health" },
+  { key: "calendar", to: "/care-calendar", label: "Care Calendar", icon: "calendar" },
+  { key: "priorities", to: "/priority-list", label: "90-Day Priorities", icon: "priorities" },
+  { key: "forecast", to: "/forecast", label: "Cost Forecast", icon: "forecast" },
+  { key: "history", to: "/job-history", label: "Job History", icon: "history" },
+  { key: "contractors", to: "/contractors", label: "Contractors", icon: "contractors" },
+]
+
+// Each role gets a nav sized to its job (see roles.js). The Business
+// section is founders-only — everyone else's screen stays a home screen.
+function buildNavSections(view) {
+  const sections = [
     {
       heading: "Property",
-      items: [
-        { to: "/", label: "Overview", icon: "overview", end: true },
-        { to: "/walkthrough", label: "Walkthrough", icon: "walkthrough" },
-        { to: "/import", label: "Import Bundle", icon: "import" },
-        { to: "/health-report", label: "Health Report", icon: "health" },
-        { to: "/care-calendar", label: "Care Calendar", icon: "calendar" },
-        { to: "/priority-list", label: "90-Day Priorities", icon: "priorities" },
-        { to: "/forecast", label: "Cost Forecast", icon: "forecast" },
-        { to: "/job-history", label: "Job History", icon: "history" },
-        { to: "/contractors", label: "Contractors", icon: "contractors" },
-      ],
+      items: PROPERTY_NAV.filter((item) => view.navKeys.has(item.key)),
     },
-    {
+  ]
+  if (view.business) {
+    sections.push({
       heading: "Business",
       items: [
         { to: "/ops", label: "Command Center", icon: "ops" },
-        ...(founder ? [{ to: "/contractor-network", label: "Contractor Network", icon: "network" }] : []),
+        { to: "/contractor-network", label: "Contractor Network", icon: "network" },
       ],
-    },
-  ]
+    })
+  }
+  return sections
 }
 
 export default function Layout({ user }) {
   const { status, propertyId } = usePropertyId(user)
   const founder = isFounder(user?.email)
-  const navSections = buildNavSections(founder)
+  const view = viewFor(user?.email)
+  const navSections = buildNavSections(view)
   const allNavItems = navSections.flatMap((s) => s.items)
 
   // Founders can view any property in their portfolio; the switcher below
@@ -275,15 +284,17 @@ export default function Layout({ user }) {
               {profile.clientName ? `${profile.clientName} Family` : user.displayName}
             </p>
           </div>
-          <div className="text-right text-xs text-ink-2">
-            <p>
-              Next invoice{" "}
-              <span className="font-semibold text-ink">
-                {profile.nextInvoiceDate || "—"}
-              </span>
-            </p>
-            <p className="text-ink-3">${profile.monthlyRate || 0}/mo</p>
-          </div>
+          {view.showBilling && (
+            <div className="text-right text-xs text-ink-2">
+              <p>
+                Next invoice{" "}
+                <span className="font-semibold text-ink">
+                  {profile.nextInvoiceDate || "—"}
+                </span>
+              </p>
+              <p className="text-ink-3">${profile.monthlyRate || 0}/mo</p>
+            </div>
+          )}
         </header>
         <main className="flex-1 p-4 md:p-8 max-w-6xl w-full mx-auto">
           {failedCollections.length > 0 && (
