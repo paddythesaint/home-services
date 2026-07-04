@@ -250,6 +250,52 @@ export async function fetchPropertyContractors(pid) {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
 }
 
+// Roster unification: the network is the source of truth for shared
+// vendors. Every roster entry that matches a network profile (by stored
+// networkId, or by name on first pass) is stamped with the profile's id
+// and has its contact fields (name / trades / phone) refreshed from it.
+// Entries with no match are the homeowner's own private vendors — left
+// untouched, and never pushed into the business collection from here.
+// Founder-only in practice: it reads the founder-gated network and walks
+// every property they're a member of.
+export async function unifyRosters(email) {
+  const netSnap = await getDocs(collection(db, "contractors"))
+  const network = netSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  const byId = new Map(network.map((c) => [c.id, c]))
+  const byName = new Map(network.map((c) => [(c.name || "").trim().toLowerCase(), c]))
+
+  const properties = await fetchMemberProperties(email)
+  let linked = 0
+  let synced = 0
+  const unmatched = []
+  for (const p of properties) {
+    const roster = await fetchPropertyContractors(p.id)
+    for (const entry of roster) {
+      const match =
+        (entry.networkId && byId.get(entry.networkId)) ||
+        byName.get((entry.name || "").trim().toLowerCase())
+      if (!match) {
+        unmatched.push(`${entry.name} (${p.address})`)
+        continue
+      }
+      const patch = {
+        networkId: match.id,
+        name: match.name,
+        trades: match.trades || "",
+        phone: match.phone || "",
+      }
+      const changed =
+        !entry.networkId ||
+        ["name", "trades", "phone"].some((k) => (entry[k] || "") !== (patch[k] || ""))
+      if (!changed) continue
+      await updateItem(p.id, "contractors", entry.id, patch)
+      if (entry.networkId) synced += 1
+      else linked += 1
+    }
+  }
+  return { linked, synced, unmatched }
+}
+
 export async function seedCollections(uid, collections) {
   // Explicit incrementing order values — Date.now() would collide within a batch.
   let order = Date.now()

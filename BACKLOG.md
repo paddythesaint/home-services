@@ -32,12 +32,10 @@ the business side.
 - No Firestore rules change. Verified in-browser across a two-property mock
   (linked + unlinked jobs, correct grouping and counts).
 
-**Known, accepted gap:** the homeowner property-local roster
-(`properties/{id}/contractors`, Slice 3) is not unified with the master
-entity — it's a deliberately separate, simpler list by founder decision.
-Revisiting that (and the multi-property homeowner-switcher question) is
-parked for the next session, since both touch the founder/permissions
-model together (see SCHEMA.md's open question).
+**Known, accepted gap (closed by Slice 28, 7/4/26):** the homeowner
+property-local roster is now unified with the master entity — network
+is truth, rosters are synced projections plus homeowner-private
+entries. See the Slice 28 entry.
 
 ## Slice 11 — injectable data layer + test harness (shipped 7/4/26)
 The old verification ritual (overwrite firestoreApi/AuthGate/useProperty
@@ -49,6 +47,25 @@ Vitest + RTL: unit tests for resolution.js, contractorMatching.js (matching
 logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
+
+## Slice 28 — roster unification: network is truth (7/4/26)
+Closes the last deliberate double-bookkeeping. The Contractor Network
+is now the single source of truth for shared vendors; each property
+roster entry that matches a network profile is stamped with its
+`networkId` and has name/trades/phone kept in sync from it. The
+privacy planes survive intact:
+- **No rules changes**: founders are members of every property, so the
+  sync is ordinary member writes; homeowners still can't read the
+  business collection.
+- **Homeowner-private vendors stay private**: unlinked entries are
+  never touched and never pushed into the business database — the
+  founder imports them deliberately (import now auto-links after).
+- **"Unify rosters"** on the network page runs the link + sync and
+  reports the outcome; editing a network profile re-syncs rosters
+  automatically, so a phone-number change lands on every home.
+- Roster page: linked entries carry an "HPS vendor" chip and are
+  read-only for members ("Contact details managed by your service
+  team"); their own entries stay fully editable.
 
 ## Slice 27 — work-order pipeline (7/4/26)
 The owner's named gap: "the workflow to take an issue, work needing to

@@ -231,6 +231,17 @@ export const fixtureData = {
             notes: "",
             order: 1,
           },
+          {
+            // Homeowner-added, deliberately NOT in the network: exercises
+            // the private-vendor path of roster unification.
+            id: "roster-joes",
+            name: "Joe the Handyman",
+            trades: "Odd jobs",
+            phone: "(434) 555-0100",
+            sourcing: "Neighbor referral",
+            notes: "Cash only",
+            order: 2,
+          },
         ],
       },
     },

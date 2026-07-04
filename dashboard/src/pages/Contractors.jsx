@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react"
 import { useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
+import { viewFor } from "../roles"
 import { Card, PageHeader, Button, Modal, DynamicForm } from "../components"
 
 const fields = [
@@ -116,7 +117,8 @@ function ImportModal({ candidates, onClose, onImport }) {
 }
 
 export default function Contractors() {
-  const { uid } = useOutletContext()
+  const { uid, user } = useOutletContext()
+  const founder = viewFor(user?.email).business
   const { items: contractors, add, update, remove } = useItems(uid, "contractors")
   const { items: jobs } = useItems(uid, "jobHistory")
   const [editing, setEditing] = useState(null)
@@ -180,7 +182,14 @@ export default function Contractors() {
               <Card key={c.id}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="font-semibold text-ink">{c.name}</p>
+                    <p className="font-semibold text-ink">
+                      {c.name}
+                      {c.networkId && (
+                        <span className="ml-2 align-middle text-[10px] font-semibold uppercase tracking-wide bg-brand-100 text-brand-900 rounded-full px-2 py-0.5">
+                          HPS vendor
+                        </span>
+                      )}
+                    </p>
                     <p className="text-sm text-ink-2">
                       {[c.trades, c.phone].filter(Boolean).join(" · ") || "—"}
                     </p>
@@ -208,10 +217,18 @@ export default function Contractors() {
                         </ul>
                       </div>
                     )}
-                    <div className="flex gap-3 mt-3">
-                      <Button variant="ghost" className="!px-0" onClick={() => setEditing(c)}>
-                        Edit
-                      </Button>
+                    <div className="flex gap-3 mt-3 items-center">
+                      {c.networkId && !founder ? (
+                        // Network-linked entries follow the master profile —
+                        // contact details stay current without homeowner upkeep.
+                        <span className="text-xs text-ink-3">
+                          Contact details managed by your service team
+                        </span>
+                      ) : (
+                        <Button variant="ghost" className="!px-0" onClick={() => setEditing(c)}>
+                          Edit
+                        </Button>
+                      )}
                       <Button
                         variant="danger"
                         className="!px-0"
