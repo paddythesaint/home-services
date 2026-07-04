@@ -15,8 +15,9 @@ and shippable right now).
 properties/{propertyId}                    — tenant boundary
   members: [{email, name, role}]            — access control, peer-granted
   memberEmails: [email, ...]                — denormalized for array-contains queries
-  anthropicApiKey                           — owner's pasted Claude key (parked topic)
-  exteriorEstimate                          — vision measurement result (Slice 8)
+  anthropicApiKey                           — orphaned field, unused as of Slice 10
+                                                (7/4/26 — see below)
+  exteriorEstimate                          — orphaned field, unused as of Slice 10
   ...profile fields (address, tier, monthlyRate, insightsAppliedOn flags, etc.)
 
   /healthReport/{id}          — systems: category, detail, condition, brand,
@@ -31,11 +32,20 @@ properties/{propertyId}                    — tenant boundary
   /photos/{id}                — systemId, dataUrl (base64), takenOn
   /activity/{id}               — systemId, type, summary, value, unit, date
   /contractors/{id}            — property-local vendor roster (Slice 3)
-  /assistant/chat               — persisted chat history (Slice 6)
 
 contractors/{id}                — TOP-LEVEL, founder-only (Slice 7)
   name, trades, phone, email, cadence, sourcing, notes
 ```
+
+**Slice 10 update (7/4/26):** the Intake Assistant and Exterior
+Measurements features (and the `/assistant/chat` subcollection, and
+`gaps.js`) were removed. Both called the Anthropic API directly from the
+browser with a key pasted into `anthropicApiKey` — the only pattern
+available with no backend, and a real exposure since the key leaves the
+client from JS anyone with dev-tools access to that browser can read.
+Removed rather than proxied, pending a real backend design (see the
+parked "AI-agent/backend" topic in BACKLOG.md). The two profile fields
+above are harmless now-orphaned data, not migrated.
 
 **Firestore rules** are already generic — `isMemberOf(data)` checks
 `memberEmails` on whatever property doc is being accessed; nothing in the

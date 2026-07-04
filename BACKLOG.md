@@ -39,6 +39,31 @@ Revisiting that (and the multi-property homeowner-switcher question) is
 parked for the next session, since both touch the founder/permissions
 model together (see SCHEMA.md's open question).
 
+## Slice 10 — pulled the client-side AI assistant (removed 7/4/26)
+Founder decision (7/4/26): the Intake Assistant and Exterior Measurements
+pages both called the Anthropic API directly from the browser using a key
+pasted into the property's Firestore profile (`profile.anthropicApiKey`) —
+the only pattern available with no backend. That means the key leaves the
+device to Anthropic straight from client JS, and the browser (or anyone
+with access to it) can read it via dev tools. Rather than build a
+proxy/backend right now, the founder chose to remove both features
+entirely until a more scalable, robust approach (a minimal serverless
+proxy holding the key server-side, gated on Firebase Auth) is designed —
+see SCHEMA.md and the parked "AI-agent/backend" topic.
+
+Removed: `dashboard/src/pages/Assistant.jsx`, `ExteriorMeasurements.jsx`,
+`assistantApi.js`, `gaps.js` (only consumer was the assistant), the
+`/assistant` and `/exterior-measurements` routes and nav entries, the
+Overview "Intake Assistant" card, and the `loadAssistantChat`/
+`saveAssistantChat` Firestore helpers. Existing `anthropicApiKey` and
+`exteriorEstimate` fields are left alone in Firestore (harmless, unused)
+rather than migrated — no data deleted.
+
+**Not removed:** the resolution pipeline (materials/info requirements,
+resolution path) on Priority List — that's a plain CRUD feature with no AI
+dependency and stays fully functional; only the chat-driven way of filling
+it in is gone. Manual entry still works everywhere.
+
 ## Parked ideas to revisit
 - [x] **Concept to review (7/2/26) — done 7/3/26.** The flagged X post
       (patio-shade lead-gen: scrape sold homes → vision-find unshaded

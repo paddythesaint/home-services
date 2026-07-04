@@ -7,7 +7,6 @@ import { isFounder } from "./founders"
 const icons = {
   overview: <path d="M3 10.5L12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5" />,
   walkthrough: <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 13l2 2 4-4" />,
-  assistant: <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />,
   health: <path d="M22 12h-4l-3 8-4-16-3 8H2" />,
   calendar: <path d="M8 2v4M16 2v4M3 9h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" />,
   priorities: <path d="M4 21V4m0 0s1-1.5 5-1.5S14 4 14 4s1 1.5 5 1.5c1 0 1.5-.25 1.5-.25v10.5s-.5.25-1.5.25c-4 0-5-1.5-5-1.5s-1-1.5-5-1.5-5 1.5-5 1.5" />,
@@ -15,7 +14,6 @@ const icons = {
   ops: <path d="M3 3v18h18M7 15l3-3 3 3 5-6" />,
   contractors: <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />,
   network: <path d="M12 2a3 3 0 100 6 3 3 0 000-6zM5 16a3 3 0 106 0 3 3 0 00-6 0zM13 16a3 3 0 106 0 3 3 0 00-6 0zM10.5 7.5L7 13.5M13.5 7.5L17 13.5M8 16h8" />,
-  measure: <path d="M3 8l13 13 5-5L8 3 3 8zM7 7l2 2M11 11l2 2M15 15l2 2" />,
   import: <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />,
 }
 
@@ -44,10 +42,8 @@ function buildNavSections(founder) {
       heading: "Property",
       items: [
         { to: "/", label: "Overview", icon: "overview", end: true },
-        { to: "/assistant", label: "Intake Assistant", icon: "assistant" },
         { to: "/walkthrough", label: "Walkthrough", icon: "walkthrough" },
         { to: "/import", label: "Import Bundle", icon: "import" },
-        { to: "/exterior-measurements", label: "Exterior Measurements", icon: "measure" },
         { to: "/health-report", label: "Health Report", icon: "health" },
         { to: "/care-calendar", label: "Care Calendar", icon: "calendar" },
         { to: "/priority-list", label: "90-Day Priorities", icon: "priorities" },
