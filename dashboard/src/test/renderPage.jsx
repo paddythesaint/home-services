@@ -16,6 +16,9 @@ export function renderPage(page, { uid = DEFAULT_UID, user = MOCK_FOUNDER } = {}
     profile,
     saveProfile: (data) => saveProperty(uid, data),
     user,
+    portfolio: null,
+    setActiveProperty: () => {},
+    refreshPortfolio: async () => [],
   }
   return render(
     <MemoryRouter>

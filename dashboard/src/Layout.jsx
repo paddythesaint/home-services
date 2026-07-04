@@ -3,6 +3,7 @@ import { NavLink, Outlet } from "react-router-dom"
 import { signOut } from "firebase/auth"
 import { auth } from "./firebase"
 import { useProperty, usePropertyId } from "./useProperty"
+import { fetchMemberProperties } from "./firestoreApi"
 import { subscribeDataErrors } from "./dataErrors"
 import { isFounder } from "./founders"
 
@@ -65,10 +66,58 @@ function buildNavSections(founder) {
 
 export default function Layout({ user }) {
   const { status, propertyId } = usePropertyId(user)
-  const { profile, save } = useProperty(propertyId)
   const founder = isFounder(user?.email)
   const navSections = buildNavSections(founder)
   const allNavItems = navSections.flatMap((s) => s.items)
+
+  // Founders can view any property in their portfolio; the switcher below
+  // picks which one the Property-plane pages show. Homeowners keep the
+  // original single-property resolution untouched — a homeowner with one
+  // home never sees any of this.
+  const [portfolio, setPortfolio] = useState(null)
+  const [selectedId, setSelectedId] = useState(() => {
+    try {
+      return localStorage.getItem("activePropertyId") || ""
+    } catch {
+      return ""
+    }
+  })
+
+  async function refreshPortfolio() {
+    const list = await fetchMemberProperties(user.email)
+    setPortfolio(list)
+    return list
+  }
+
+  useEffect(() => {
+    if (!founder) return
+    let active = true
+    fetchMemberProperties(user.email)
+      .then((list) => active && setPortfolio(list))
+      .catch(() => active && setPortfolio([]))
+    return () => {
+      active = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [founder, user.email])
+
+  function setActiveProperty(id) {
+    setSelectedId(id)
+    try {
+      localStorage.setItem("activePropertyId", id)
+    } catch {
+      /* private mode etc. — selection just won't persist */
+    }
+  }
+
+  // Trust the remembered selection while the portfolio is still loading;
+  // once loaded, fall back to the resolved default if it's no longer valid.
+  const activePropertyId =
+    founder && selectedId && (portfolio === null || portfolio.some((p) => p.id === selectedId))
+      ? selectedId
+      : propertyId
+
+  const { profile, save } = useProperty(activePropertyId)
 
   // Data-layer failures (usually permission-denied from stale published
   // rules) surface as a banner — never as a silently empty page.
@@ -116,6 +165,24 @@ export default function Layout({ user }) {
             Home &amp; Property Services
           </p>
         </div>
+        {founder && (portfolio?.length ?? 0) > 1 && (
+          <label className="block mb-5 px-2">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-300">
+              Viewing property
+            </span>
+            <select
+              value={activePropertyId || ""}
+              onChange={(e) => setActiveProperty(e.target.value)}
+              className="mt-1.5 w-full bg-brand-800 text-brand-50 text-sm rounded-md px-2 py-1.5 border border-brand-700"
+            >
+              {portfolio.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.address}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <nav className="flex flex-col gap-4">
           {navSections.map((section) => (
             <div key={section.heading} className="flex flex-col gap-0.5">
@@ -164,6 +231,21 @@ export default function Layout({ user }) {
               Sign out
             </button>
           </div>
+          {founder && (portfolio?.length ?? 0) > 1 && (
+            <div className="px-3 pb-2">
+              <select
+                value={activePropertyId || ""}
+                onChange={(e) => setActiveProperty(e.target.value)}
+                className="w-full bg-brand-800 text-brand-50 text-xs rounded-md px-2 py-1.5 border border-brand-700"
+              >
+                {portfolio.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.address}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <nav className="flex gap-1.5 overflow-x-auto px-3 pb-2.5">
             {allNavItems.map((item) => (
               <NavLink
@@ -212,7 +294,17 @@ export default function Layout({ user }) {
                 : "Let your service operator know."}
             </div>
           )}
-          <Outlet context={{ uid: propertyId, profile, saveProfile: save, user }} />
+          <Outlet
+            context={{
+              uid: activePropertyId,
+              profile,
+              saveProfile: save,
+              user,
+              portfolio,
+              setActiveProperty,
+              refreshPortfolio,
+            }}
+          />
         </main>
       </div>
     </div>

@@ -39,6 +39,13 @@ service cloud.firestore {
     }
 
     match /properties/{propertyId} {
+      // Property creation (founder onboarding flow): any verified signed-in
+      // user may create a property that lists themselves as a member. The
+      // existing `allow write` can't cover create — it reads resource.data,
+      // which doesn't exist yet on a create.
+      allow create: if request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in request.resource.data.memberEmails;
       allow read: if isMemberOf(resource.data) || isLegacyOwner(propertyId);
       // A member (or the legacy owner) may update the property, including its
       // member list. New-member writes only work if you can already write.

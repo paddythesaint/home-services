@@ -5,6 +5,11 @@
 // Items that are inferred rather than confirmed say so in their notes —
 // verify each during a walkthrough and edit freely.
 
+// The starter seed and every document-insights banner are assembled from
+// THIS property's records — they must never be offered on another home in
+// the portfolio. Overview gates on this address test.
+export const seedAddressHint = /old ballard/i
+
 export const seedProfile = {
   acreage: 5.011,
   yearBuilt: 1992,
