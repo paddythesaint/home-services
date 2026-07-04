@@ -130,19 +130,19 @@ three questions per candidate —
       Assistant gets set_resolution_path / add_requirement /
       provide_requirement tools. Frontend-only; highest resolution
       proximity of anything on the list.
-- [ ] **Slice 6 — assistant as the always-on maintenance manager.** The
-      assistant stops being a page you visit and becomes the persistent
-      interface across the property lifecycle — "your maintenance manager
-      on call." (a) **Gap engine**: compute the record's highest-value
-      missing info (unverified systems, missing brands/ages/last-serviced,
-      open `infoNeeded` items from Slice 5) and have the assistant open
-      with the top gaps instead of a generic greeting; it keeps prompting
-      as the record evolves. (b) **Persist chat history** to Firestore
-      (absorbs the existing Product item) so the relationship is
-      continuous across devices/sessions. (c) IA decision, deferred until
-      (a) proves out: Overview currently pitches both Walkthrough and
-      Assistant up front — likely demote Walkthrough to a tool the
-      assistant suggests rather than a co-equal entry point. Frontend-only.
+- [x] **Slice 6 — assistant as the always-on maintenance manager (a+b
+      shipped 7/3/26; c open).** (a) **Gap engine** (`src/gaps.js`): ranks
+      the record's most valuable missing info — open `infoNeeded` asks and
+      unsourced materials from Slice 5 first (they block action), then
+      overdue recurring checks, then missing system facts worst-condition
+      first. Surfaced two ways: an "Open gaps" chip row above the composer
+      (click → drafts the ask) and a top-gaps section in the system prompt
+      so the model pursues them unprompted. (b) **Chat history persists**
+      to `properties/{id}/assistant/chat` — loaded once on mount, saved
+      after each turn (images stripped, history capped at a safe
+      tool-pair boundary), with a Clear chat control. (c) Still open: the
+      Overview IA decision — likely demote Walkthrough to a tool the
+      assistant suggests; revisit after living with the gap engine.
 - [ ] **Slice 7 — contractor profiles graduate to the business plane.**
       Move Contractors from the Property section to **Business** in the nav
       and promote it to a top-level `contractors/{id}` collection — the

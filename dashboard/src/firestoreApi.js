@@ -167,6 +167,18 @@ export function removePhoto(uid, id) {
   return deleteDoc(doc(db, "properties", uid, "photos", id))
 }
 
+// Assistant chat persistence: one doc per property, overwritten after each
+// turn. Loaded once on mount (no live subscription — we'd only echo our own
+// writes); images are stripped before saving to stay under doc size limits.
+export async function loadAssistantChat(uid) {
+  const snap = await getDoc(doc(db, "properties", uid, "assistant", "chat"))
+  return snap.exists() ? snap.data() : null
+}
+
+export function saveAssistantChat(uid, data) {
+  return setDoc(doc(db, "properties", uid, "assistant", "chat"), data)
+}
+
 export async function seedCollections(uid, collections) {
   // Explicit incrementing order values — Date.now() would collide within a batch.
   let order = Date.now()
