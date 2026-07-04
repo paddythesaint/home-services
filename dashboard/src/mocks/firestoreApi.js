@@ -246,6 +246,46 @@ export async function fetchPropertyContractors(pid) {
   return structuredClone(coll(pid, "contractors"))
 }
 
+// Mirrors the real unifyRosters: network is truth; matching roster entries
+// get networkId + refreshed contact fields, private ones are untouched.
+export async function unifyRosters(email) {
+  const byId = new Map(store.contractors.map((c) => [c.id, c]))
+  const byName = new Map(
+    store.contractors.map((c) => [(c.name || "").trim().toLowerCase(), c])
+  )
+  const properties = await fetchMemberProperties(email)
+  let linked = 0
+  let synced = 0
+  const unmatched = []
+  for (const p of properties) {
+    for (const entry of coll(p.id, "contractors")) {
+      const match =
+        (entry.networkId && byId.get(entry.networkId)) ||
+        byName.get((entry.name || "").trim().toLowerCase())
+      if (!match) {
+        unmatched.push(`${entry.name} (${p.address})`)
+        continue
+      }
+      const patch = {
+        networkId: match.id,
+        name: match.name,
+        trades: match.trades || "",
+        phone: match.phone || "",
+      }
+      const changed =
+        !entry.networkId ||
+        ["name", "trades", "phone"].some((k) => (entry[k] || "") !== (patch[k] || ""))
+      if (!changed) continue
+      const wasLinked = Boolean(entry.networkId)
+      Object.assign(entry, patch)
+      emitItems(p.id, "contractors")
+      if (wasLinked) synced += 1
+      else linked += 1
+    }
+  }
+  return { linked, synced, unmatched }
+}
+
 export async function seedCollections(uid, collections) {
   let order = Date.now()
   for (const [name, items] of Object.entries(collections)) {

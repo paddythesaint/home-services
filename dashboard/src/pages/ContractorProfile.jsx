@@ -6,6 +6,7 @@ import {
   removeContractor,
   fetchMemberProperties,
   updateItem,
+  unifyRosters,
 } from "../firestoreApi"
 import { viewFor } from "../roles"
 import { jobMatchesContractor, unlinkedMatches, groupJobsByProperty } from "../contractorMatching"
@@ -236,9 +237,12 @@ export default function ContractorProfile() {
           <DynamicForm
             fields={contractorFields}
             initialValues={contractor}
-            onSubmit={(values) => {
-              updateContractor(contractor.id, values)
+            onSubmit={async (values) => {
+              await updateContractor(contractor.id, values)
               setEditing(false)
+              // Rosters follow the network: push the fresh contact details
+              // down to every linked property-roster entry.
+              unifyRosters(user.email).catch(() => {})
             }}
           />
         </Modal>

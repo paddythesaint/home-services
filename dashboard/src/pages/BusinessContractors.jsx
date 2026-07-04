@@ -6,6 +6,7 @@ import {
   fetchPropertyContractors,
   fetchMemberProperties,
   updateItem,
+  unifyRosters,
 } from "../firestoreApi"
 import { viewFor } from "../roles"
 import { norm, jobMatchesContractor, unlinkedMatches } from "../contractorMatching"
@@ -108,6 +109,51 @@ function DirectoryPanel({ existingNames }) {
         </Button>
         <Button onClick={addSelected} disabled={adding || selected.size === 0}>
           {adding ? "Adding…" : `Add ${selected.size || ""} to network`}
+        </Button>
+      </div>
+    </Card>
+  )
+}
+
+// The rosters follow the network. One click links every property-roster
+// entry to its network profile by name and refreshes linked contact
+// fields; homeowner-private vendors are reported, not touched.
+function UnifyPanel({ email }) {
+  const [running, setRunning] = useState(false)
+  const [result, setResult] = useState(null)
+
+  async function run() {
+    setRunning(true)
+    setResult(await unifyRosters(email))
+    setRunning(false)
+  }
+
+  return (
+    <Card>
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm text-ink-2">
+            Property rosters follow the network — link entries to their profiles and push
+            current contact details down to every home.
+          </p>
+          {result && (
+            <p className="text-xs text-ink-3 mt-1">
+              Linked {result.linked} · refreshed {result.synced}
+              {result.unmatched.length > 0 ? (
+                <>
+                  {" "}
+                  · {result.unmatched.length} private vendor
+                  {result.unmatched.length === 1 ? "" : "s"} not in the network (
+                  {result.unmatched.join(", ")}) — import below if they're yours to manage.
+                </>
+              ) : (
+                " · every roster entry is linked."
+              )}
+            </p>
+          )}
+        </div>
+        <Button variant="subtle" onClick={run} disabled={running}>
+          {running ? "Unifying…" : "Unify rosters"}
         </Button>
       </div>
     </Card>
@@ -318,11 +364,14 @@ export default function BusinessContractors() {
       )}
 
       <div className="mb-4 flex flex-col gap-3">
+        <UnifyPanel email={user?.email} />
         <DirectoryPanel existingNames={contractors.map((c) => c.name)} />
         <ImportPanel
           properties={properties}
           existingNames={contractors.map((c) => norm(c.name))}
-          onImported={() => {}}
+          // Freshly imported roster vendors immediately link back to their
+          // new network profiles.
+          onImported={() => unifyRosters(user?.email).catch(() => {})}
         />
       </div>
 
