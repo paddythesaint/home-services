@@ -32,6 +32,26 @@ const norm = (s) => (s || "").trim().toLowerCase()
 const jobMatchesContractor = (job, contractor) =>
   job.contractorId === contractor.id ||
   (!job.contractorId && job.sub && norm(job.sub).includes(norm(contractor.name)))
+const unlinkedMatches = (jobs, contractor) =>
+  jobs.filter((j) => !j.contractorId && j.sub && norm(j.sub).includes(norm(contractor.name)))
+
+// Structured "by home" view: a contractor's jobs grouped under the property
+// they were performed at, most-worked-at home first, newest job first within
+// each home — this is the shape the master network is meant to replace flat,
+// string-matched lists with.
+function groupJobsByProperty(jobs) {
+  const byProperty = new Map()
+  for (const j of jobs) {
+    if (!byProperty.has(j.propertyId)) {
+      byProperty.set(j.propertyId, { propertyId: j.propertyId, propertyLabel: j.propertyLabel, jobs: [] })
+    }
+    byProperty.get(j.propertyId).jobs.push(j)
+  }
+  for (const group of byProperty.values()) {
+    group.jobs.sort((a, b) => (b.order || 0) - (a.order || 0))
+  }
+  return [...byProperty.values()].sort((a, b) => b.jobs.length - a.jobs.length)
+}
 
 // Subscribes to one property's job history and reports jobs up, tagged with
 // which property they're from — the cross-property aggregation unit.
@@ -179,14 +199,26 @@ export default function BusinessContractors() {
 
   async function linkJobs(contractor) {
     setLinking(contractor.id)
-    const unlinked = allJobs.filter(
-      (j) => !j.contractorId && j.sub && norm(j.sub).includes(norm(contractor.name))
-    )
-    for (const j of unlinked) {
+    for (const j of unlinkedMatches(allJobs, contractor)) {
       await updateItem(j.propertyId, "jobHistory", j.id, { contractorId: contractor.id })
     }
     setLinking(null)
   }
+
+  async function linkAll() {
+    setLinking("all")
+    for (const c of state.contractors) {
+      for (const j of unlinkedMatches(allJobs, c)) {
+        await updateItem(j.propertyId, "jobHistory", j.id, { contractorId: c.id })
+      }
+    }
+    setLinking(null)
+  }
+
+  const totalUnlinked = state.contractors.reduce(
+    (n, c) => n + unlinkedMatches(allJobs, c).length,
+    0
+  )
 
   if (!founder) {
     return (
@@ -223,6 +255,18 @@ export default function BusinessContractors() {
         action={<Button onClick={() => setEditing("new")}>+ Add contractor</Button>}
       />
 
+      {totalUnlinked > 0 && (
+        <div className="bg-brand-100 border border-line rounded-lg p-4 mb-4 flex items-center justify-between gap-4">
+          <p className="text-sm text-ink-2">
+            {totalUnlinked} job{totalUnlinked === 1 ? "" : "s"} across the portfolio name a
+            contractor by text but aren't linked to a network profile yet.
+          </p>
+          <Button variant="subtle" onClick={linkAll} disabled={linking === "all"}>
+            {linking === "all" ? "Linking…" : "Link all matches"}
+          </Button>
+        </div>
+      )}
+
       <div className="mb-4">
         <ImportPanel
           properties={properties}
@@ -246,13 +290,12 @@ export default function BusinessContractors() {
         <div className="flex flex-col gap-3">
           {contractors.map((c) => {
             const jobs = allJobs.filter((j) => jobMatchesContractor(j, c))
-            const unlinkedCount = allJobs.filter(
-              (j) => !j.contractorId && j.sub && norm(j.sub).includes(norm(c.name))
-            ).length
+            const homes = groupJobsByProperty(jobs)
+            const unlinkedCount = unlinkedMatches(allJobs, c).length
             return (
               <Card key={c.id}>
                 <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
+                  <div className="min-w-0 w-full">
                     <p className="font-semibold text-ink">{c.name}</p>
                     <p className="text-sm text-ink-2">
                       {[c.trades, c.phone, c.email].filter(Boolean).join(" · ") || "—"}
@@ -265,27 +308,38 @@ export default function BusinessContractors() {
                     )}
                     {c.notes && <p className="text-sm text-ink-2 mt-1.5">{c.notes}</p>}
 
-                    {jobs.length > 0 && (
-                      <div className="mt-2.5">
-                        <p className="text-xs font-medium text-ink-3">
-                          {jobs.length} job{jobs.length === 1 ? "" : "s"} across the portfolio
+                    {homes.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs font-medium text-ink-3 mb-1.5">
+                          {homes.length} home{homes.length === 1 ? "" : "s"} served ·{" "}
+                          {jobs.length} job{jobs.length === 1 ? "" : "s"} total
                         </p>
-                        <ul className="mt-1 flex flex-col gap-0.5">
-                          {jobs
-                            .slice()
-                            .reverse()
-                            .slice(0, 5)
-                            .map((j) => (
-                              <li key={`${j.propertyId}-${j.id}`} className="text-xs text-ink-2">
-                                {j.date ? `${j.date} · ` : ""}
-                                {j.title}
-                                <span className="text-ink-3"> — {j.propertyLabel}</span>
-                              </li>
-                            ))}
-                          {jobs.length > 5 && (
-                            <li className="text-xs text-ink-3">+{jobs.length - 5} more</li>
-                          )}
-                        </ul>
+                        <div className="flex flex-col gap-2">
+                          {homes.map((home) => (
+                            <div key={home.propertyId} className="bg-plane rounded-lg px-3 py-2">
+                              <p className="text-xs font-semibold text-ink">
+                                {home.propertyLabel}
+                                <span className="font-normal text-ink-3">
+                                  {" "}
+                                  · {home.jobs.length} job{home.jobs.length === 1 ? "" : "s"}
+                                </span>
+                              </p>
+                              <ul className="mt-1 flex flex-col gap-0.5">
+                                {home.jobs.slice(0, 4).map((j) => (
+                                  <li key={j.id} className="text-xs text-ink-2">
+                                    {j.date ? `${j.date} · ` : ""}
+                                    {j.title}
+                                  </li>
+                                ))}
+                                {home.jobs.length > 4 && (
+                                  <li className="text-xs text-ink-3">
+                                    +{home.jobs.length - 4} more
+                                  </li>
+                                )}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
 
