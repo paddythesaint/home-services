@@ -1,0 +1,47 @@
+name: Deploy backend functions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "functions/**"
+      - "firebase.json"
+      - ".github/workflows/deploy-functions.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: functions-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install function dependencies
+        working-directory: functions
+        run: npm install --omit=dev
+
+      # The Anthropic key travels GitHub secret → functions/.env → Cloud
+      # Functions runtime env. It never appears in the repo or the browser.
+      - name: Write runtime env
+        run: printf 'ANTHROPIC_API_KEY=%s\n' "${{ secrets.ANTHROPIC_API_KEY }}" > functions/.env
+
+      - name: Write deploy credentials
+        run: printf '%s' "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > "$RUNNER_TEMP/gcp-sa.json"
+
+      - name: Deploy to Cloud Functions
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/gcp-sa.json
+        run: >
+          npx firebase-tools@13 deploy
+          --only functions
+          --project "${{ secrets.VITE_FIREBASE_PROJECT_ID }}"
+          --non-interactive --force

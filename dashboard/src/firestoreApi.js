@@ -15,6 +15,7 @@ import {
   deleteField,
 } from "firebase/firestore"
 import { db } from "./firebase"
+import { callBackend } from "./backendApi"
 
 // The `uid` parameter below is the property id. Historically it equalled the
 // owner's Firebase uid; membership decouples the two. Resolve it once at load.
@@ -338,6 +339,29 @@ export async function runDiagnostics(user) {
       false,
       "no property visible to probe",
       "Membership lookup returned nothing — fix that first."
+    )
+  }
+
+  // Backend liveness: verifies the Cloud Function is deployed, reachable,
+  // accepting our sign-in tokens, and holding its server-side API key.
+  try {
+    const data = await callBackend("ping")
+    add(
+      "backend",
+      "Backend (AI proxy)",
+      Boolean(data.ok && data.hasKey),
+      data.hasKey ? "reachable · key configured server-side" : "reachable but ANTHROPIC_API_KEY is missing",
+      data.hasKey
+        ? undefined
+        : "The deploy ran without the ANTHROPIC_API_KEY GitHub secret — set it and re-run the deploy-functions workflow."
+    )
+  } catch (err) {
+    add(
+      "backend",
+      "Backend (AI proxy)",
+      false,
+      err.message || String(err),
+      "The backend isn't deployed or reachable. Check the 'Deploy backend functions' run under GitHub → Actions; merging to main (or Run workflow) triggers it."
     )
   }
 

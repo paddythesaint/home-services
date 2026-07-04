@@ -50,6 +50,21 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 20 — backend foundation: auth-verified AI proxy (shipped 7/4/26)
+The un-parking of the AI layer. `functions/` holds one Cloud Functions v2
+HTTPS endpoint: verifies the caller's Firebase ID token, requires founder
+or property membership for AI calls, holds ANTHROPIC_API_KEY server-side
+(CI writes it from a GitHub secret at deploy — never in the repo or the
+browser), fixes model + token cap server-side, rate-limits per user, and
+caps maxInstances at 2 as the hard cost brake (the Blaze budget only
+alerts). Deploys automatically via deploy-functions.yml on any
+functions/** change — owner did the one-time Blaze upgrade + two GitHub
+secrets; no console visits needed for future backend changes. Client
+side: backendApi.js (callBackend/callClaude carrying the ID token) and a
+"Backend (AI proxy)" probe row on System status. Next up on this
+foundation: document pipeline, Claude-vision nameplate OCR, and the
+assistant's return.
+
 ## Slice 19 — lifespan & cost intelligence + requirement playbooks (shipped 7/4/26)
 The record now predicts instead of just remembering. Three knowledge
 modules, all curated domain data pattern-matched client-side (no AI API —

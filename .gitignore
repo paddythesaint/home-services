@@ -2,3 +2,7 @@
 # node_modules here — the real one lives in dashboard/ and is ignored there.
 node_modules/
 package-lock.json
+
+# Backend runtime env — written by CI from GitHub secrets, never committed.
+functions/.env
+functions/*.log
