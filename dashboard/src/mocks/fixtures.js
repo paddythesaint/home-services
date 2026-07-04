@@ -30,8 +30,9 @@ export const fixtureData = {
         members: [
           { email: "paddythesaint@gmail.com", name: "Paddy", role: "owner" },
           { email: "sally@example.com", name: "Sally", role: "owner" },
+          { email: "tech@example.com", name: "Tech", role: "technician" },
         ],
-        memberEmails: ["paddythesaint@gmail.com", "sally@example.com"],
+        memberEmails: ["paddythesaint@gmail.com", "sally@example.com", "tech@example.com"],
       },
       collections: {
         healthReport: [
@@ -228,8 +229,11 @@ export const fixtureData = {
         monthlyRate: 179,
         nextInvoiceDate: "Aug 5, 2026",
         seedApplied: true,
-        members: [{ email: "paddythesaint@gmail.com", name: "Paddy", role: "owner" }],
-        memberEmails: ["paddythesaint@gmail.com"],
+        members: [
+          { email: "paddythesaint@gmail.com", name: "Paddy", role: "owner" },
+          { email: "alton@example.com", name: "Alton", role: "owner" },
+        ],
+        memberEmails: ["paddythesaint@gmail.com", "alton@example.com"],
       },
       collections: {
         healthReport: [

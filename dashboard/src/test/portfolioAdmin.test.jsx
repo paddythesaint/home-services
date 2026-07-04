@@ -29,7 +29,8 @@ describe("Portfolio admin on the Command Center", () => {
     renderPage(<Ops />, {
       user: { email: "sally@example.com", displayName: "Sally", uid: "u-sally" },
     })
-    expect(await screen.findByText("895 Old Ballard Farm Ln")).toBeInTheDocument()
+    // The whole Command Center is founder-gated now.
+    expect(await screen.findByText("Business owners only.")).toBeInTheDocument()
     expect(screen.queryByText("Portfolio admin")).not.toBeInTheDocument()
   })
 

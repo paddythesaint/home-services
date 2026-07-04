@@ -87,7 +87,8 @@ describe("Ops portfolio actions", () => {
 
   it("offers neither to non-founder members", async () => {
     renderPage(<Ops />, { user: SALLY })
-    expect(await screen.findByText("895 Old Ballard Farm Ln")).toBeInTheDocument()
+    // The whole Command Center is founder-gated now.
+    expect(await screen.findByText("Business owners only.")).toBeInTheDocument()
     expect(screen.queryByText("+ New property")).not.toBeInTheDocument()
     expect(screen.queryByText(/View dashboard/)).not.toBeInTheDocument()
   })

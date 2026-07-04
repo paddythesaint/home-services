@@ -36,10 +36,20 @@ describe("onboarding checklist on Overview", () => {
   it("shows on a non-seed property with the right steps ticked", async () => {
     renderPage(<Overview />, { uid: "prop-ridge" })
     expect(await screen.findByText("Getting this home ready")).toBeInTheDocument()
-    // Ridgeview fixture: systems + a job exist; walkthrough and invite don't.
-    expect(screen.getByText(/2 of 5 steps done/)).toBeInTheDocument()
+    // Ridgeview fixture: systems, a job, and the Alton invite exist;
+    // the walkthrough hasn't happened.
+    expect(screen.getByText(/3 of 5 steps done/)).toBeInTheDocument()
     expect(screen.getByText("Walk the property")).toBeInTheDocument()
     expect(screen.getByText("Invite the homeowner")).toBeInTheDocument()
+  })
+
+  it("is an internal instrument — homeowners never see it", async () => {
+    renderPage(<Overview />, {
+      uid: "prop-ridge",
+      user: { email: "alton@example.com", displayName: "Alton", uid: "u-alton" },
+    })
+    expect(await screen.findByText("42 Ridgeview Rd")).toBeInTheDocument()
+    expect(screen.queryByText("Getting this home ready")).not.toBeInTheDocument()
   })
 
   it("never shows on the seed property", async () => {

@@ -58,9 +58,9 @@ describe("System status panel", () => {
     renderPage(<Ops />, {
       user: { email: "sally@example.com", displayName: "Sally", uid: "u-sally" },
     })
-    // Page renders (Sally is a member of the Ballard property)…
-    expect(await screen.findByText("895 Old Ballard Farm Ln")).toBeInTheDocument()
-    // …but the founder-only panel does not.
+    // Since role-based views, the whole Command Center refuses non-founders,
+    // so the panel (and everything else on the page) never renders.
+    expect(await screen.findByText("Business owners only.")).toBeInTheDocument()
     expect(screen.queryByText("System status")).not.toBeInTheDocument()
   })
 })
