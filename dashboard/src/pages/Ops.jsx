@@ -4,6 +4,7 @@ import { useItems } from "../useItems"
 import { fetchMemberProperties } from "../firestoreApi"
 import { todayISO, isoToLabel, todayLabel } from "../dates"
 import { isReadyToAction } from "../resolution"
+import { isFounder } from "../founders"
 import { Card, PageHeader, StatTile, UrgencyBadge, ConditionBadge } from "../components"
 
 const isOpen = (p) => !p.status || p.status === "open" || p.status === "scheduled"
@@ -285,12 +286,26 @@ export default function Ops() {
                     ))}
                   </div>
                   <p className="text-xs text-ink-3 mt-3">
-                    Pulled from job history. Manage full records — trades, phone, sourcing,
-                    jobs — on each property's{" "}
-                    <Link to="/contractors" className="underline">
-                      Contractors
-                    </Link>{" "}
-                    page.
+                    Pulled from job history.{" "}
+                    {isFounder(user?.email) ? (
+                      <>
+                        Manage the full network — contacts, cadence, cross-property jobs —
+                        in the{" "}
+                        <Link to="/contractor-network" className="underline">
+                          Contractor Network
+                        </Link>
+                        .
+                      </>
+                    ) : (
+                      <>
+                        Manage full records — trades, phone, sourcing, jobs — on each
+                        property's{" "}
+                        <Link to="/contractors" className="underline">
+                          Contractors
+                        </Link>{" "}
+                        page.
+                      </>
+                    )}
                   </p>
                 </>
               )}

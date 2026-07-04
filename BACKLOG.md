@@ -143,19 +143,28 @@ three questions per candidate —
       tool-pair boundary), with a Clear chat control. (c) Still open: the
       Overview IA decision — likely demote Walkthrough to a tool the
       assistant suggests; revisit after living with the gap engine.
-- [ ] **Slice 7 — contractor profiles graduate to the business plane.**
-      Move Contractors from the Property section to **Business** in the nav
-      and promote it to a top-level `contractors/{id}` collection — the
-      central repository: one profile per contractor with points of
-      contact + details, trades, how sourced, **work history across all
-      properties (past and scheduled future)**, and **service cadence**
-      ("Dodson bi-monthly", "generator service every June") — which is
-      exactly the who-does-what-and-when data the action gap needs. Jobs
-      get a real `contractorId` FK, retiring Slice 3's string-matching
-      debt. The homeowner keeps a lighter per-property "your vendors" view
-      derived from their own jobs. This forces the Slice 4b founder-
-      identity decision (cross-property collection ⇒ founder-scoped rules)
-      — bundle the two.
+- [x] **Slice 7 — contractor profiles graduate to the business plane
+      (shipped 7/3/26).** New top-level `contractors/{id}` collection —
+      the central repository: one profile per contractor with contacts
+      (phone/email), trades, how sourced, **service cadence** (free-text —
+      "Annual service each spring"), notes, and **cross-property job
+      history** aggregated live across every property the founder belongs
+      to. New **Contractor Network** page under **Business** in the nav,
+      gated to founders (`src/founders.js` allowlist + matching
+      `isFounder()` in firestore.rules — this is the Slice 4b
+      founder-identity decision, resolved with the simple hardcoded-email
+      option as recommended, bundled in as planned). Founders get an
+      **import panel** pulling each property's existing Slice-3 roster
+      into the shared network (deduped by name), and a **"Link N matching
+      jobs"** action per contractor that retroactively sets a real
+      `contractorId` on job-history entries matched by name — the FK
+      Slice 3 deferred. The homeowner's existing per-property Contractors
+      page (Slice 3) is untouched — it's the lighter "your vendors" view,
+      still property-scoped and visible to all members. Command Center's
+      contractor glimpse now deep-links founders to the network instead
+      of the property page. Frontend-only; no new indexes needed since
+      cross-property job aggregation reuses the founder's existing
+      property-membership reads rather than a collection-group query.
 - [ ] **Slice 8 — exterior vision measurements (quote-readiness data).**
       Run the uploaded exterior photos through Claude vision to estimate
       **window count** (per-facade counts → deduped total, with confidence)

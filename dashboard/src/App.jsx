@@ -10,6 +10,7 @@ import CareCalendar from "./pages/CareCalendar"
 import PriorityList from "./pages/PriorityList"
 import JobHistory from "./pages/JobHistory"
 import Contractors from "./pages/Contractors"
+import BusinessContractors from "./pages/BusinessContractors"
 import ImportBundle from "./pages/ImportBundle"
 
 export default function App() {
@@ -29,6 +30,7 @@ export default function App() {
               <Route path="contractors" element={<Contractors />} />
               <Route path="import" element={<ImportBundle />} />
               <Route path="ops" element={<Ops />} />
+              <Route path="contractor-network" element={<BusinessContractors />} />
             </Route>
           </Routes>
         )}

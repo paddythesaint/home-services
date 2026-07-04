@@ -167,6 +167,35 @@ export function removePhoto(uid, id) {
   return deleteDoc(doc(db, "properties", uid, "photos", id))
 }
 
+// Business-plane contractor network: a top-level collection, one profile
+// per contractor across all properties. Founder-only via firestore.rules
+// isFounder — a denied subscription surfaces through onError.
+export function subscribeContractors(callback, onError) {
+  return onSnapshot(
+    collection(db, "contractors"),
+    (snap) => callback(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    onError
+  )
+}
+
+export function addContractor(data) {
+  return addDoc(collection(db, "contractors"), data)
+}
+
+export function updateContractor(id, data) {
+  return updateDoc(doc(db, "contractors", id), data)
+}
+
+export function removeContractor(id) {
+  return deleteDoc(doc(db, "contractors", id))
+}
+
+// One-time migration source: the per-property rosters from slice 3.
+export async function fetchPropertyContractors(pid) {
+  const snap = await getDocs(collection(db, "properties", pid, "contractors"))
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+}
+
 // Assistant chat persistence: one doc per property, overwritten after each
 // turn. Loaded once on mount (no live subscription — we'd only echo our own
 // writes); images are stripped before saving to stay under doc size limits.
