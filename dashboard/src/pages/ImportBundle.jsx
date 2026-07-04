@@ -40,7 +40,7 @@ function findSystem(systems, matches) {
 }
 
 export default function ImportBundle() {
-  const { uid } = useOutletContext()
+  const { uid, saveProfile } = useOutletContext()
   const healthApi = useItems(uid, "healthReport")
   const priorityApi = useItems(uid, "priorityList")
   const [bundle, setBundle] = useState(null)
@@ -155,6 +155,8 @@ export default function ImportBundle() {
           setLog([...done])
         }
       }
+      // Stamp the profile so the onboarding checklist can mark this step.
+      await saveProfile?.({ bundleImportedOn: todayLabel() })
       setState("done")
     } catch (err) {
       console.error(err)
