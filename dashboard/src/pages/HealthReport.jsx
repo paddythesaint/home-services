@@ -2,7 +2,9 @@ import { useState } from "react"
 import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import PhotoSection from "../PhotoSection"
+import PhotoAudit from "../PhotoAudit"
 import ActivitySection from "../ActivitySection"
+import { isFounder } from "../founders"
 import { addItem } from "../firestoreApi"
 import { todayLabel, todayISO, isoToLabel, addMonthsISO } from "../dates"
 import { replacementHorizon, fmtMoneyRange } from "../benchmarks"
@@ -57,7 +59,7 @@ function dueClass(nextDue) {
 }
 
 export default function HealthReport() {
-  const { uid, profile } = useOutletContext()
+  const { uid, profile, user } = useOutletContext()
   const { items, add, update, remove } = useItems(uid, "healthReport")
   const [editing, setEditing] = useState(null) // null | "new" | item
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -196,6 +198,7 @@ export default function HealthReport() {
                   <PhotoSection
                     uid={uid}
                     systemId={system.id}
+                    count={system.photoCount}
                     onSuggest={(f) => {
                       const patch = { ...f }
                       if (f.note) {
@@ -214,6 +217,12 @@ export default function HealthReport() {
               </Card>
             )
           })}
+        </div>
+      )}
+
+      {isFounder(user?.email) && items.length > 0 && (
+        <div className="mt-4">
+          <PhotoAudit uid={uid} systems={items} />
         </div>
       )}
 

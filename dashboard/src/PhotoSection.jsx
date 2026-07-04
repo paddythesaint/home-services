@@ -6,11 +6,14 @@ import {
   removePhoto,
 } from "./firestoreApi"
 import { compressImage, runOcr, parseNameplate } from "./photoUtils"
+import { readNameplate } from "./nameplateVision"
 import { Button, Modal } from "./components"
 
-// Photo capture + nameplate OCR for one system. `onSuggest` receives parsed
-// fields ({brand, installYear, serial}) when the user applies a suggestion.
-export default function PhotoSection({ uid, systemId, onSuggest, startOpen = false }) {
+// Photo capture + nameplate reading for one system. Vision (backend AI
+// proxy) is the primary reader; Tesseract OCR remains the offline
+// fallback when the backend is unreachable. `onSuggest` receives parsed
+// fields ({brand, installYear, serial, note}) the user chooses to apply.
+export default function PhotoSection({ uid, systemId, onSuggest, startOpen = false, count }) {
   const [open, setOpen] = useState(startOpen)
   const [photos, setPhotos] = useState(null)
   const [busy, setBusy] = useState(null) // null | "saving" | "reading"
@@ -41,9 +44,18 @@ export default function PhotoSection({ uid, systemId, onSuggest, startOpen = fal
         order: Date.now(),
       })
       setBusy("reading")
-      const text = await runOcr(dataUrl)
-      await updatePhoto(uid, ref.id, { ocrText: text })
-      const parsed = parseNameplate(text)
+      let parsed
+      try {
+        parsed = await readNameplate(uid, dataUrl)
+        await updatePhoto(uid, ref.id, { visionRead: true })
+      } catch (visionErr) {
+        // Backend unreachable (offline, not yet deployed) — fall back to
+        // on-device OCR rather than losing the moment at the nameplate.
+        console.warn("Vision read failed, falling back to OCR:", visionErr.message)
+        const text = await runOcr(dataUrl)
+        await updatePhoto(uid, ref.id, { ocrText: text })
+        parsed = parseNameplate(text)
+      }
       setSuggestions(Object.keys(parsed).length > 0 ? parsed : "none")
     } catch (err) {
       console.error(err)
@@ -54,13 +66,16 @@ export default function PhotoSection({ uid, systemId, onSuggest, startOpen = fal
   }
 
   if (!open) {
+    // The count comes from the system doc's denormalized photoCount — the
+    // whole point is that photos announce themselves without being opened
+    // (they used to hide behind an unlabeled toggle).
     return (
       <button
         type="button"
         onClick={() => setOpen(true)}
         className="text-sm font-medium text-brand-600 hover:text-brand-800"
       >
-        Photos &rsaquo;
+        Photos{typeof count === "number" && count > 0 ? ` (${count})` : ""} &rsaquo;
       </button>
     )
   }
@@ -102,7 +117,7 @@ export default function PhotoSection({ uid, systemId, onSuggest, startOpen = fal
               <button
                 type="button"
                 aria-label="Delete photo"
-                onClick={() => removePhoto(uid, photo.id)}
+                onClick={() => removePhoto(uid, photo.id, photo.systemId)}
                 className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-white border border-line text-ink-3 hover:text-red-600 text-xs leading-none hidden group-hover:block"
               >
                 &times;
@@ -142,6 +157,11 @@ export default function PhotoSection({ uid, systemId, onSuggest, startOpen = fal
                 }
               >
                 Serial: {suggestions.serial}
+              </Button>
+            )}
+            {suggestions.note && (
+              <Button variant="subtle" onClick={() => onSuggest({ note: suggestions.note })}>
+                Note: {suggestions.note}
               </Button>
             )}
             <button

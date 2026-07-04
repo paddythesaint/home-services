@@ -47,6 +47,7 @@ export const fixtureData = {
             note: "",
             verified: true,
             verifiedOn: "July 2, 2026",
+            photoCount: 1,
             order: 1,
           },
           {
@@ -171,7 +172,25 @@ export const fixtureData = {
             order: 3,
           },
         ],
-        photos: [],
+        photos: [
+          {
+            id: "photo-hvac-1",
+            systemId: "sys-hvac",
+            dataUrl:
+              "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+            takenOn: "July 2, 2026",
+            order: 1,
+          },
+          {
+            // Orphan: its system was deleted — the photo audit surfaces it.
+            id: "photo-orphan-1",
+            systemId: "sys-gone",
+            dataUrl:
+              "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+            takenOn: "July 3, 2026",
+            order: 2,
+          },
+        ],
         activity: [
           {
             id: "act-1",

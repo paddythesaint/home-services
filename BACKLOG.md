@@ -50,6 +50,21 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 22 — vision nameplate reading + photo visibility & audit (7/4/26)
+Born from a real incident: the founder's generator photos imported fine
+but were invisible behind the Health Report's unlabeled "Photos ›"
+toggle, and Tesseract read nothing off the nameplate. Three fixes:
+- **Vision-first nameplate reading**: PhotoSection now sends photos to
+  the backend AI proxy (brand, model, serial, install year, condition
+  note as one-click suggestions); Tesseract remains the offline
+  fallback. First feature built on the Slice 20 backend.
+- **Photo counts announce themselves**: addPhoto/removePhoto maintain a
+  denormalized photoCount on the system, and the collapsed toggle reads
+  "Photos (3) ›" instead of hiding everything.
+- **Photo audit** (founder-only, Health Report): one click counts every
+  photo by system, surfaces orphans (system deleted) with reattach or
+  delete, and backfills the photoCount stamps on existing data.
+
 ## Slice 21 — Charlottesville contractor directory (shipped 7/4/26)
 The founder's web research (72 providers across 10 trades — electrical,
 HVAC, plumbing, landscaping, pest, exterior cleaning, roofing, tree,

@@ -171,8 +171,18 @@ export function subscribePhotos(uid, systemId, callback) {
   return off
 }
 
-export function addPhoto(uid, data) {
-  return addItem(uid, "photos", data)
+function bumpPhotoCount(uid, systemId, delta) {
+  const sys = coll(uid, "healthReport").find((s) => s.id === systemId)
+  if (sys) {
+    sys.photoCount = Math.max(0, (sys.photoCount || 0) + delta)
+    emitItems(uid, "healthReport")
+  }
+}
+
+export async function addPhoto(uid, data) {
+  const ref = await addItem(uid, "photos", data)
+  bumpPhotoCount(uid, data.systemId, 1)
+  return ref
 }
 
 export function subscribeActivity(uid, systemId, callback) {
@@ -185,8 +195,17 @@ export function updatePhoto(uid, id, data) {
   return updateItem(uid, "photos", id, data)
 }
 
-export function removePhoto(uid, id) {
-  return removeItem(uid, "photos", id)
+export async function removePhoto(uid, id, systemId) {
+  await removeItem(uid, "photos", id)
+  bumpPhotoCount(uid, systemId, -1)
+}
+
+export async function fetchAllPhotos(uid) {
+  return structuredClone(coll(uid, "photos"))
+}
+
+export function setPhotoCount(uid, systemId, count) {
+  return updateItem(uid, "healthReport", systemId, { photoCount: count })
 }
 
 export function subscribeContractors(callback, onError) {
