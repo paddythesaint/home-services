@@ -3,6 +3,42 @@
 Items parked for future sessions, roughly in priority order. Add freely;
 prune when done.
 
+## Slice 9 — contractor network as the real single entity (shipped 7/4/26)
+Founder product decision (7/4/26): the business owner's contractor record
+should be one entry per contractor, with structured data organized by home
+and by job — not the Slice 3/7 dual-store reconciled by string-matching.
+Scoped explicitly to what doesn't need a Firestore rule change (confirmed
+with the founder): the homeowner-facing "your vendors" page stays exactly
+as it is for now (still its own simple per-property list); this slice fixes
+the business side.
+
+- **Job History gets a founder-only contractor picker.** Founders (checked
+  client-side via `isFounder`) see a "Contractor (network)" dropdown
+  sourced from the master `contractors` collection when adding/editing a
+  job; picking one sets a real `contractorId` at creation time and
+  auto-fills the display `sub` text. Non-founder members never query the
+  founder-only collection — the field simply doesn't render for them, so
+  no permission error is possible. This is what makes the network
+  authoritative *going forward* instead of only through retroactive
+  string-matching.
+- **Contractor Network page now groups each contractor's jobs by home**
+  (most-worked-at property first, newest job first within each) instead of
+  one flat cross-property list — "2 homes served · 3 jobs total," each
+  home's jobs listed underneath. This is the "structured by home and
+  job/project" request made concrete.
+- **Bulk "Link all matches"** action alongside the existing per-contractor
+  link button — sweeps every contractor's unlinked, name-matched jobs
+  across the whole portfolio in one action.
+- No Firestore rules change. Verified in-browser across a two-property mock
+  (linked + unlinked jobs, correct grouping and counts).
+
+**Known, accepted gap:** the homeowner property-local roster
+(`properties/{id}/contractors`, Slice 3) is not unified with the master
+entity — it's a deliberately separate, simpler list by founder decision.
+Revisiting that (and the multi-property homeowner-switcher question) is
+parked for the next session, since both touch the founder/permissions
+model together (see SCHEMA.md's open question).
+
 ## Parked ideas to revisit
 - [x] **Concept to review (7/2/26) — done 7/3/26.** The flagged X post
       (patio-shade lead-gen: scrape sold homes → vision-find unshaded

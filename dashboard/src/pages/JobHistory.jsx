@@ -1,9 +1,11 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
+import { subscribeContractors } from "../firestoreApi"
+import { isFounder } from "../founders"
 import { Card, PageHeader, StatusBadge, Button, Modal, DynamicForm } from "../components"
 
-const fields = [
+const baseFields = [
   { name: "date", label: "Date", type: "text", placeholder: "e.g. June 24, 2026" },
   { name: "title", label: "Title", type: "text" },
   { name: "category", label: "Category", type: "text" },
@@ -20,11 +22,55 @@ const fields = [
 ]
 
 export default function JobHistory() {
-  const { uid } = useOutletContext()
+  const { uid, user } = useOutletContext()
   const { items, add, update, remove } = useItems(uid, "jobHistory")
   const [editing, setEditing] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const [contractors, setContractors] = useState([])
+  const founder = isFounder(user?.email)
   const orderedItems = [...items].reverse()
+
+  // Founders get a picker into the shared contractor network, so new jobs
+  // carry a real contractorId from creation instead of relying on the
+  // Contractor Network page's retroactive name-matching. Non-founder
+  // members never query the founder-only contractors collection at all.
+  useEffect(() => {
+    if (!founder) return
+    return subscribeContractors(setContractors, () => {})
+  }, [founder])
+
+  const fields = founder
+    ? [
+        ...baseFields.slice(0, 3),
+        {
+          name: "contractorId",
+          label: "Contractor (network)",
+          type: "select",
+          options: ["", ...contractors.map((c) => c.id)],
+          optionLabels: {
+            "": "— not in network / one-off —",
+            ...Object.fromEntries(contractors.map((c) => [c.id, c.name])),
+          },
+        },
+        ...baseFields.slice(3),
+      ]
+    : baseFields
+
+  function submit(values) {
+    const patch = { ...values }
+    if (patch.contractorId) {
+      const c = contractors.find((x) => x.id === patch.contractorId)
+      if (c) patch.sub = c.name
+    } else {
+      delete patch.contractorId
+    }
+    if (editing === "new") {
+      add(patch)
+    } else {
+      update(editing.id, patch)
+    }
+    setEditing(null)
+  }
 
   return (
     <div>
@@ -77,14 +123,7 @@ export default function JobHistory() {
           <DynamicForm
             fields={fields}
             initialValues={editing === "new" ? { status: "scheduled" } : editing}
-            onSubmit={(values) => {
-              if (editing === "new") {
-                add(values)
-              } else {
-                update(editing.id, values)
-              }
-              setEditing(null)
-            }}
+            onSubmit={submit}
           />
         </Modal>
       )}
