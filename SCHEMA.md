@@ -140,15 +140,13 @@ from a founder-owned collection, which needs its own scoped rule (another
 Firebase step). Flagging it now so it's a conscious choice later, not
 something we back into.
 
-## Draft rule for Slice 2b (staged, not published — for later)
+## Slice 2b rule — now staged in firestore.rules (7/4/26)
 
-```
-match /properties/{propertyId} {
-  allow create: if request.auth != null
-    && request.auth.token.email_verified == true
-    && request.auth.token.email in request.resource.data.memberEmails;
-  allow read: if isMemberOf(resource.data) || isLegacyOwner(propertyId);
-  allow write: if isLegacyOwner(propertyId) || isMemberOf(resource.data);
-  ...
-}
-```
+The `allow create` clause drafted here shipped into
+`dashboard/firestore.rules` with Slice 13 (business-owner multi-property
+view). It is **staged, not necessarily published** — RUNBOOK.md has the
+one-visit console procedure, and the Command Center's System status panel
+verifies what's actually live. Gap #4 (homeowner single-property
+assumption) is resolved for the business owner via the founder property
+switcher; a homeowner with multiple homes remains an accepted exception
+per the founder's 7/4 decision.
