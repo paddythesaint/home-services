@@ -7,6 +7,7 @@ import { addPhoto, addItem, loadAssistantChat, saveAssistantChat } from "../fire
 import { todayLabel, todayISO, addMonthsISO } from "../dates"
 import { requirementId, PATH_META } from "../resolution"
 import { computeGaps } from "../gaps"
+import { logFact, fieldLabel } from "../facts"
 import { Card, Button } from "../components"
 
 // The API requires every assistant tool_use block to be answered by a
@@ -211,6 +212,15 @@ export default function Assistant() {
         if (fields.verified) fields.verifiedOn = todayLabel()
         await healthApi.update(args.id, fields)
         const item = healthApi.items.find((i) => i.id === args.id)
+        const changed = Object.keys(args.fields)
+        if (changed.length > 0) {
+          await logFact(
+            uid,
+            args.id,
+            `Set ${changed.map(fieldLabel).join(", ")}`,
+            { type: "assistant", label: "chat" }
+          )
+        }
         return `Updated ${item?.category || "system"}`
       }
       case "add_system":

@@ -97,6 +97,7 @@ export default function Overview() {
           priorityApi={priorityApi}
           jobApi={jobApi}
           saveProfile={saveProfile}
+          uid={uid}
         />
       )}
 
@@ -112,6 +113,7 @@ export default function Overview() {
           jobApi={jobApi}
           calendarApi={calendarApi}
           saveProfile={saveProfile}
+          uid={uid}
         />
       )}
 
@@ -127,6 +129,7 @@ export default function Overview() {
           jobApi={jobApi}
           calendarApi={calendarApi}
           saveProfile={saveProfile}
+          uid={uid}
         />
       )}
 
