@@ -59,6 +59,20 @@ export async function fetchMemberProperties(email) {
     .map(([id, p]) => ({ id, ...structuredClone(p.profile) }))
 }
 
+export async function createProperty(data, user) {
+  const email = (user.email || "").toLowerCase()
+  const id = genId("prop")
+  store.properties[id] = {
+    profile: {
+      ...data,
+      members: [{ email, name: user.displayName || "", role: "owner" }],
+      memberEmails: [email],
+    },
+    collections: {},
+  }
+  return id
+}
+
 export async function addMember(propertyId, { email, name, role }) {
   const profile = prop(propertyId).profile
   const members = profile.members || []

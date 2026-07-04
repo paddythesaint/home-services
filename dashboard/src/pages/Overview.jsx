@@ -4,6 +4,7 @@ import { useItems } from "../useItems"
 import SeedBanner from "../SeedBanner"
 import InsightsBanner from "../InsightsBanner"
 import Members from "../Members"
+import { seedAddressHint } from "../seedData"
 import { closingDocsInsights } from "../documentInsights"
 import { recordsIndexInsights } from "../recordsIndexInsights"
 import { energyAuditInsights } from "../energyAuditInsights"
@@ -72,6 +73,10 @@ export default function Overview() {
     .filter((s) => s.nextDue && s.nextDue <= todayISO())
     .sort((a, b) => a.nextDue.localeCompare(b.nextDue))
 
+  // The starter seed and the document-insights banners were assembled from
+  // the original property's records — never offer them on another home.
+  const isSeedProperty = seedAddressHint.test(profile.address || "")
+
   return (
     <div>
       <PageHeader
@@ -84,9 +89,9 @@ export default function Overview() {
         }
       />
 
-      {dashboardEmpty && <SeedBanner uid={uid} />}
+      {dashboardEmpty && isSeedProperty && <SeedBanner uid={uid} />}
 
-      {!dashboardEmpty && !profile.insightsAppliedOn && (
+      {!dashboardEmpty && isSeedProperty && !profile.insightsAppliedOn && (
         <InsightsBanner
           title="Apply insights from your closing documents?"
           description="We reviewed the 2021 closing package — inspection addendum, certified radon report, appraisal, paint schedule, and the 2023 kitchen renovation estimate. This updates your systems with what they revealed (furnace replaced 2021, propane fuel, radon at 5.7 pCi/L with an unserviced mitigation system, two gas-log fireplaces flagged for service), adds a paint-color reference, and backfills your job history. Everything stays editable; mortgage details were excluded."
@@ -101,7 +106,7 @@ export default function Overview() {
         />
       )}
 
-      {!dashboardEmpty && !profile.recordsIndexAppliedOn && (
+      {!dashboardEmpty && isSeedProperty && !profile.recordsIndexAppliedOn && (
         <InsightsBanner
           title="Apply insights from your Home Records Index?"
           description="We reviewed the records index compiled from your Gmail and Drive. This adds your 22kW standby generator (installed 2021, serviced June 2026) and Dodson pest-control service, records the furnace's installer and warranty (Monticello Air, 2021), flags the 2025–26 roof insurance claim for follow-up, backfills six jobs, and adds priorities for the missing homeowner's-insurance policy and email-only documents worth saving."
@@ -117,7 +122,7 @@ export default function Overview() {
         />
       )}
 
-      {!dashboardEmpty && !profile.energyAuditAppliedOn && (
+      {!dashboardEmpty && isSeedProperty && !profile.energyAuditAppliedOn && (
         <InsightsBanner
           title="Apply insights from your March 2026 energy audit?"
           description="We read the full 40-page LEAP energy audit (report #387364, March 10, 2026). Two safety findings lead: the water heaters failed the gas-leak screen (burner corrosion, loose exhaust gasket) and the auditor was blunt about the basement stove — 'fix it or get rid of it'. This also adds windows (mold in four rooms), ventilation (three bath fans at 0 CFM), attic insulation, and drainage as systems, logs the audit as a job, and queues the ~$687/yr weatherization package as a priority."

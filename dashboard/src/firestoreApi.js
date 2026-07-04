@@ -69,6 +69,19 @@ export async function resolvePropertyId(user) {
   return null
 }
 
+// Founder onboarding: create a property with the creator as first member.
+// Requires the `allow create` clause in firestore.rules to be published
+// (see RUNBOOK.md) — on permission-denied the UI says exactly that.
+export async function createProperty(data, user) {
+  const email = (user.email || "").toLowerCase()
+  const ref = await addDoc(collection(db, "properties"), {
+    ...data,
+    members: [{ email, name: user.displayName || "", role: "owner" }],
+    memberEmails: [email],
+  })
+  return ref.id
+}
+
 // All properties the user is a member of — the operator's portfolio. Scoped
 // by membership, so an operator only ever sees properties they belong to.
 export async function fetchMemberProperties(email) {

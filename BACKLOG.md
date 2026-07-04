@@ -50,6 +50,19 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 13 — business-owner multi-property view (shipped 7/4/26)
+The model the founder confirmed: a homeowner belongs to one property; the
+business owner sees every property they're a member of. Founders now get a
+"Viewing property" switcher in the nav (persisted per browser; homeowners
+never see it), every Property-plane page follows the selection, and the
+Command Center gained "+ New property" (creates the doc with the founder
+as first member — needs the new `allow create` rule in firestore.rules
+published; the UI says exactly that on permission-denied) plus a per-home
+"View dashboard →" jump and a systems-good health chip. Also fixed a
+multi-property data leak this exposed: the Ballard-specific starter seed
+and all three document-insights banners were offered on every property —
+now gated to the source home (`seedAddressHint`).
+
 ## Slice 12 — System status: production self-diagnostics (shipped 7/4/26)
 Rules are published by hand in the Firebase console and can drift from the
 repo's firestore.rules — a green deploy never proved the app worked. The

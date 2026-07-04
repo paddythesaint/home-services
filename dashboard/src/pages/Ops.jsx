@@ -1,12 +1,33 @@
 import { useEffect, useState } from "react"
-import { Link, useOutletContext } from "react-router-dom"
+import { Link, useNavigate, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
-import { fetchMemberProperties } from "../firestoreApi"
+import { fetchMemberProperties, createProperty } from "../firestoreApi"
 import { todayISO, isoToLabel, todayLabel } from "../dates"
 import { isReadyToAction } from "../resolution"
 import { isFounder } from "../founders"
 import SystemStatus from "../SystemStatus"
-import { Card, PageHeader, StatTile, UrgencyBadge, ConditionBadge } from "../components"
+import {
+  Card,
+  PageHeader,
+  StatTile,
+  UrgencyBadge,
+  ConditionBadge,
+  Button,
+  Modal,
+  DynamicForm,
+} from "../components"
+
+const newPropertyFields = [
+  { name: "address", label: "Address", type: "text" },
+  { name: "areaLabel", label: "City / State / Zip", type: "text" },
+  { name: "clientName", label: "Family / client name", type: "text" },
+  { name: "tier", label: "Membership tier", type: "text", placeholder: "e.g. Standard" },
+  { name: "monthlyRate", label: "Monthly rate ($)", type: "number" },
+  { name: "yearBuilt", label: "Year built", type: "number" },
+  { name: "acreage", label: "Acreage", type: "number" },
+  { name: "bedrooms", label: "Bedrooms", type: "number" },
+  { name: "bathrooms", label: "Bathrooms", type: "number" },
+]
 
 const isOpen = (p) => !p.status || p.status === "open" || p.status === "scheduled"
 const rank = (u) => (u === "high" ? 3 : u === "medium" ? 2 : 1)
@@ -14,7 +35,7 @@ const rank = (u) => (u === "high" ? 3 : u === "medium" ? 2 : 1)
 // One property's live rollup. Reports metrics + attention items up so the
 // command center can aggregate across the portfolio, and renders its own
 // actionable queue.
-function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractors }) {
+function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractors, onOpen }) {
   const priorityApi = useItems(propertyId, "priorityList")
   const { items: systems } = useItems(propertyId, "healthReport")
   const { items: jobs } = useItems(propertyId, "jobHistory")
@@ -97,8 +118,23 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
             {profile.areaLabel}
             {profile.clientName ? ` · ${profile.clientName}` : ""}
           </p>
+          {onOpen && (
+            <button
+              type="button"
+              className="text-xs text-brand-600 hover:text-brand-800 font-medium mt-1"
+              onClick={() => onOpen(propertyId)}
+            >
+              View dashboard &rarr;
+            </button>
+          )}
         </div>
         <div className="flex flex-wrap justify-end gap-x-3 gap-y-0.5 text-xs text-ink-2">
+          {systems.length > 0 && (
+            <span>
+              {systems.filter((s) => s.condition === "good").length}/{systems.length} systems
+              good
+            </span>
+          )}
           <span>{openPriorities.length} open</span>
           {readyPriorities.length > 0 && <span>{readyPriorities.length} ready</span>}
           {nextVisitPriorities.length > 0 && (
@@ -166,11 +202,15 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
 }
 
 export default function Ops() {
-  const { user } = useOutletContext()
+  const { user, setActiveProperty, refreshPortfolio } = useOutletContext()
+  const navigate = useNavigate()
+  const founder = isFounder(user?.email)
   const [state, setState] = useState({ status: "loading", list: [] })
   const [metrics, setMetrics] = useState({})
   const [attention, setAttention] = useState({})
   const [contractors, setContractors] = useState({})
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState("")
 
   useEffect(() => {
     let active = true
@@ -181,6 +221,31 @@ export default function Ops() {
       active = false
     }
   }, [user.email])
+
+  // Jump the Property-plane pages to one home from the portfolio view.
+  function openProperty(id) {
+    setActiveProperty?.(id)
+    navigate("/")
+  }
+
+  async function submitNewProperty(values) {
+    setCreateError("")
+    try {
+      const id = await createProperty(values, user)
+      // Refresh before switching so the switcher recognizes the new id.
+      await refreshPortfolio?.()
+      setActiveProperty?.(id)
+      setCreating(false)
+      navigate("/")
+    } catch (err) {
+      const denied = (err.code || "").includes("permission-denied")
+      setCreateError(
+        denied
+          ? "Permission denied — the property-creation rule isn't published yet. Publish dashboard/firestore.rules in the Firebase console (see RUNBOOK.md), then try again."
+          : `Couldn't create the property: ${err.message || err}`
+      )
+    }
+  }
 
   const totals = Object.values(metrics).reduce(
     (a, m) => ({
@@ -204,6 +269,11 @@ export default function Ops() {
       <PageHeader
         title="Business"
         subtitle="Command center for running the service — portfolio health, demand, and what needs action across every property. Internal financials and client health arrive as a separate founder-only layer."
+        action={
+          founder ? (
+            <Button onClick={() => setCreating(true)}>+ New property</Button>
+          ) : undefined
+        }
       />
 
       {state.status === "loading" ? (
@@ -268,6 +338,7 @@ export default function Ops() {
                 onMetrics={(id, m) => setMetrics((prev) => ({ ...prev, [id]: m }))}
                 onAttention={(id, items) => setAttention((prev) => ({ ...prev, [id]: items }))}
                 onContractors={(id, names) => setContractors((prev) => ({ ...prev, [id]: names }))}
+                onOpen={founder ? openProperty : undefined}
               />
             ))}
           </div>
@@ -332,6 +403,22 @@ export default function Ops() {
         </Link>
         .
       </p>
+
+      {creating && (
+        <Modal title="New property" onClose={() => setCreating(false)}>
+          <p className="text-sm text-ink-2 mb-4">
+            Creates the property record with you as its first member. Invite the
+            homeowner afterward from the property's "People with access" panel.
+          </p>
+          <DynamicForm
+            fields={newPropertyFields}
+            initialValues={{ tier: "Standard" }}
+            submitLabel="Create property"
+            onSubmit={submitNewProperty}
+          />
+          {createError && <p className="text-sm text-red-600 mt-3">{createError}</p>}
+        </Modal>
+      )}
     </div>
   )
 }
