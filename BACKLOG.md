@@ -50,6 +50,22 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 24 — role-based views, phase 1 (7/4/26)
+Answer to "when someone else logs in, they see everything and it might
+be overwhelming." roles.js resolves a viewing role from the signed-in
+email: founder (everything), relationship (Sally: property plane +
+intake tools, no business plane, no forecast, no billing), technician
+(the visit set: systems, calendar, priorities, walkthrough, history),
+homeowner (the default for any member not on the staff map: their
+record, clean — no intake tools, no internal onboarding checklist,
+billing visible because it's their invoice). Nav is filtered per role,
+the billing header is gated, and the Command Center now refuses
+non-founders outright instead of hiding founder tools piecemeal.
+Phase 1 is presentation, not security — business pages were already
+rules-enforced; staff access without co-ownership (real technician
+logins) is the phase-2 rules work. Swap the placeholder staff emails
+in roles.js for real ones as the team becomes real.
+
 ## Slice 23 — contractor table, profile pages, cross-linking (7/4/26)
 The Contractor Network's tile cards (fine at 2 contractors, unusable at
 74) became a dense sortable-by-name table: name, trades, contact,
@@ -242,6 +258,9 @@ it in is gone. Manual entry still works everywhere.
       gather visual inspiration/references, consider a real brand identity,
       rethink layout and hierarchy from scratch rather than iterating,
       mobile-first (the walkthrough + assistant are phone workflows).
+      Assets banked: `docs/design-assets/895-old-ballard-aerial-front.jpg`
+      (drone shot of the front elevation, 4000×2250, Oct 2021) — owner
+      earmarked it as a property-header image for the redesign (7/4/26).
 
 ## Architecture roadmap (from 7/2/26 discussion)
 Sequenced. Slice 1 shipped; the rest are ordered by dependency.
