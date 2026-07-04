@@ -50,6 +50,16 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 17 — co-founder demo pack (shipped overnight 7/4/26)
+DEMO.md: the pre-demo morning checklist (rules publish, System status,
+key scrub), the pitch and two-planes story, a 15-minute click-path with
+fresh screenshots (docs/screenshots/, fixture data only — no client data
+in the repo), the N=20 scale story, an honest "real vs not yet" section,
+and answers to the questions a sharp co-founder should ask. INTAKE.md:
+the pre-visit questionnaire whose sections map 1:1 onto profile fields,
+Health Report systems, Job History, the vendor roster, and the 90-day
+priority list — the input side of the Slice 16 onboarding checklist.
+
 ## Slice 16 — new-property onboarding checklist (shipped overnight 7/4/26)
 Every non-seed property's Overview now carries a "Getting this home
 ready" card until its record is real: walk the property, build the system
