@@ -2,6 +2,7 @@ import { NavLink, Outlet } from "react-router-dom"
 import { signOut } from "firebase/auth"
 import { auth } from "./firebase"
 import { useProperty, usePropertyId } from "./useProperty"
+import { isFounder } from "./founders"
 
 const icons = {
   overview: <path d="M3 10.5L12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5" />,
@@ -13,6 +14,7 @@ const icons = {
   history: <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />,
   ops: <path d="M3 3v18h18M7 15l3-3 3 3 5-6" />,
   contractors: <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />,
+  network: <path d="M12 2a3 3 0 100 6 3 3 0 000-6zM5 16a3 3 0 106 0 3 3 0 00-6 0zM13 16a3 3 0 106 0 3 3 0 00-6 0zM10.5 7.5L7 13.5M13.5 7.5L17 13.5M8 16h8" />,
   import: <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />,
 }
 
@@ -35,32 +37,37 @@ function NavIcon({ name }) {
   )
 }
 
-const navSections = [
-  {
-    heading: "Property",
-    items: [
-      { to: "/", label: "Overview", icon: "overview", end: true },
-      { to: "/assistant", label: "Intake Assistant", icon: "assistant" },
-      { to: "/walkthrough", label: "Walkthrough", icon: "walkthrough" },
-      { to: "/import", label: "Import Bundle", icon: "import" },
-      { to: "/health-report", label: "Health Report", icon: "health" },
-      { to: "/care-calendar", label: "Care Calendar", icon: "calendar" },
-      { to: "/priority-list", label: "90-Day Priorities", icon: "priorities" },
-      { to: "/job-history", label: "Job History", icon: "history" },
-      { to: "/contractors", label: "Contractors", icon: "contractors" },
-    ],
-  },
-  {
-    heading: "Business",
-    items: [{ to: "/ops", label: "Command Center", icon: "ops" }],
-  },
-]
-
-const allNavItems = navSections.flatMap((s) => s.items)
+function buildNavSections(founder) {
+  return [
+    {
+      heading: "Property",
+      items: [
+        { to: "/", label: "Overview", icon: "overview", end: true },
+        { to: "/assistant", label: "Intake Assistant", icon: "assistant" },
+        { to: "/walkthrough", label: "Walkthrough", icon: "walkthrough" },
+        { to: "/import", label: "Import Bundle", icon: "import" },
+        { to: "/health-report", label: "Health Report", icon: "health" },
+        { to: "/care-calendar", label: "Care Calendar", icon: "calendar" },
+        { to: "/priority-list", label: "90-Day Priorities", icon: "priorities" },
+        { to: "/job-history", label: "Job History", icon: "history" },
+        { to: "/contractors", label: "Contractors", icon: "contractors" },
+      ],
+    },
+    {
+      heading: "Business",
+      items: [
+        { to: "/ops", label: "Command Center", icon: "ops" },
+        ...(founder ? [{ to: "/contractor-network", label: "Contractor Network", icon: "network" }] : []),
+      ],
+    },
+  ]
+}
 
 export default function Layout({ user }) {
   const { status, propertyId } = usePropertyId(user)
   const { profile, save } = useProperty(propertyId)
+  const navSections = buildNavSections(isFounder(user?.email))
+  const allNavItems = navSections.flatMap((s) => s.items)
 
   if (status === "resolving" || (status === "ready" && !profile)) {
     return (
