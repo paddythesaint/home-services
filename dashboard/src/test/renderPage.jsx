@@ -9,7 +9,10 @@ import { saveProperty } from "../mocks/firestoreApi"
 
 export const DEFAULT_UID = "prop-ballard"
 
-export function renderPage(page, { uid = DEFAULT_UID, user = MOCK_FOUNDER } = {}) {
+export function renderPage(
+  page,
+  { uid = DEFAULT_UID, user = MOCK_FOUNDER, path, routePath } = {}
+) {
   const profile = structuredClone(fixtureData.properties[uid].profile)
   const context = {
     uid,
@@ -21,10 +24,14 @@ export function renderPage(page, { uid = DEFAULT_UID, user = MOCK_FOUNDER } = {}
     refreshPortfolio: async () => [],
   }
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[path || "/"]}>
       <Routes>
         <Route element={<Outlet context={context} />}>
-          <Route index element={page} />
+          {routePath ? (
+            <Route path={routePath} element={page} />
+          ) : (
+            <Route index element={page} />
+          )}
         </Route>
       </Routes>
     </MemoryRouter>

@@ -380,14 +380,24 @@ export default function Ops() {
               ) : (
                 <>
                   <div className="flex flex-wrap gap-2">
-                    {allContractors.map((name) => (
-                      <span
-                        key={name}
-                        className="text-sm text-ink-2 bg-brand-100 rounded-full px-3 py-1"
-                      >
-                        {name}
-                      </span>
-                    ))}
+                    {allContractors.map((name) =>
+                      isFounder(user?.email) ? (
+                        <Link
+                          key={name}
+                          to="/contractor-network"
+                          className="text-sm text-ink-2 bg-brand-100 rounded-full px-3 py-1 hover:bg-brand-200"
+                        >
+                          {name}
+                        </Link>
+                      ) : (
+                        <span
+                          key={name}
+                          className="text-sm text-ink-2 bg-brand-100 rounded-full px-3 py-1"
+                        >
+                          {name}
+                        </span>
+                      )
+                    )}
                   </div>
                   <p className="text-xs text-ink-3 mt-3">
                     Pulled from job history.{" "}

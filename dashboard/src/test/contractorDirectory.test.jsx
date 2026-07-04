@@ -42,6 +42,12 @@ describe("directory panel on the Contractor Network", () => {
       expect(screen.getAllByText("Polson Electrical Services").length).toBeGreaterThan(0)
     )
     fireEvent.click(screen.getByText("Close"))
-    expect(await screen.findByText(/Electrical · 434-465-8608/)).toBeInTheDocument()
+    // Table row: trades and phone land in their own cells.
+    expect(await screen.findByText("434-465-8608")).toBeInTheDocument()
+    const link = screen
+      .getAllByText("Polson Electrical Services")
+      .map((el) => el.closest("a"))
+      .find(Boolean)
+    expect(link.getAttribute("href")).toMatch(/^\/contractor-network\//)
   })
 })
