@@ -39,6 +39,17 @@ Revisiting that (and the multi-property homeowner-switcher question) is
 parked for the next session, since both touch the founder/permissions
 model together (see SCHEMA.md's open question).
 
+## Slice 11 — injectable data layer + test harness (shipped 7/4/26)
+The old verification ritual (overwrite firestoreApi/AuthGate/useProperty
+with hand mocks, screenshot, restore from backups) is gone. `vite.config.js`
+now aliases those three modules to `src/mocks/` in mock/test mode — real
+source files are never edited. `npm run preview:mock` serves the app on
+two-property fixture data (amber banner marks mock mode); `npm test` runs
+Vitest + RTL: unit tests for resolution.js, contractorMatching.js (matching
+logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
+render smoke test per page against the mock store. Red tests now block the
+GitHub Pages deploy (deploy.yml runs `npm test` before build).
+
 ## Slice 10 — pulled the client-side AI assistant (removed 7/4/26)
 Founder decision (7/4/26): the Intake Assistant and Exterior Measurements
 pages both called the Anthropic API directly from the browser using a key
