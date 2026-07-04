@@ -243,6 +243,7 @@ export default function Walkthrough() {
                 systemId: currentItem.id,
                 type: "service",
                 summary: "Confirmed during walkthrough",
+                source: { type: "walkthrough", label: "walkthrough" },
                 date: todayLabel(),
                 order: Date.now(),
               })

@@ -192,13 +192,23 @@ an enhancer, not a blocker — but it's also the flashiest demo, so it can
 jump the queue when a pitch needs it. (Nav item from the same review —
 Property = homeowner view, Business = command center — already shipped.)
 
-- [ ] **Facts need provenance.** Add a lightweight `source` to facts (which
-      document/photo/chat asserted it, and when) so the record is auditable —
-      the roof story only made sense because we knew appraisal-said-X vs
-      claim-said-Y. Pairs with documents-as-records below.
-- [ ] **Shrink the overloaded note field.** With the activity log now carrying
-      history, the system `note` should return to "current state, one
-      paragraph" — provenance and history moved out.
+- [x] **Facts need provenance (shipped 7/4/26) + shrink the overloaded note
+      field (shipped 7/4/26).** Done together — same fix. New `fact` activity
+      type (`src/facts.js`: `logFact`/`fieldLabel` helper) carries
+      `source: {type, label}` — which automated path asserted a change, and
+      a readable label ("chat", "Home Records Index", "walkthrough") —
+      rendered right on the per-system History timeline ("Fact recorded ·
+      via Home Records Index"). Wired into every automated write path:
+      the assistant's `update_system` tool, Import Bundle's system
+      updates, and Insights Banner's `systemUpdates`. **Import Bundle's
+      `noteAppend` no longer appends into `note`** — that text now logs
+      to the fact feed instead, which is what stops the note field from
+      growing into a provenance/history dump; `note` goes back to
+      "current state, one paragraph" for anything written going forward.
+      No migration of existing note content (not destructive); no
+      Firestore rules change needed (additive fields under existing write
+      permissions) — see SCHEMA.md, done specifically as the two items
+      achievable without Firebase console access.
 
 ## Product
 - [ ] **Document upload pipeline with AI extraction.** The 2021 closing-docs

@@ -8,11 +8,18 @@ export const ACTIVITY_TYPES = {
   action: { label: "Action", color: "var(--color-brand-600)" },
   observation: { label: "Observation", color: "var(--color-status-warn)" },
   service: { label: "Service", color: "var(--color-ink-3)" },
+  // A structured field (brand, condition, note, ...) was set or changed by
+  // an automated path — the provenance record for facts, not just events.
+  // Written automatically alongside the write itself (see Assistant.jsx,
+  // ImportBundle.jsx, InsightsBanner.jsx); never hand-added via the form.
+  fact: { label: "Fact recorded", color: "var(--color-ink)" },
 }
 
 // Collapsible per-system history timeline: typed entries (reading / action /
-// observation / service) with optional structured value + unit, so numbers
-// like radon pCi/L accumulate instead of overwriting the system note.
+// observation / service / fact) with optional structured value + unit, so
+// numbers like radon pCi/L accumulate instead of overwriting the system
+// note. `fact` entries additionally carry `source: {type, label}` — which
+// document/photo/chat asserted the change, so the record stays auditable.
 export default function ActivitySection({ uid, systemId, startOpen = false }) {
   const [open, setOpen] = useState(startOpen)
   const [entries, setEntries] = useState(null)
@@ -88,7 +95,9 @@ export default function ActivitySection({ uid, systemId, startOpen = false }) {
               value={form.type}
               onChange={(e) => set("type", e.target.value)}
             >
-              {Object.entries(ACTIVITY_TYPES).map(([key, meta]) => (
+              {Object.entries(ACTIVITY_TYPES)
+                .filter(([key]) => key !== "fact")
+                .map(([key, meta]) => (
                 <option key={key} value={key}>
                   {meta.label}
                 </option>
@@ -146,6 +155,7 @@ export default function ActivitySection({ uid, systemId, startOpen = false }) {
                 <div className="min-w-0">
                   <span className="text-xs text-ink-3">
                     {entry.date} · {meta.label}
+                    {entry.source?.label && ` · via ${entry.source.label}`}
                   </span>
                   <p className="text-ink-2">
                     {entry.summary}

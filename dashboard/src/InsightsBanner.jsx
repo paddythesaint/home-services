@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Button } from "./components"
+import { logFact, fieldLabel } from "./facts"
 
 function todayLabel() {
   return new Date().toLocaleDateString("en-US", {
@@ -24,6 +25,7 @@ export default function InsightsBanner({
   jobApi,
   calendarApi,
   saveProfile,
+  uid,
 }) {
   const [state, setState] = useState("idle")
   const {
@@ -43,7 +45,16 @@ export default function InsightsBanner({
         const target = healthApi.items.find((i) =>
           i.category.toLowerCase().includes(match)
         )
-        if (target) await healthApi.update(target.id, data)
+        if (target) {
+          await healthApi.update(target.id, data)
+          const changed = Object.keys(data).filter((k) => k !== "verified" && k !== "verifiedOn")
+          if (changed.length > 0) {
+            await logFact(uid, target.id, `Set ${changed.map(fieldLabel).join(", ")}`, {
+              type: "insights",
+              label: title,
+            })
+          }
+        }
       }
       for (const item of systemAdds) {
         const firstWord = item.category.split(" ")[0].toLowerCase()

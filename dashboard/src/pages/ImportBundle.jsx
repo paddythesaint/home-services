@@ -3,6 +3,7 @@ import { useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import { addItem, addPhoto } from "../firestoreApi"
 import { todayLabel } from "../dates"
+import { logFact, fieldLabel } from "../facts"
 import { Card, PageHeader, Button } from "../components"
 
 // Loads a locally-provided JSON bundle (photos as data URLs + extracted facts
@@ -18,7 +19,7 @@ import { Card, PageHeader, Button } from "../components"
 //     match: ["lowercase substrings tried against category+detail"],
 //     create: { category, detail, condition, note, … },   // used if no match
 //     fill: { brand, installYear, location },             // fill-if-empty
-//     noteAppend: "…",                                    // appended once
+//     noteAppend: "…",                       // logged to the fact feed, not appended to note
 //     verify: true,                                       // mark verified
 //     activity: [{ type, summary, value?, unit? }],
 //     photos: [{ name, dataUrl }],
@@ -92,15 +93,26 @@ export default function ImportBundle() {
           for (const [k, v] of Object.entries(entry.fill || {})) {
             if (!target[k]) patch[k] = v
           }
-          if (entry.noteAppend && !(target.note || "").includes(entry.noteAppend)) {
-            patch.note = target.note ? `${target.note} ${entry.noteAppend}` : entry.noteAppend
-          }
           if (entry.verify) {
             patch.verified = true
             patch.verifiedOn = todayLabel()
           }
           if (Object.keys(patch).length > 0) {
             await healthApi.update(targetId, patch)
+          }
+          // What this wave asserted goes to the fact log, not appended into
+          // note — note stays "current state, one paragraph" (BACKLOG.md);
+          // the append-only activity feed is where history accumulates.
+          const filledKeys = Object.keys(patch).filter((k) => k !== "verified" && k !== "verifiedOn")
+          const parts = []
+          if (filledKeys.length > 0) parts.push(`Set ${filledKeys.map(fieldLabel).join(", ")}`)
+          if (patch.verified) parts.push("Verified")
+          if (entry.noteAppend) parts.push(entry.noteAppend)
+          if (parts.length > 0) {
+            await logFact(uid, targetId, parts.join(" — "), {
+              type: "import",
+              label: bundle.source || "Imported bundle",
+            }, bundle.takenOn)
           }
         }
         for (const act of entry.activity || []) {
