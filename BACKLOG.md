@@ -50,6 +50,20 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 23 — contractor table, profile pages, cross-linking (7/4/26)
+The Contractor Network's tile cards (fine at 2 contractors, unusable at
+74) became a dense sortable-by-name table: name, trades, contact,
+cadence, last job, per-row "Link N jobs" action, with a "N homes · N
+jobs" count under each name. Every contractor name in the app is now a
+door: the table links to a new `/contractor-network/:id` profile page —
+stat tiles (homes served / jobs on record / last job), contact &
+sourcing card with tel:/mailto:/website links, work history grouped by
+home, unlinked-match banner, and the edit/delete actions that moved off
+the list page. Job History's contractor names link to profiles too
+(founders only, linked jobs only), and the Ops contractor chips click
+through to the network. Shared plumbing extracted: contractorShared.js
+(form fields) and PortfolioJobs.jsx (cross-property job feed).
+
 ## Slice 22 — vision nameplate reading + photo visibility & audit (7/4/26)
 Born from a real incident: the founder's generator photos imported fine
 but were invisible behind the Health Report's unlabeled "Photos ›"

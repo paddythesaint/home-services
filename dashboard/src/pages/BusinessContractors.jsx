@@ -3,48 +3,16 @@ import { Link, useOutletContext } from "react-router-dom"
 import {
   subscribeContractors,
   addContractor,
-  updateContractor,
-  removeContractor,
   fetchPropertyContractors,
   fetchMemberProperties,
   updateItem,
 } from "../firestoreApi"
-import { useItems } from "../useItems"
 import { isFounder } from "../founders"
-import {
-  norm,
-  jobMatchesContractor,
-  unlinkedMatches,
-  groupJobsByProperty,
-} from "../contractorMatching"
+import { norm, jobMatchesContractor, unlinkedMatches } from "../contractorMatching"
+import { contractorFields } from "../contractorShared"
+import { PropertyJobFeed } from "../PortfolioJobs"
 import { DIRECTORY_COUNT, directoryCandidates } from "../contractorDirectory"
 import { Card, PageHeader, Button, Modal, DynamicForm } from "../components"
-
-const fields = [
-  { name: "name", label: "Name", type: "text" },
-  { name: "trades", label: "Trades", type: "text", placeholder: "e.g. HVAC, Roofing" },
-  { name: "phone", label: "Phone", type: "text" },
-  { name: "email", label: "Email", type: "text" },
-  { name: "website", label: "Website", type: "text" },
-  {
-    name: "cadence",
-    label: "Service cadence",
-    type: "text",
-    placeholder: "e.g. Bi-monthly, Annual (June)",
-  },
-  { name: "sourcing", label: "How sourced", type: "text" },
-  { name: "notes", label: "Notes", type: "textarea" },
-]
-
-// Subscribes to one property's job history and reports jobs up, tagged with
-// which property they're from — the cross-property aggregation unit.
-function PropertyJobFeed({ propertyId, propertyLabel, onJobs }) {
-  const { items } = useItems(propertyId, "jobHistory")
-  useEffect(() => {
-    onJobs(propertyId, items.map((j) => ({ ...j, propertyId, propertyLabel })))
-  }, [propertyId, propertyLabel, items])
-  return null
-}
 
 // The founder-researched Charlottesville directory (contractorDirectory.js):
 // browse by trade, tick, add as real network profiles. Deduped by name
@@ -256,8 +224,7 @@ export default function BusinessContractors() {
   const [state, setState] = useState({ status: "loading", contractors: [] })
   const [properties, setProperties] = useState([])
   const [jobsByProperty, setJobsByProperty] = useState({})
-  const [editing, setEditing] = useState(null)
-  const [confirmDelete, setConfirmDelete] = useState(null)
+  const [adding, setAdding] = useState(false)
   const [linking, setLinking] = useState(null) // contractor id currently linking
 
   useEffect(() => {
@@ -335,7 +302,7 @@ export default function BusinessContractors() {
       <PageHeader
         title="Contractor Network"
         subtitle="One profile per contractor — contacts, trades, cadence, and work across every property, past and scheduled."
-        action={<Button onClick={() => setEditing("new")}>+ Add contractor</Button>}
+        action={<Button onClick={() => setAdding(true)}>+ Add contractor</Button>}
       />
 
       {totalUnlinked > 0 && (
@@ -371,146 +338,103 @@ export default function BusinessContractors() {
           </p>
         </Card>
       ) : (
-        <div className="flex flex-col gap-3">
-          {contractors.map((c) => {
-            const jobs = allJobs.filter((j) => jobMatchesContractor(j, c))
-            const homes = groupJobsByProperty(jobs)
-            const unlinkedCount = unlinkedMatches(allJobs, c).length
-            return (
-              <Card key={c.id}>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 w-full">
-                    <p className="font-semibold text-ink">{c.name}</p>
-                    <p className="text-sm text-ink-2">
-                      {[c.trades, c.phone, c.email].filter(Boolean).join(" · ") || "—"}
-                      {c.website && (
-                        <>
-                          {" · "}
-                          <a
-                            href={c.website}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-brand-600 hover:text-brand-800 underline"
-                          >
-                            website
-                          </a>
-                        </>
-                      )}
-                    </p>
-                    {c.cadence && (
-                      <p className="text-xs text-ink-3 mt-1">Cadence: {c.cadence}</p>
-                    )}
-                    {c.sourcing && (
-                      <p className="text-xs text-ink-3">Sourced: {c.sourcing}</p>
-                    )}
-                    {c.notes && <p className="text-sm text-ink-2 mt-1.5">{c.notes}</p>}
-
-                    {homes.length > 0 && (
-                      <div className="mt-3">
-                        <p className="text-xs font-medium text-ink-3 mb-1.5">
-                          {homes.length} home{homes.length === 1 ? "" : "s"} served ·{" "}
-                          {jobs.length} job{jobs.length === 1 ? "" : "s"} total
-                        </p>
-                        <div className="flex flex-col gap-2">
-                          {homes.map((home) => (
-                            <div key={home.propertyId} className="bg-plane rounded-lg px-3 py-2">
-                              <p className="text-xs font-semibold text-ink">
-                                {home.propertyLabel}
-                                <span className="font-normal text-ink-3">
-                                  {" "}
-                                  · {home.jobs.length} job{home.jobs.length === 1 ? "" : "s"}
-                                </span>
-                              </p>
-                              <ul className="mt-1 flex flex-col gap-0.5">
-                                {home.jobs.slice(0, 4).map((j) => (
-                                  <li key={j.id} className="text-xs text-ink-2">
-                                    {j.date ? `${j.date} · ` : ""}
-                                    {j.title}
-                                  </li>
-                                ))}
-                                {home.jobs.length > 4 && (
-                                  <li className="text-xs text-ink-3">
-                                    +{home.jobs.length - 4} more
-                                  </li>
-                                )}
-                              </ul>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex gap-3 mt-3 items-center flex-wrap">
-                      <Button variant="ghost" className="!px-0" onClick={() => setEditing(c)}>
-                        Edit
-                      </Button>
-                      <Button
-                        variant="danger"
-                        className="!px-0"
-                        onClick={() => setConfirmDelete(c)}
-                      >
-                        Delete
-                      </Button>
-                      {unlinkedCount > 0 && (
-                        <button
-                          type="button"
-                          className="text-xs text-brand-600 hover:text-brand-800 font-medium disabled:opacity-50"
-                          disabled={linking === c.id}
-                          onClick={() => linkJobs(c)}
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs uppercase tracking-wide text-ink-3 border-b border-line">
+                  <th className="py-2 pr-4 font-semibold">Contractor</th>
+                  <th className="py-2 pr-4 font-semibold">Trades</th>
+                  <th className="py-2 pr-4 font-semibold">Contact</th>
+                  <th className="py-2 pr-4 font-semibold">Cadence</th>
+                  <th className="py-2 pr-4 font-semibold">Last job</th>
+                  <th className="py-2 font-semibold"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {contractors.map((c) => {
+                  const jobs = allJobs.filter((j) => jobMatchesContractor(j, c))
+                  const homeCount = new Set(jobs.map((j) => j.propertyId)).size
+                  const lastJob = jobs.reduce(
+                    (a, j) => (!a || (j.order || 0) > (a.order || 0) ? j : a),
+                    null
+                  )
+                  const unlinkedCount = unlinkedMatches(allJobs, c).length
+                  return (
+                    <tr key={c.id} className="align-top">
+                      <td className="py-2.5 pr-4">
+                        <Link
+                          to={`/contractor-network/${c.id}`}
+                          className="font-medium text-brand-600 hover:text-brand-800"
                         >
-                          {linking === c.id
-                            ? "Linking…"
-                            : `Link ${unlinkedCount} matching job${unlinkedCount === 1 ? "" : "s"}`}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            )
-          })}
-        </div>
+                          {c.name}
+                        </Link>
+                        <p className="text-xs text-ink-3">
+                          {homeCount} home{homeCount === 1 ? "" : "s"} · {jobs.length} job
+                          {jobs.length === 1 ? "" : "s"}
+                        </p>
+                      </td>
+                      <td className="py-2.5 pr-4 text-ink-2">{c.trades || "—"}</td>
+                      <td className="py-2.5 pr-4 text-ink-2">
+                        <p>{c.phone || ""}</p>
+                        <p className="text-xs text-ink-3 break-all">
+                          {c.email || ""}
+                          {c.email && c.website ? " · " : ""}
+                          {c.website && (
+                            <a
+                              href={c.website}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-brand-600 hover:text-brand-800 underline"
+                            >
+                              website
+                            </a>
+                          )}
+                        </p>
+                      </td>
+                      <td className="py-2.5 pr-4 text-ink-2 whitespace-nowrap">
+                        {c.cadence || "—"}
+                      </td>
+                      <td className="py-2.5 pr-4 text-ink-2 whitespace-nowrap">
+                        {lastJob ? lastJob.date || "logged" : "—"}
+                      </td>
+                      <td className="py-2.5 text-right whitespace-nowrap">
+                        {unlinkedCount > 0 && (
+                          <button
+                            type="button"
+                            className="text-xs text-brand-600 hover:text-brand-800 font-medium disabled:opacity-50"
+                            disabled={linking === c.id}
+                            onClick={() => linkJobs(c)}
+                          >
+                            {linking === c.id
+                              ? "Linking…"
+                              : `Link ${unlinkedCount} job${unlinkedCount === 1 ? "" : "s"}`}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-ink-3 mt-3">
+            Click a contractor's name for their full profile — contacts, notes, and work
+            history by home, plus edit and delete.
+          </p>
+        </Card>
       )}
 
-      {editing && (
-        <Modal
-          title={editing === "new" ? "Add contractor" : "Edit contractor"}
-          onClose={() => setEditing(null)}
-        >
+      {adding && (
+        <Modal title="Add contractor" onClose={() => setAdding(false)}>
           <DynamicForm
-            fields={fields}
-            initialValues={editing === "new" ? {} : editing}
+            fields={contractorFields}
+            initialValues={{}}
             onSubmit={(values) => {
-              if (editing === "new") {
-                addContractor(values)
-              } else {
-                updateContractor(editing.id, values)
-              }
-              setEditing(null)
+              addContractor(values)
+              setAdding(false)
             }}
           />
-        </Modal>
-      )}
-
-      {confirmDelete && (
-        <Modal title="Delete contractor?" onClose={() => setConfirmDelete(null)}>
-          <p className="text-sm text-ink-2 mb-4">
-            Remove "{confirmDelete.name}" from the network? This doesn't change any job history.
-          </p>
-          <div className="flex justify-end gap-2">
-            <Button variant="subtle" onClick={() => setConfirmDelete(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              onClick={() => {
-                removeContractor(confirmDelete.id)
-                setConfirmDelete(null)
-              }}
-            >
-              Delete
-            </Button>
-          </div>
         </Modal>
       )}
     </div>

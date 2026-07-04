@@ -71,13 +71,13 @@ describe("page smoke tests (mock data layer)", () => {
     expect((await screen.findAllByText("42 Ridgeview Rd")).length).toBeGreaterThan(0)
   })
 
-  it("Contractor Network groups a contractor's jobs by home for founders", async () => {
+  it("Contractor Network table counts a contractor's homes and jobs for founders", async () => {
     renderPage(<BusinessContractors />)
-    expect(await screen.findByText("Monticello Air")).toBeInTheDocument()
-    // Monticello has jobs at both fixture properties → grouped view shows it.
-    await waitFor(() =>
-      expect(screen.getByText(/2 homes served/)).toBeInTheDocument()
-    )
+    const nameLink = await screen.findByText("Monticello Air")
+    // The name is now a link into the contractor's profile page.
+    expect(nameLink.closest("a")).toHaveAttribute("href", "/contractor-network/net-monticello")
+    // Monticello has jobs at both fixture properties → the table row counts them.
+    await waitFor(() => expect(screen.getByText(/2 homes · 3 jobs/)).toBeInTheDocument())
   })
 
   it("Contractor Network refuses non-founders", async () => {

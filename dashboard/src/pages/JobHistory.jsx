@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useOutletContext } from "react-router-dom"
+import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import { subscribeContractors } from "../firestoreApi"
 import { isFounder } from "../founders"
@@ -92,7 +92,17 @@ export default function JobHistory() {
                 <div>
                   <p className="font-semibold text-ink">{job.title}</p>
                   <p className="text-sm text-ink-2">
-                    {job.date} · {job.category} · {job.sub}
+                    {job.date} · {job.category} ·{" "}
+                    {founder && job.contractorId ? (
+                      <Link
+                        to={`/contractor-network/${job.contractorId}`}
+                        className="text-brand-600 hover:text-brand-800 underline"
+                      >
+                        {job.sub}
+                      </Link>
+                    ) : (
+                      job.sub
+                    )}
                   </p>
                   <p className="text-sm text-ink-2 mt-1.5">{job.notes}</p>
                   <div className="flex gap-3 mt-3">
