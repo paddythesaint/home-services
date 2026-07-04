@@ -1,0 +1,4 @@
+# Tooling run from the repo root (npx, playwright helpers) sometimes drops a
+# node_modules here — the real one lives in dashboard/ and is ignored there.
+node_modules/
+package-lock.json
