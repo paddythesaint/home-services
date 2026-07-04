@@ -237,6 +237,17 @@ export async function seedCollections(uid, collections) {
   }
 }
 
+export async function scrubOrphanedApiKeys(email) {
+  let count = 0
+  for (const p of Object.values(store.properties)) {
+    if ((p.profile.memberEmails || []).includes(email) && p.profile.anthropicApiKey) {
+      delete p.profile.anthropicApiKey
+      count++
+    }
+  }
+  return count
+}
+
 // Mirrors the real runDiagnostics shape. Everything passes unless
 // VITE_MOCK_DENY names a collection, which fails its matching probe —
 // handy for previewing the failure UI.

@@ -5,7 +5,7 @@
 // what's broken and how to fix it.
 
 import { useState } from "react"
-import { runDiagnostics } from "./firestoreApi"
+import { runDiagnostics, scrubOrphanedApiKeys } from "./firestoreApi"
 import { Card, Button } from "./components"
 
 function Dot({ ok }) {
@@ -20,6 +20,17 @@ function Dot({ ok }) {
 
 export default function SystemStatus({ user }) {
   const [state, setState] = useState({ status: "idle", results: [] })
+  const [scrub, setScrub] = useState({ status: "idle", count: 0 })
+
+  async function runScrub() {
+    setScrub({ status: "running", count: 0 })
+    try {
+      const count = await scrubOrphanedApiKeys(user.email)
+      setScrub({ status: "done", count })
+    } catch {
+      setScrub({ status: "error", count: 0 })
+    }
+  }
 
   async function run() {
     setState({ status: "running", results: [] })
@@ -88,6 +99,32 @@ export default function SystemStatus({ user }) {
         data — if the create-property flow fails with a permission error, that rule isn't
         published yet (see RUNBOOK.md).
       </p>
+
+      <div className="mt-4 pt-4 border-t border-line">
+        <p className="text-sm font-medium text-ink">Data hygiene</p>
+        <div className="flex items-start justify-between gap-4 mt-1">
+          <p className="text-sm text-ink-2">
+            The retired AI assistant stored a pasted Anthropic API key on the property
+            profile. It's unused since the feature was removed — this deletes the field
+            from every property you can see, so no usable key lingers in the database.
+          </p>
+          <Button variant="subtle" onClick={runScrub} disabled={scrub.status === "running"}>
+            {scrub.status === "running" ? "Scrubbing…" : "Remove orphaned API keys"}
+          </Button>
+        </div>
+        {scrub.status === "done" && (
+          <p className="text-sm text-ink mt-2">
+            {scrub.count === 0
+              ? "None found — nothing to remove."
+              : `Removed ${scrub.count} stored key${scrub.count === 1 ? "" : "s"}.`}
+          </p>
+        )}
+        {scrub.status === "error" && (
+          <p className="text-sm text-red-600 mt-2">
+            Couldn't remove the field — check the browser console.
+          </p>
+        )}
+      </div>
     </Card>
   )
 }
