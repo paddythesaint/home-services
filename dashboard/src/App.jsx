@@ -7,6 +7,7 @@ import Ops from "./pages/Ops"
 import HealthReport from "./pages/HealthReport"
 import CareCalendar from "./pages/CareCalendar"
 import PriorityList from "./pages/PriorityList"
+import Forecast from "./pages/Forecast"
 import JobHistory from "./pages/JobHistory"
 import Contractors from "./pages/Contractors"
 import BusinessContractors from "./pages/BusinessContractors"
@@ -24,6 +25,7 @@ export default function App() {
               <Route path="health-report" element={<HealthReport />} />
               <Route path="care-calendar" element={<CareCalendar />} />
               <Route path="priority-list" element={<PriorityList />} />
+              <Route path="forecast" element={<Forecast />} />
               <Route path="job-history" element={<JobHistory />} />
               <Route path="contractors" element={<Contractors />} />
               <Route path="import" element={<ImportBundle />} />

@@ -50,6 +50,29 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 19 — lifespan & cost intelligence + requirement playbooks (shipped 7/4/26)
+The record now predicts instead of just remembering. Three knowledge
+modules, all curated domain data pattern-matched client-side (no AI API —
+the backend stays parked):
+- **benchmarks.js** — typical lifespan + replacement-cost ranges for 18
+  system types (industry-standard figures, always labeled "typical").
+  `replacementHorizon()` reads a system's installYear into age, window
+  years, and a healthy/approaching/in-window/past status.
+- **Health Report** — systems with a benchmark + install year carry a
+  lifespan line ("Year 7 of a typical 8–12 · replacement window
+  2027–2031 · ~$1,300–2,500").
+- **Cost Forecast page** (new nav entry) — the 3-Year Cost Forecast from
+  the original business plan: year-bucketed replacement windows + open
+  priorities with estimates, totals per year, and a systems-outlook
+  table with status chips. Per-unit costs (windows) display but stay
+  out of totals. Missing install years are surfaced as the fix.
+- **requirementSuggestions.js** — 13 playbooks mapping task patterns to
+  the materials/info typically needed to close them (filter sizes,
+  gutter footage, caulk color, nameplate photos…). The priority list's
+  resolution section offers them as one-click "Typically needed for
+  this" chips, deduped against whatever the record already tracks,
+  capped at 4 so it stays useful, never auto-inserted.
+
 ## Slice 18 — Portfolio admin: delete properties (shipped 7/4/26)
 Founder request after creating a typo property (891 Old Ballard): the
 Command Center now has a "Portfolio admin" card listing every property
