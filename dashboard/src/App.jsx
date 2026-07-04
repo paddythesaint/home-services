@@ -11,6 +11,7 @@ import Forecast from "./pages/Forecast"
 import JobHistory from "./pages/JobHistory"
 import Contractors from "./pages/Contractors"
 import BusinessContractors from "./pages/BusinessContractors"
+import WorkOrders from "./pages/WorkOrders"
 import ContractorProfile from "./pages/ContractorProfile"
 import ImportBundle from "./pages/ImportBundle"
 
@@ -31,6 +32,7 @@ export default function App() {
               <Route path="contractors" element={<Contractors />} />
               <Route path="import" element={<ImportBundle />} />
               <Route path="ops" element={<Ops />} />
+              <Route path="work-orders" element={<WorkOrders />} />
               <Route path="contractor-network" element={<BusinessContractors />} />
               <Route path="contractor-network/:contractorId" element={<ContractorProfile />} />
             </Route>

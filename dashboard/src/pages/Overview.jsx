@@ -7,6 +7,7 @@ import InsightsBanner from "../InsightsBanner"
 import Members from "../Members"
 import { seedAddressHint } from "../seedData"
 import { viewFor } from "../roles"
+import { isUnderway } from "../workOrders"
 import hero895 from "../assets/hero-895.jpg"
 import { closingDocsInsights } from "../documentInsights"
 import { recordsIndexInsights } from "../recordsIndexInsights"
@@ -48,6 +49,7 @@ export default function Overview() {
   const calendarApi = useItems(uid, "careCalendar")
   const { items: calendarItems, loading: calendarLoading } = calendarApi
   const jobApi = useItems(uid, "jobHistory")
+  const { items: workOrders } = useItems(uid, "workOrders")
   const { items: healthItems, loading: healthLoading } = healthApi
   const { items: priorityItems, loading: priorityLoading } = priorityApi
   const { items: jobItems } = jobApi
@@ -177,6 +179,26 @@ export default function Overview() {
           saveProfile={saveProfile}
           uid={uid}
         />
+      )}
+
+      {workOrders.filter(isUnderway).length > 0 && (
+        <Card className="mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-3 mb-2">
+            Happening now
+          </p>
+          <ul className="flex flex-col gap-1.5">
+            {workOrders.filter(isUnderway).map((w) => (
+              <li key={w.id} className="text-sm text-ink-2">
+                <span className="font-medium text-ink">{w.title}</span>
+                {w.lane === "in-progress"
+                  ? " — being worked on"
+                  : w.scheduledFor
+                    ? ` — scheduled for ${w.scheduledFor}`
+                    : " — on the calendar"}
+              </li>
+            ))}
+          </ul>
+        </Card>
       )}
 
       {dueChecks.length > 0 && (

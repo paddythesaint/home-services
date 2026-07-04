@@ -306,6 +306,7 @@ export async function runDiagnostics(user) {
     "careCalendar",
     "priorityList",
     "jobHistory",
+    "workOrders",
     "photos",
     "activity",
     "contractors",

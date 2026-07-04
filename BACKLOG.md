@@ -50,6 +50,27 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 27 — work-order pipeline (7/4/26)
+The owner's named gap: "the workflow to take an issue, work needing to
+be done, who does it, how we get a quote and status of the work." The
+work order is now the object that carries all of that:
+- **Board** (`/work-orders`, founders): every order across the
+  portfolio in lanes — Triage → Quote → Scheduled → In progress →
+  Done — each card carrying property, assignment (our visit or a
+  network contractor, linked to their profile), quote trail
+  (needed/requested/received $X/approved), and dates.
+- **Raised from a priority in one click** ("Raise work order" on the
+  90-Day list, founders), linked both ways.
+- **Completion is the handshake**: marks the lane done, writes the
+  Job History entry (contractor + cost from the quote), and resolves
+  the linked priority. Nothing bookkept twice.
+- **Homeowners see calm, not machinery**: Overview gains a "Happening
+  now" card listing only scheduled/in-progress work ("Gutter guards —
+  scheduled for July 12"). Triage and quoting stay internal. First
+  concrete piece of Sally's calm-homeowner direction.
+Zero rules changes (property subcollection under the member wildcard);
+workOrders added to the status-panel probes and deep-delete list.
+
 ## Slice 26 — design foundations (7/4/26)
 First pass of the design overhaul ("modern, easy to use, pretty —
 between Google for buttons and Squarespace for pretty"). All through

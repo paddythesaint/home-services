@@ -1,7 +1,10 @@
 import { useState } from "react"
-import { useOutletContext } from "react-router-dom"
+import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
+import { addItem } from "../firestoreApi"
 import { todayLabel } from "../dates"
+import { viewFor } from "../roles"
+import { workOrderFromPriority } from "../workOrders"
 import { suggestRequirements } from "../requirementSuggestions"
 import {
   RESOLUTION_PATHS,
@@ -401,7 +404,8 @@ function ResolutionSection({ item, update }) {
 }
 
 export default function PriorityList() {
-  const { uid } = useOutletContext()
+  const { uid, user } = useOutletContext()
+  const founder = viewFor(user?.email).business
   const { items, add, update, remove, moveUp, moveDown } = useItems(uid, "priorityList")
   const [editing, setEditing] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -428,6 +432,13 @@ export default function PriorityList() {
       resolutionNote: resolveNote.trim(),
     })
     setResolving(null)
+  }
+
+  // One click from "we should fix this" to a tracked piece of work on the
+  // Work Orders board, linked both ways.
+  async function raiseWorkOrder(item) {
+    const ref = await addItem(uid, "workOrders", workOrderFromPriority(item))
+    await update(item.id, { workOrderId: ref.id })
   }
 
   return (
@@ -562,6 +573,23 @@ export default function PriorityList() {
                           Mark scheduled
                         </Button>
                       )}
+                      {founder &&
+                        (item.workOrderId ? (
+                          <Link
+                            to="/work-orders"
+                            className="text-sm font-medium text-brand-600 hover:text-brand-800 self-center"
+                          >
+                            Work order raised ›
+                          </Link>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            className="!px-0"
+                            onClick={() => raiseWorkOrder(item)}
+                          >
+                            Raise work order
+                          </Button>
+                        ))}
                       <Button
                         variant="ghost"
                         className="!px-0"
