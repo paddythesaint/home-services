@@ -202,9 +202,11 @@ Sequenced. Slice 1 shipped; the rest are ordered by dependency.
       to the uid-keyed doc that self-heals. Rules grant access by membership.
       "People with access" panel lets owners invite/remove by email. This is
       the homeowner-side (household) access layer.
-- [ ] **Slice 2b — multi-property creation & the two planes.** Membership
-      exists; still to build is *creating* new properties with generated ids
-      (rather than the legacy uid-as-id) when onboarding a new household.
+- [x] **Slice 2b — multi-property creation & the two planes.** Shipped
+      across Slices 13/18 (7/4/26): property creation with generated ids,
+      founder switcher, portfolio admin with deep delete. What remains of
+      the original idea is only the Slice 4b financial layer below.
+      Original framing kept for the record:
       **Two distinct planes — keep them separate (7/2/26 discussion):**
       (1) *Property membership* — who can access a given house, at what role
       (owner / co-owner / viewer / assigned technician); granted peer-to-peer by
@@ -385,8 +387,8 @@ Property = homeowner view, Business = command center — already shipped.)
       closing folder" onboarding).
 - [ ] **Upgrade nameplate photo OCR to Claude vision.** Tesseract works but a
       vision model reads nameplates far better. Same backend unlocks it.
-- [ ] **3-Year Cost Forecast** page (fourth deliverable from the business
-      plan) — generate from system ages + area service costs.
+- [x] **3-Year Cost Forecast** page — shipped as Slice 19 (7/4/26), built
+      from system ages against lifespan benchmarks + open priorities.
 - [ ] **Room profiles** (deferred from walkthrough build — "location" field
       covers most of it for now).
 - [ ] **Technician share access** — a scoped way for a visiting tech to see or
