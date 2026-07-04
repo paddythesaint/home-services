@@ -29,13 +29,19 @@ jobs:
         working-directory: functions
         run: npm install --omit=dev
 
-      # The Anthropic key travels GitHub secret → functions/.env → Cloud
-      # Functions runtime env. It never appears in the repo or the browser.
+      # Secrets are passed through env vars, never inlined into the shell
+      # script — inline substitution mangles JSON quoting (that exact bug
+      # broke deploy run #1: firebase-tools read a corrupt credentials file
+      # and reported "Failed to authenticate").
       - name: Write runtime env
-        run: printf 'ANTHROPIC_API_KEY=%s\n' "${{ secrets.ANTHROPIC_API_KEY }}" > functions/.env
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: printf 'ANTHROPIC_API_KEY=%s\n' "$ANTHROPIC_API_KEY" > functions/.env
 
       - name: Write deploy credentials
-        run: printf '%s' "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > "$RUNNER_TEMP/gcp-sa.json"
+        env:
+          SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: printf '%s' "$SA_JSON" > "$RUNNER_TEMP/gcp-sa.json"
 
       - name: Deploy to Cloud Functions
         env:
