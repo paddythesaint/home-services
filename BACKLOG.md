@@ -50,6 +50,15 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 14 — RUNBOOK.md: one console visit for all pending rules (7/4/26)
+Every pending Firestore rules change (founder contractors from Slice 7,
+property-create from Slice 13) is staged in dashboard/firestore.rules;
+RUNBOOK.md is the paste-the-whole-file, two-minute console procedure plus
+the System-status verification steps. Convention going forward: any PR
+touching firestore.rules updates the RUNBOOK table. **Owner action still
+required: perform the publish — the app can't do it, and until then the
+Contractor Network may be broken in prod and "+ New property" will be.**
+
 ## Slice 13 — business-owner multi-property view (shipped 7/4/26)
 The model the founder confirmed: a homeowner belongs to one property; the
 business owner sees every property they're a member of. Founders now get a
