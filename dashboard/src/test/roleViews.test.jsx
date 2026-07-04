@@ -1,9 +1,11 @@
-import { describe, it, expect } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { describe, it, expect, beforeEach } from "vitest"
+import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { MemoryRouter, Routes, Route } from "react-router-dom"
 import Layout from "../Layout"
-import { viewFor, businessRole } from "../roles"
+import { viewFor, businessRole, setViewAs } from "../roles"
 import { MOCK_FOUNDER } from "../mocks/fixtures"
+
+beforeEach(() => localStorage.clear())
 
 const SALLY = { email: "sally@example.com", displayName: "Sally", uid: "u-sally" }
 const TECH = { email: "tech@example.com", displayName: "Tech", uid: "u-tech" }
@@ -32,6 +34,21 @@ describe("viewFor (role resolution)", () => {
 
   it("is case-insensitive on email", () => {
     expect(businessRole("Sally@Example.com")).toBe("relationship")
+  })
+
+  it("'View as' overrides the lens for founders only", () => {
+    setViewAs("homeowner")
+    const founderView = viewFor(MOCK_FOUNDER.email)
+    expect(founderView.role).toBe("homeowner")
+    expect(founderView.actualRole).toBe("founder")
+    expect(founderView.preview).toBe(true)
+    expect(founderView.business).toBe(false)
+    // Non-founders are never affected by the stored preview.
+    expect(viewFor("sally@example.com").role).toBe("relationship")
+    expect(viewFor("sally@example.com").preview).toBe(false)
+    // Reset restores the full view.
+    setViewAs("founder")
+    expect(viewFor(MOCK_FOUNDER.email).preview).toBe(false)
   })
 
   it("only founders get the business plane; billing is founder/homeowner", () => {
@@ -88,5 +105,34 @@ describe("role-tailored navigation (Layout)", () => {
     hidden("Import Bundle")
     hidden("Command Center")
     await sees(/Next invoice/)
+  })
+})
+
+describe("founder 'View as' switcher", () => {
+  it("previews another role from the top ribbon and persists across mounts", async () => {
+    const first = renderLayout(MOCK_FOUNDER)
+    const pickers = await screen.findAllByLabelText("View as")
+    fireEvent.change(pickers[0], { target: { value: "homeowner" } })
+
+    await waitFor(() => hidden("Command Center"))
+    await sees(/Previewing as/)
+    hidden("Walkthrough")
+
+    // Persists until changed: a fresh mount (new page load) keeps the lens.
+    first.unmount()
+    renderLayout(MOCK_FOUNDER)
+    await sees(/Previewing as/)
+    hidden("Command Center")
+
+    // One click back to the full view.
+    fireEvent.click(screen.getByText("Back to founder view"))
+    await sees("Command Center")
+    hidden(/Previewing as/)
+  })
+
+  it("never shows the control to non-founders", async () => {
+    renderLayout(SALLY)
+    await sees("Walkthrough")
+    expect(screen.queryAllByLabelText("View as")).toHaveLength(0)
   })
 })

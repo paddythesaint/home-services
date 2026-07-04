@@ -6,7 +6,7 @@ import OnboardingChecklist from "../OnboardingChecklist"
 import InsightsBanner from "../InsightsBanner"
 import Members from "../Members"
 import { seedAddressHint } from "../seedData"
-import { businessRole } from "../roles"
+import { viewFor } from "../roles"
 import { closingDocsInsights } from "../documentInsights"
 import { recordsIndexInsights } from "../recordsIndexInsights"
 import { energyAuditInsights } from "../energyAuditInsights"
@@ -93,7 +93,7 @@ export default function Overview() {
 
       {dashboardEmpty && isSeedProperty && <SeedBanner uid={uid} />}
 
-      {!isSeedProperty && businessRole(user?.email) && (
+      {!isSeedProperty && viewFor(user?.email).staff && (
         <OnboardingChecklist profile={profile} systems={healthItems} jobs={jobItems} />
       )}
 

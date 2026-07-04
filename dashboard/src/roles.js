@@ -46,12 +46,50 @@ const NAV = {
   ],
 }
 
+// --- "View as" preview (founders only) ---
+// Founders can borrow any other role's lens to sanity-check what a
+// homeowner, Sally, or a technician actually sees — without signing in
+// as them. The choice persists (localStorage) across pages and property
+// switches until changed. Presentation only: it never grants anything,
+// it only hides, and it has no effect for non-founders.
+
+const VIEW_AS_KEY = "viewAsRole"
+
+export const ROLE_LABELS = {
+  founder: "Founder — full view",
+  relationship: "Relationship (intake)",
+  technician: "Technician (visit)",
+  homeowner: "Homeowner",
+}
+
+export function getViewAs() {
+  try {
+    const v = localStorage.getItem(VIEW_AS_KEY)
+    return v && NAV[v] ? v : "founder"
+  } catch {
+    return "founder"
+  }
+}
+
+export function setViewAs(role) {
+  try {
+    if (!role || role === "founder") localStorage.removeItem(VIEW_AS_KEY)
+    else if (NAV[role]) localStorage.setItem(VIEW_AS_KEY, role)
+  } catch {
+    /* private mode etc. — preview just won't persist */
+  }
+}
+
 export function viewFor(email) {
-  const role = businessRole(email) || "homeowner"
+  const actualRole = businessRole(email) || "homeowner"
+  const role = actualRole === "founder" ? getViewAs() : actualRole
   return {
     role,
+    actualRole,
+    preview: actualRole === "founder" && role !== "founder",
     navKeys: new Set(NAV[role]),
     business: role === "founder", // Business nav section + its pages
+    staff: role !== "homeowner", // internal instruments (onboarding checklist)
     showBilling: role === "founder" || role === "homeowner",
   }
 }

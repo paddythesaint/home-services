@@ -4,7 +4,7 @@ import { useItems } from "../useItems"
 import PhotoSection from "../PhotoSection"
 import PhotoAudit from "../PhotoAudit"
 import ActivitySection from "../ActivitySection"
-import { isFounder } from "../founders"
+import { viewFor } from "../roles"
 import { addItem } from "../firestoreApi"
 import { todayLabel, todayISO, isoToLabel, addMonthsISO } from "../dates"
 import { replacementHorizon, fmtMoneyRange } from "../benchmarks"
@@ -220,7 +220,7 @@ export default function HealthReport() {
         </div>
       )}
 
-      {isFounder(user?.email) && items.length > 0 && (
+      {viewFor(user?.email).business && items.length > 0 && (
         <div className="mt-4">
           <PhotoAudit uid={uid} systems={items} />
         </div>
