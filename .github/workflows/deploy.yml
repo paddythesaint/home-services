@@ -35,6 +35,9 @@ jobs:
           cache: npm
           cache-dependency-path: dashboard/package-lock.json
       - run: npm ci
+      # Red tests block the deploy — the suite runs against the in-memory
+      # mock data layer (vite mode "test"), so no Firebase secrets needed.
+      - run: npm test
       - run: npm run build && cp dist/index.html dist/404.html
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}

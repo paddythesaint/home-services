@@ -11,6 +11,12 @@ import {
 } from "../firestoreApi"
 import { useItems } from "../useItems"
 import { isFounder } from "../founders"
+import {
+  norm,
+  jobMatchesContractor,
+  unlinkedMatches,
+  groupJobsByProperty,
+} from "../contractorMatching"
 import { Card, PageHeader, Button, Modal, DynamicForm } from "../components"
 
 const fields = [
@@ -27,31 +33,6 @@ const fields = [
   { name: "sourcing", label: "How sourced", type: "text" },
   { name: "notes", label: "Notes", type: "textarea" },
 ]
-
-const norm = (s) => (s || "").trim().toLowerCase()
-const jobMatchesContractor = (job, contractor) =>
-  job.contractorId === contractor.id ||
-  (!job.contractorId && job.sub && norm(job.sub).includes(norm(contractor.name)))
-const unlinkedMatches = (jobs, contractor) =>
-  jobs.filter((j) => !j.contractorId && j.sub && norm(j.sub).includes(norm(contractor.name)))
-
-// Structured "by home" view: a contractor's jobs grouped under the property
-// they were performed at, most-worked-at home first, newest job first within
-// each home — this is the shape the master network is meant to replace flat,
-// string-matched lists with.
-function groupJobsByProperty(jobs) {
-  const byProperty = new Map()
-  for (const j of jobs) {
-    if (!byProperty.has(j.propertyId)) {
-      byProperty.set(j.propertyId, { propertyId: j.propertyId, propertyLabel: j.propertyLabel, jobs: [] })
-    }
-    byProperty.get(j.propertyId).jobs.push(j)
-  }
-  for (const group of byProperty.values()) {
-    group.jobs.sort((a, b) => (b.order || 0) - (a.order || 0))
-  }
-  return [...byProperty.values()].sort((a, b) => b.jobs.length - a.jobs.length)
-}
 
 // Subscribes to one property's job history and reports jobs up, tagged with
 // which property they're from — the cross-property aggregation unit.
