@@ -1,10 +1,20 @@
-# Property intake questionnaire
+# Property intake — internal instrument
 
-Fill in what you know — blanks are fine, "not sure" is fine. Everything
-here maps straight into the property record: the basics land on your
-dashboard profile, each system becomes a Health Report card for the
-walkthrough to verify, past work becomes Job History, and your vendors
-join the roster. The walkthrough visit fills whatever you leave blank.
+**This is ours, not the homeowner's.** White-glove means we never hand a
+client a form. The relationship lead carries sections 1, 5, and 7 as a
+conversation script on the welcome call; the technician fills sections 2
+and 3 during the visit walkthrough; section 6 is a document-mining
+checklist we work through ourselves once the client shares whatever
+paperwork they have ("email us what exists — we'll do the rest").
+
+Everything captured maps straight into the property record: basics land
+on the profile, each system becomes a Health Report card, past work
+becomes Job History, vendors join the roster, and the "what's bugging
+you" list seeds the 90-Day Priorities. Blanks are fine — the record is
+built to fill in over time.
+
+The one exception: a fellow founder onboarding their own home can just
+fill the whole thing in directly.
 
 ## 1. The basics
 
@@ -81,12 +91,13 @@ Keep or replace?:
 How found:        referral / prior owner / etc.
 ```
 
-## 5. Known issues & annoyances
+## 5. Known issues & annoyances (welcome-call script — the best question we have)
 
-The list you'd rattle off to a handyman if he asked "what's bugging
-you about the house?" — drips, sticky doors, cold rooms, mystery
-switches, the thing you've been meaning to deal with for two years.
-These seed your 90-Day Priority list.
+"What's bugging you about the house?" — drips, sticky doors, cold rooms,
+mystery switches, the thing they've been meaning to deal with for two
+years. Let them talk; write it all down. These seed the 90-Day
+Priority list, and closing two of them in the first month is what makes
+the subscription feel like magic.
 
 1.
 2.
@@ -113,8 +124,8 @@ Check what exists and roughly where it lives (don't send anything yet):
 
 ---
 
-**What happens next:** the account gets created with you invited, this
-sheet gets loaded in, and a walkthrough visit (10–20 minutes, phone in
-hand) verifies the systems and captures nameplate photos. From then on
-the dashboard is live: what's healthy, what's due, what's on the next
-visit, and every job on the record.
+**How this flows:** welcome call (relationship lead, sections 1/5/7) →
+split visit (relationship lead hosts; technician walks systems with the
+app, sections 2/3) → document mining + bundle assembly (section 6, back
+office) → record live, homeowner invited, reveal call. The homeowner's
+total lift: one conversation and opening the door.
