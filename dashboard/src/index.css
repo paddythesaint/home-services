@@ -1,31 +1,41 @@
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/fraunces";
 @import "tailwindcss";
 
 @theme {
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Inter for UI, Fraunces for display — the warm-serif-over-clean-sans
+     pairing. Both variable, both self-hosted (no external requests). */
+  --font-sans: "Inter Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Fraunces Variable", Georgia, "Times New Roman", serif;
 
   /* Brand greens — chrome & identity only, never data */
-  --color-brand-50: #f5f7f4;
-  --color-brand-100: #e6ebe2;
-  --color-brand-200: #cdd8c5;
+  --color-brand-50: #f4f7f2;
+  --color-brand-100: #e5ebe0;
+  --color-brand-200: #ccd8c2;
   --color-brand-400: #7c9a68;
   --color-brand-600: #4a6741;
   --color-brand-700: #3a5233;
-  --color-brand-800: #2c3f27;
-  --color-brand-900: #1f2e1b;
+  --color-brand-800: #2b3f26;
+  --color-brand-900: #1d2b19;
+  --color-brand-950: #131e10;
 
   /* Ink & chrome (dataviz reference tokens) */
-  --color-ink: #0b0b0b;
+  --color-ink: #191917;
   --color-ink-2: #52514e;
-  --color-ink-3: #898781;
-  --color-surface: #fcfcfb;
-  --color-plane: #f4f4f1;
-  --color-line: #e1e0d9;
+  --color-ink-3: #8b8880;
+  --color-surface: #ffffff;
+  --color-plane: #f6f5f1;
+  --color-line: #e7e5dd;
 
   /* Status palette — fixed, ships with icon + label, never color alone */
   --color-status-good: #0ca30c;
   --color-status-warn: #fab219;
   --color-status-serious: #ec835a;
   --color-status-critical: #d03b3b;
+
+  /* Elevation — soft, warm-tinted, quiet */
+  --shadow-card: 0 1px 2px rgba(25, 25, 23, 0.04), 0 2px 8px rgba(25, 25, 23, 0.03);
+  --shadow-raised: 0 2px 4px rgba(25, 25, 23, 0.06), 0 12px 32px rgba(25, 25, 23, 0.1);
 }
 
 html,
@@ -41,4 +51,12 @@ body {
   color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* Display headings get Fraunces' character at a moderate optical size —
+   warmth without the ink-trap extremes. */
+.font-display {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 28;
+  letter-spacing: -0.01em;
 }

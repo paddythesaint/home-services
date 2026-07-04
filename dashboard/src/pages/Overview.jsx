@@ -7,6 +7,7 @@ import InsightsBanner from "../InsightsBanner"
 import Members from "../Members"
 import { seedAddressHint } from "../seedData"
 import { viewFor } from "../roles"
+import hero895 from "../assets/hero-895.jpg"
 import { closingDocsInsights } from "../documentInsights"
 import { recordsIndexInsights } from "../recordsIndexInsights"
 import { energyAuditInsights } from "../energyAuditInsights"
@@ -79,17 +80,51 @@ export default function Overview() {
   // the original property's records — never offer them on another home.
   const isSeedProperty = seedAddressHint.test(profile.address || "")
 
+  const headerSubtitle = `${profile.areaLabel}${profile.acreage ? ` · ${profile.acreage} acres` : ""}${profile.yearBuilt ? ` · Built ${profile.yearBuilt}` : ""}`
+
   return (
     <div>
-      <PageHeader
-        title={profile.address}
-        subtitle={`${profile.areaLabel}${profile.acreage ? ` · ${profile.acreage} acres` : ""}${profile.yearBuilt ? ` · Built ${profile.yearBuilt}` : ""}`}
-        action={
-          <Button variant="subtle" onClick={() => setEditingProperty(true)}>
-            Edit property info
-          </Button>
-        }
-      />
+      {isSeedProperty ? (
+        // The property gets a face: aerial hero with the address set over a
+        // scrim. Photo is bundled for the flagship home for now; per-property
+        // photos ride with the design overhaul.
+        <div className="relative rounded-2xl overflow-hidden mb-6 shadow-(--shadow-card)">
+          <img
+            src={hero895}
+            alt={profile.address}
+            className="w-full h-52 md:h-72 object-cover"
+          />
+          <div
+            className="absolute inset-0 bg-gradient-to-t from-brand-950/75 via-brand-950/15 to-transparent"
+            aria-hidden="true"
+          />
+          <div className="absolute bottom-0 left-0 right-0 p-5 md:p-7 flex items-end justify-between gap-4">
+            <div>
+              <h1 className="font-display text-2xl md:text-4xl font-semibold text-white leading-tight">
+                {profile.address}
+              </h1>
+              <p className="text-sm text-white/85 mt-1.5">{headerSubtitle}</p>
+            </div>
+            <Button
+              variant="subtle"
+              className="shrink-0 !bg-white/90 hover:!bg-white !text-brand-900"
+              onClick={() => setEditingProperty(true)}
+            >
+              Edit property info
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <PageHeader
+          title={profile.address}
+          subtitle={headerSubtitle}
+          action={
+            <Button variant="subtle" onClick={() => setEditingProperty(true)}>
+              Edit property info
+            </Button>
+          }
+        />
+      )}
 
       {dashboardEmpty && isSeedProperty && <SeedBanner uid={uid} />}
 

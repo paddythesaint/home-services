@@ -182,7 +182,7 @@ export default function Layout({ user }) {
           <p className="text-[11px] uppercase tracking-[0.14em] text-brand-200">
             Charlottesville
           </p>
-          <p className="text-base font-semibold leading-snug">
+          <p className="font-display text-lg font-semibold leading-snug">
             Home &amp; Property Services
           </p>
         </div>
@@ -216,7 +216,7 @@ export default function Layout({ user }) {
                   to={item.to}
                   end={item.end}
                   className={({ isActive }) =>
-                    `flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+                    `flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors ${
                       isActive
                         ? "bg-brand-50 text-brand-900 font-medium"
                         : "text-brand-100 hover:bg-brand-800"
@@ -306,7 +306,7 @@ export default function Layout({ user }) {
         <header className="hidden md:flex items-center justify-between border-b border-line bg-surface px-8 py-3.5">
           <div>
             <p className="text-xs text-ink-3">Welcome back</p>
-            <p className="text-sm font-semibold text-ink">
+            <p className="font-display text-[15px] font-semibold text-ink">
               {profile.clientName ? `${profile.clientName} Family` : user.displayName}
             </p>
           </div>
