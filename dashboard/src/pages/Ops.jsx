@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, useNavigate, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
-import { fetchMemberProperties, createProperty } from "../firestoreApi"
+import { fetchMemberProperties, createProperty, deletePropertyDeep } from "../firestoreApi"
 import { todayISO, isoToLabel, todayLabel } from "../dates"
 import { isReadyToAction } from "../resolution"
 import { isFounder } from "../founders"
@@ -211,6 +211,10 @@ export default function Ops() {
   const [contractors, setContractors] = useState({})
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState("")
+  const [deleting, setDeleting] = useState(null) // property pending delete confirmation
+  const [confirmText, setConfirmText] = useState("")
+  const [deleteBusy, setDeleteBusy] = useState(false)
+  const [deleteError, setDeleteError] = useState("")
 
   useEffect(() => {
     let active = true
@@ -226,6 +230,30 @@ export default function Ops() {
   function openProperty(id) {
     setActiveProperty?.(id)
     navigate("/")
+  }
+
+  async function doDelete() {
+    setDeleteBusy(true)
+    setDeleteError("")
+    try {
+      await deletePropertyDeep(deleting.id)
+      const drop = (setter) =>
+        setter((prev) => {
+          const next = { ...prev }
+          delete next[deleting.id]
+          return next
+        })
+      drop(setMetrics)
+      drop(setAttention)
+      drop(setContractors)
+      setState((s) => ({ ...s, list: s.list.filter((p) => p.id !== deleting.id) }))
+      await refreshPortfolio?.()
+      setDeleting(null)
+      setConfirmText("")
+    } catch (err) {
+      setDeleteError(`Couldn't delete: ${err.message || err}`)
+    }
+    setDeleteBusy(false)
   }
 
   async function submitNewProperty(values) {
@@ -390,7 +418,36 @@ export default function Ops() {
         </>
       )}
 
-      {isFounder(user?.email) && (
+      {founder && state.status === "ready" && state.list.length > 0 && (
+        <div className="mt-4">
+          <Card title="Portfolio admin">
+            <p className="text-sm text-ink-2">
+              Founder-only housekeeping. Member access (adding or removing people) is
+              managed on each property's Overview under "People with access" — this is
+              where whole properties are removed.
+            </p>
+            <ul className="mt-3 divide-y divide-line">
+              {state.list.map((p) => (
+                <li key={p.id} className="py-2.5 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-ink">{p.address}</p>
+                    <p className="text-xs text-ink-3">
+                      {[p.areaLabel, `${(p.members || []).length} member${(p.members || []).length === 1 ? "" : "s"}`]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  </div>
+                  <Button variant="danger" onClick={() => setDeleting(p)}>
+                    Delete…
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </div>
+      )}
+
+      {founder && (
         <div className="mt-4">
           <SystemStatus user={user} />
         </div>
@@ -403,6 +460,54 @@ export default function Ops() {
         </Link>
         .
       </p>
+
+      {deleting && (
+        <Modal
+          title="Delete property?"
+          onClose={() => {
+            setDeleting(null)
+            setConfirmText("")
+            setDeleteError("")
+          }}
+        >
+          <p className="text-sm text-ink-2 mb-3">
+            This permanently deletes <strong>{deleting.address}</strong> and everything in
+            its record — systems, priorities, calendar, jobs, photos, activity, and its
+            vendor roster. Members lose access immediately. There is no undo.
+          </p>
+          <label className="block text-sm mb-4">
+            <span className="text-ink-2">
+              Type the address to confirm: <strong>{deleting.address}</strong>
+            </span>
+            <input
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              className="mt-1.5 w-full border border-line rounded-lg px-3 py-2 bg-surface text-ink"
+              placeholder={deleting.address}
+            />
+          </label>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="subtle"
+              onClick={() => {
+                setDeleting(null)
+                setConfirmText("")
+                setDeleteError("")
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              disabled={deleteBusy || confirmText.trim() !== deleting.address}
+              onClick={doDelete}
+            >
+              {deleteBusy ? "Deleting…" : "Delete permanently"}
+            </Button>
+          </div>
+          {deleteError && <p className="text-sm text-red-600 mt-3">{deleteError}</p>}
+        </Modal>
+      )}
 
       {creating && (
         <Modal title="New property" onClose={() => setCreating(false)}>

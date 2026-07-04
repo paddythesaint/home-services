@@ -67,8 +67,8 @@ describe("page smoke tests (mock data layer)", () => {
 
   it("Ops aggregates both portfolio properties", async () => {
     renderPage(<Ops />)
-    expect(await screen.findByText("895 Old Ballard Farm Ln")).toBeInTheDocument()
-    expect(await screen.findByText("42 Ridgeview Rd")).toBeInTheDocument()
+    expect((await screen.findAllByText("895 Old Ballard Farm Ln")).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText("42 Ridgeview Rd")).length).toBeGreaterThan(0)
   })
 
   it("Contractor Network groups a contractor's jobs by home for founders", async () => {
