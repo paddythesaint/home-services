@@ -165,16 +165,24 @@ three questions per candidate —
       of the property page. Frontend-only; no new indexes needed since
       cross-property job aggregation reuses the founder's existing
       property-membership reads rather than a collection-group query.
-- [ ] **Slice 8 — exterior vision measurements (quote-readiness data).**
-      Run the uploaded exterior photos through Claude vision to estimate
-      **window count** (per-facade counts → deduped total, with confidence)
-      and **gutter linear footage** (roofline segments scaled against the
-      known footprint). Store as property facts flagged *estimated — verify*,
-      with provenance, and auto-fill Slice 5's `infoNeeded` measurement
-      asks. Honest feasibility: per-photo window counting is reliable;
-      cross-facade dedup needs care; gutter footage will be ±20–30% — fine
-      for ballpark quotes if labeled as an estimate. Uses the existing
-      browser-direct Claude call; no backend.
+- [x] **Slice 8 — exterior vision measurements (shipped 7/3/26).** New
+      **Exterior Measurements** page (Property nav): pick which system's
+      photos to analyze (auto-guesses an exterior/grounds/roof system),
+      sends up to 12 of its photos in one Claude vision call asking for a
+      combined window count (deduped across photos in a single request,
+      simpler than a per-photo breakdown and just as capable since the
+      model sees all images together) and a gutter linear-footage estimate
+      scaled off visible reference objects (door/window widths) — no
+      stored square-footage figure existed to scale against, so this is
+      the honest substitute. Each figure carries a confidence level and
+      one-sentence reasoning; results save to the property profile as
+      `exteriorEstimate` with date + photo-count provenance, always
+      labeled "estimate — verify." **Auto-fills Slice 5:** any open
+      priority's `measurement`-type info-need mentioning "window" or
+      "gutter" is marked provided with the estimate. Verified in-browser:
+      renders a saved estimate correctly and the error path (bad key)
+      degrades gracefully without losing the prior result. Uses the
+      existing browser-direct Claude call; no backend.
 
 **Sequencing rationale:** 5 is the bridge itself and everything else feeds
 it — 6 fills its info-needs conversationally, 7 gives the quotes somewhere

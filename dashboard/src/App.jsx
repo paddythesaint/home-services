@@ -12,6 +12,7 @@ import JobHistory from "./pages/JobHistory"
 import Contractors from "./pages/Contractors"
 import BusinessContractors from "./pages/BusinessContractors"
 import ImportBundle from "./pages/ImportBundle"
+import ExteriorMeasurements from "./pages/ExteriorMeasurements"
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
               <Route path="job-history" element={<JobHistory />} />
               <Route path="contractors" element={<Contractors />} />
               <Route path="import" element={<ImportBundle />} />
+              <Route path="exterior-measurements" element={<ExteriorMeasurements />} />
               <Route path="ops" element={<Ops />} />
               <Route path="contractor-network" element={<BusinessContractors />} />
             </Route>
