@@ -9,6 +9,7 @@ import { seedAddressHint } from "../seedData"
 import { viewFor } from "../roles"
 import { isUnderway } from "../workOrders"
 import HomeownerHome from "../HomeownerHome"
+import RelationshipCard from "../RelationshipCard"
 import hero895 from "../assets/hero-895.jpg"
 import { closingDocsInsights } from "../documentInsights"
 import { recordsIndexInsights } from "../recordsIndexInsights"
@@ -338,6 +339,8 @@ function FullOverview() {
       <div className="mt-4">
         <Members uid={uid} profile={profile} currentEmail={user?.email} />
       </div>
+
+      {viewFor(user?.email).business && <RelationshipCard uid={uid} />}
 
       <p className="text-xs text-ink-3 mt-4">
         Have a prepared data bundle (photos + facts)?{" "}

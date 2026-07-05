@@ -376,4 +376,23 @@ export const fixtureData = {
       notes: "",
     },
   ],
+  // Founder-only relationship store (clients/{propertyId} in production).
+  clients: {
+    "prop-ballard": {
+      card: {
+        preferences: "Afternoon visits preferred; text before arriving.",
+        access: "Gate code 1187. Dog (Biscuit) is friendly but bolts — keep the gate shut.",
+        keyDates: "Away most of August; anniversary Oct 12.",
+      },
+      touches: [
+        {
+          id: "touch-1",
+          date: "July 2, 2026",
+          type: "call",
+          note: "Quarterly check-in — all good, asked about gutter timing.",
+          order: 1,
+        },
+      ],
+    },
+  },
 }

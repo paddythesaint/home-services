@@ -32,6 +32,27 @@ service cloud.firestore {
         && request.auth.token.email in ['paddythesaint@gmail.com'];
     }
 
+    // Staff: the relationship and technician seats. They get property-plane
+    // access WITHOUT being made co-owners of anyone's home (no membership,
+    // no appearance in "People with access"). Keep in sync with the staff
+    // map in src/roles.js — swap the placeholders for real emails as the
+    // team becomes real.
+    function isStaff() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in ['sally@example.com', 'tech@example.com'];
+    }
+
+    // Client relationship store: household preferences, access notes, and
+    // the touch log. Founder-only — this is what the business remembers
+    // about the relationship, and it never renders for members.
+    match /clients/{propertyId} {
+      allow read, write: if isFounder();
+      match /{sub}/{docId} {
+        allow read, write: if isFounder();
+      }
+    }
+
     // The contractor network: one profile per contractor, spanning all
     // properties. Founder-only.
     match /contractors/{contractorId} {
@@ -46,14 +67,15 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.auth.token.email_verified == true
         && request.auth.token.email in request.resource.data.memberEmails;
-      allow read: if isMemberOf(resource.data) || isLegacyOwner(propertyId);
+      allow read: if isMemberOf(resource.data) || isLegacyOwner(propertyId) || isStaff();
       // A member (or the legacy owner) may update the property, including its
       // member list. New-member writes only work if you can already write.
-      allow write: if isLegacyOwner(propertyId) || isMemberOf(resource.data);
+      allow write: if isLegacyOwner(propertyId) || isMemberOf(resource.data) || isStaff();
 
       match /{sub}/{docId} {
         allow read, write: if isLegacyOwner(propertyId)
-          || isMemberOf(propertyData(propertyId));
+          || isMemberOf(propertyData(propertyId))
+          || isStaff();
       }
     }
   }

@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react"
 import { Link, useNavigate, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
-import { fetchMemberProperties, createProperty, deletePropertyDeep } from "../firestoreApi"
+import {
+  fetchMemberProperties,
+  createProperty,
+  deletePropertyDeep,
+  fetchLatestTouch,
+} from "../firestoreApi"
 import { todayISO, isoToLabel, todayLabel } from "../dates"
 import { isReadyToAction } from "../resolution"
 import { viewFor } from "../roles"
@@ -39,6 +44,19 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
   const priorityApi = useItems(propertyId, "priorityList")
   const { items: systems } = useItems(propertyId, "healthReport")
   const { items: jobs } = useItems(propertyId, "jobHistory")
+
+  // Relationship health, not just property health: when did we last talk
+  // to this household? (Founder-only clients store; errors stay quiet.)
+  const [lastTouch, setLastTouch] = useState(null)
+  useEffect(() => {
+    let active = true
+    fetchLatestTouch(propertyId)
+      .then((t) => active && setLastTouch(t))
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [propertyId])
 
   const openPriorities = priorityApi.items.filter(isOpen)
   const highPriorities = openPriorities.filter((p) => p.urgency === "high")
@@ -117,6 +135,7 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
           <p className="text-xs text-ink-3">
             {profile.areaLabel}
             {profile.clientName ? ` · ${profile.clientName}` : ""}
+            {lastTouch ? ` · last touch ${lastTouch.date}` : " · no touches logged"}
           </p>
           {onOpen && (
             <button

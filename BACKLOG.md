@@ -48,6 +48,25 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 34 — the relationship layer + staff rules (7/5/26)
+CRM findings #2 and #6. The business now has a memory of the household,
+not just the house:
+- **Client relationship card** (founder Overview, "private to HPS"):
+  preferences, access & household notes, key dates — stored in a new
+  founder-only top-level collection (clients/{propertyId}) that members
+  can never read, plus a **touch log** (call/text/email/visit, one line
+  each).
+- **Relationship health on the Command Center**: each property shows
+  "last touch <date>" — or "no touches logged", because the silence is
+  the signal.
+- **Staff rules** (firestore.rules isStaff()): the relationship and
+  technician seats get property-plane access WITHOUT being co-owners
+  of a client's home — no membership, no "People with access" entry.
+  Placeholder emails; swap alongside roles.js when hiring.
+- System status gains a "Client relationship store" probe; RUNBOOK
+  updated — **one console publish of dashboard/firestore.rules
+  activates both** (card shows a red pointer until then).
+
 ## Slice 33 — the receipt of value (7/5/26)
 CRM finding #5: clients cancel things that feel dormant. The calm home
 gains "Your membership, the last 12 months" — tasks completed, work
