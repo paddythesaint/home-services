@@ -173,11 +173,14 @@ export default function Layout({ user }) {
   if (status === "none") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-plane px-4">
-        <div className="bg-surface border border-line rounded-xl p-8 max-w-sm w-full text-center shadow-sm">
-          <p className="font-semibold text-ink mb-2">No property yet</p>
+        <div className="bg-surface border border-line rounded-2xl p-8 max-w-sm w-full text-center shadow-(--shadow-card)">
+          <p className="font-display text-lg font-semibold text-ink mb-2">
+            {founder ? "Welcome — let's add your home" : "No property yet"}
+          </p>
           <p className="text-sm text-ink-2 mb-6">
-            {user.email} isn't a member of any property yet. Ask an owner to
-            invite you from their "People with access" panel, then reload.
+            {founder
+              ? "You have full access, but no property is linked to you yet. Ask your co-founder to create your home from their Command Center and add you under \"People with access\" — then reload this page."
+              : `${user.email} isn't a member of any property yet. Ask an owner to invite you from their "People with access" panel, then reload.`}
           </p>
           <button
             type="button"

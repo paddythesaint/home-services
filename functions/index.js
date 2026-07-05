@@ -21,7 +21,7 @@ const { getFirestore } = require("firebase-admin/firestore")
 initializeApp()
 
 // Keep in sync with dashboard/src/founders.js and firestore.rules.
-const FOUNDER_EMAILS = ["paddythesaint@gmail.com"]
+const FOUNDER_EMAILS = ["paddythesaint@gmail.com", "michael.e.sutton@gmail.com"]
 
 const ALLOWED_ORIGINS = [
   "https://paddythesaint.github.io",
