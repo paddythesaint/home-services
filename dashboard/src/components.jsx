@@ -1,9 +1,10 @@
 import { useState } from "react"
 
-export function Card({ title, children, className = "" }) {
+export function Card({ title, children, className = "", ...rest }) {
   return (
     <div
       className={`bg-surface border border-line rounded-2xl p-5 md:p-6 shadow-(--shadow-card) ${className}`}
+      {...rest}
     >
       {title && (
         <h2 className="text-[15px] font-semibold text-ink mb-3.5 tracking-tight">{title}</h2>
