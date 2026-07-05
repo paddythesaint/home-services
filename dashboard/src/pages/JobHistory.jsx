@@ -3,6 +3,7 @@ import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import { subscribeContractors } from "../firestoreApi"
 import { viewFor } from "../roles"
+import VisitNoteCard from "../VisitNoteCard"
 import { Card, PageHeader, StatusBadge, Button, Modal, DynamicForm } from "../components"
 
 const baseFields = [
@@ -22,7 +23,7 @@ const baseFields = [
 ]
 
 export default function JobHistory() {
-  const { uid, user } = useOutletContext()
+  const { uid, user, profile } = useOutletContext()
   const { items, add, update, remove } = useItems(uid, "jobHistory")
   const [editing, setEditing] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -79,6 +80,8 @@ export default function JobHistory() {
         subtitle="A complete record of every job dispatched on your property."
         action={<Button onClick={() => setEditing("new")}>+ Add job</Button>}
       />
+
+      {founder && <VisitNoteCard uid={uid} profile={profile} jobs={items} />}
 
       {orderedItems.length === 0 ? (
         <Card>

@@ -48,6 +48,15 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 32 — visit notes: silent excellence made visible (7/5/26)
+CRM finding #3. Job History (founders) gains a "Visit note" composer:
+one click drafts a warm, client-ready note from the record — completed
+work in the last three weeks (fallback: last few jobs) and what's
+coming up from work orders — editable, then Copy / Open in email
+(addressed to the non-staff members) / Save. Saved notes land in the
+property's visitNotes collection and the latest one greets the
+homeowner on their calm home screen as "A note from your team."
+
 ## Slice 31 — the bell to ring: Request button + calm homeowner home (7/5/26)
 CRM assessment finding #1: the product had no way for a client to ask
 for anything. Homeowners now land on a calm home screen instead of the
