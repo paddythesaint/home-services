@@ -23,7 +23,8 @@ import { FOUNDER_EMAILS } from "./founders"
 // signs in with @example.com).
 export const STAFF_ROLES = {
   ...Object.fromEntries(FOUNDER_EMAILS.map((e) => [e, "founder"])),
-  "sally@example.com": "relationship",
+  "sallyrryan@gmail.com": "relationship", // Sally — real login
+  "sally@example.com": "relationship", // demo/test persona (unroutable, harmless)
   "tech@example.com": "technician",
 }
 

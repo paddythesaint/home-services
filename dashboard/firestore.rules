@@ -40,7 +40,7 @@ service cloud.firestore {
     function isStaff() {
       return request.auth != null
         && request.auth.token.email_verified == true
-        && request.auth.token.email in ['sally@example.com', 'tech@example.com'];
+        && request.auth.token.email in ['sallyrryan@gmail.com', 'tech@example.com'];
     }
 
     // Client relationship store: household preferences, access notes, and
