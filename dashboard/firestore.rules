@@ -29,7 +29,7 @@ service cloud.firestore {
     function isFounder() {
       return request.auth != null
         && request.auth.token.email_verified == true
-        && request.auth.token.email in ['paddythesaint@gmail.com'];
+        && request.auth.token.email in ['paddythesaint@gmail.com', 'michael.e.sutton@gmail.com'];
     }
 
     // Staff: the relationship and technician seats. They get property-plane
