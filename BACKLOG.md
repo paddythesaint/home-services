@@ -48,6 +48,14 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 36 — founders' Ideas board (7/5/26)
+Owner request: a place in the Business nav to capture ideas the moment
+they occur, visible only to the two owners. New founder-only top-level
+`ideas` collection (rules block + System status probe + RUNBOOK row —
+needs the usual one-publish); /ideas page with quick add (title + a
+line of context), attribution + date, done/reopen with a folded done
+list, edit and delete. Deliberately lighter than a project tracker.
+
 ## Slice 35 — first-login guided tour (7/5/26)
 Built for Mike's arrival: a lightweight spotlight tour on first sign-in
 (no library — dimmed overlay, white ring on the real UI, a small card

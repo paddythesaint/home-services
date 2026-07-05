@@ -59,6 +59,12 @@ service cloud.firestore {
       allow read, write: if isFounder();
     }
 
+    // The founders' shared idea board. Business-plane scratchpad — never
+    // rendered for members or staff.
+    match /ideas/{ideaId} {
+      allow read, write: if isFounder();
+    }
+
     match /properties/{propertyId} {
       // Property creation (founder onboarding flow): any verified signed-in
       // user may create a property that lists themselves as a member. The

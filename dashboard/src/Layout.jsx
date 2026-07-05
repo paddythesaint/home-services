@@ -23,6 +23,7 @@ const icons = {
   network: <path d="M12 2a3 3 0 100 6 3 3 0 000-6zM5 16a3 3 0 106 0 3 3 0 00-6 0zM13 16a3 3 0 106 0 3 3 0 00-6 0zM10.5 7.5L7 13.5M13.5 7.5L17 13.5M8 16h8" />,
   import: <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />,
   workorders: <path d="M9 3h6a1 1 0 011 1v2H8V4a1 1 0 011-1zM8 6H6a2 2 0 00-2 2v11a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-2M9 12l2 2 4-4" />,
+  ideas: <path d="M9 18h6M10 21h4M12 3a6 6 0 00-3.9 10.6c.57.5.9 1.2.9 1.9V16h6v-.5c0-.7.33-1.4.9-1.9A6 6 0 0012 3z" />,
 }
 
 function NavIcon({ name }) {
@@ -72,6 +73,7 @@ function buildNavSections(view) {
         { to: "/ops", label: "Command Center", icon: "ops" },
         { to: "/work-orders", label: "Work Orders", icon: "workorders" },
         { to: "/contractor-network", label: "Contractor Network", icon: "network" },
+        { to: "/ideas", label: "Ideas", icon: "ideas" },
       ],
     })
   }

@@ -14,6 +14,7 @@ about two minutes.
 | Membership rules (`isMemberOf`, `isLegacyOwner`) | earlier, believed live | Everything else — if these were missing you couldn't sign in usefully at all. |
 | `match /clients/{propertyId}` (founder-only) | Slice 34 (7/5/26) | The client relationship card + touch log on the founder Overview, and "last touch" on the Command Center. System status shows a red "Client relationship store" row until published. |
 | `isStaff()` on properties + subcollections | Slice 34 (7/5/26) | Staff (relationship/technician seats) can work on any property **without being made co-owners** of a client's home. Placeholder emails in the rules — swap for real ones alongside `src/roles.js` when hiring. |
+| `match /ideas/{ideaId}` (founder-only) | Slice 36 (7/5/26) | The owners' shared Ideas board in the Business nav. System status shows a red "Idea board" row until published. |
 
 Publishing the whole file is idempotent: clauses that are already live are
 simply re-published unchanged. There is nothing to diff by hand.

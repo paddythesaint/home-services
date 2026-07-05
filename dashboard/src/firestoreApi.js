@@ -257,6 +257,27 @@ export function removeContractor(id) {
   return deleteDoc(doc(db, "contractors", id))
 }
 
+// The founders' shared idea board (top-level, founder-only via rules).
+export function subscribeIdeas(callback, onError) {
+  return onSnapshot(
+    query(collection(db, "ideas"), orderBy("order", "desc")),
+    (snap) => callback(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    onError
+  )
+}
+
+export function addIdea(data) {
+  return addDoc(collection(db, "ideas"), { ...data, order: Date.now() })
+}
+
+export function updateIdea(id, data) {
+  return updateDoc(doc(db, "ideas", id), data)
+}
+
+export function removeIdea(id) {
+  return deleteDoc(doc(db, "ideas", id))
+}
+
 // One-time migration source: the per-property rosters from slice 3.
 export async function fetchPropertyContractors(pid) {
   const snap = await getDocs(collection(db, "properties", pid, "contractors"))
@@ -462,6 +483,18 @@ export async function runDiagnostics(user) {
       } catch (err) {
         add(`sub-${name}`, `Property data: ${name}`, false, err.code || String(err), RULES_FIX)
       }
+    }
+    try {
+      await getDocs(query(collection(db, "ideas"), limit(1)))
+      add("ideas", "Idea board (founder-only)", true, "readable")
+    } catch (err) {
+      add(
+        "ideas",
+        "Idea board (founder-only)",
+        false,
+        err.code || String(err),
+        "The founder-only ideas rule isn't live. " + RULES_FIX
+      )
     }
     try {
       await getDoc(doc(db, "clients", pid))
