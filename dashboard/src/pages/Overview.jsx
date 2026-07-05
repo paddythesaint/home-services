@@ -8,6 +8,7 @@ import Members from "../Members"
 import { seedAddressHint } from "../seedData"
 import { viewFor } from "../roles"
 import { isUnderway } from "../workOrders"
+import HomeownerHome from "../HomeownerHome"
 import hero895 from "../assets/hero-895.jpg"
 import { closingDocsInsights } from "../documentInsights"
 import { recordsIndexInsights } from "../recordsIndexInsights"
@@ -42,7 +43,15 @@ const propertyFields = [
   { name: "referralCredits", label: "Referral credits (free months)", type: "number" },
 ]
 
+// Homeowners get the calm home screen; staff and founders get the full
+// operational overview. Branching in a wrapper keeps hook order stable
+// when a founder flips the View-as lens.
 export default function Overview() {
+  const { user } = useOutletContext()
+  return viewFor(user?.email).role === "homeowner" ? <HomeownerHome /> : <FullOverview />
+}
+
+function FullOverview() {
   const { uid, profile, saveProfile, user } = useOutletContext()
   const healthApi = useItems(uid, "healthReport")
   const priorityApi = useItems(uid, "priorityList")

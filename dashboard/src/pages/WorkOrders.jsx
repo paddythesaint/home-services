@@ -228,7 +228,14 @@ export default function WorkOrders() {
                       key={`${w.propertyId}-${w.id}`}
                       className="bg-surface border border-line rounded-xl p-3 shadow-(--shadow-card)"
                     >
-                      <p className="text-xs text-ink-3">{w.propertyLabel}</p>
+                      <p className="text-xs text-ink-3 flex items-center gap-2">
+                        {w.propertyLabel}
+                        {w.source === "homeowner" && (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-50 border border-amber-200 text-amber-900 rounded-full px-2 py-0.5">
+                            Client request
+                          </span>
+                        )}
+                      </p>
                       <p className="text-sm font-semibold text-ink mt-0.5">{w.title}</p>
                       <p className="text-xs text-ink-2 mt-1">
                         {w.assigneeType === "contractor" ? (
