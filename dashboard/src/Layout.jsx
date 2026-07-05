@@ -91,7 +91,9 @@ export default function Layout({ user }) {
 
   const view = viewFor(user?.email)
   const navSections = buildNavSections(view)
-  const allNavItems = navSections.flatMap((s) => s.items)
+
+  // Mobile: hamburger → left drawer (the full sidebar, not scroll chips).
+  const [menuOpen, setMenuOpen] = useState(false)
 
   // Founders can view any property in their portfolio; the switcher below
   // picks which one the Property-plane pages show. Homeowners keep the
@@ -248,63 +250,128 @@ export default function Layout({ user }) {
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="md:hidden bg-brand-900 text-brand-50">
-          <div className="px-4 py-3 flex items-center justify-between">
-            <p className="text-sm font-semibold">Home &amp; Property Services</p>
-            <button type="button" onClick={() => signOut(auth)} className="text-xs underline">
-              Sign out
+          <div className="px-4 py-3 flex items-center gap-3">
+            <button
+              type="button"
+              aria-label="Open menu"
+              onClick={() => setMenuOpen(true)}
+              className="p-1 -ml-1 text-brand-50"
+            >
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
             </button>
+            <p className="font-display text-sm font-semibold flex-1">
+              Home &amp; Property Services
+            </p>
           </div>
-          {founder && (portfolio?.length ?? 0) > 1 && (
-            <div className="px-3 pb-2">
-              <select
-                value={activePropertyId || ""}
-                onChange={(e) => setActiveProperty(e.target.value)}
-                className="w-full bg-brand-800 text-brand-50 text-xs rounded-md px-2 py-1.5 border border-brand-700"
-              >
-                {portfolio.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.address}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-          {founder && (
-            <div className="px-3 pb-2">
-              <select
-                value={viewAs}
-                onChange={(e) => changeViewAs(e.target.value)}
-                className="w-full bg-brand-800 text-brand-50 text-xs rounded-md px-2 py-1.5 border border-brand-700"
-                aria-label="View as"
-              >
-                {Object.entries(ROLE_LABELS).map(([role, label]) => (
-                  <option key={role} value={role}>
-                    View as: {label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-          <nav className="flex gap-1.5 overflow-x-auto px-3 pb-2.5">
-            {allNavItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  `flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs whitespace-nowrap transition-colors ${
-                    isActive
-                      ? "bg-brand-50 text-brand-900 font-medium"
-                      : "bg-brand-800 text-brand-100"
-                  }`
-                }
-              >
-                <NavIcon name={item.icon} />
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
         </header>
+
+        {/* Mobile drawer: the full sidebar, sliding in from the left. */}
+        {menuOpen && (
+          <div className="md:hidden fixed inset-0 z-50">
+            <div
+              className="absolute inset-0 bg-brand-950/50"
+              aria-hidden="true"
+              onClick={() => setMenuOpen(false)}
+            />
+            <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] bg-brand-900 text-brand-50 p-5 overflow-y-auto shadow-(--shadow-raised)">
+              <div className="mb-6 flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-brand-200">
+                    Charlottesville
+                  </p>
+                  <p className="font-display text-lg font-semibold leading-snug">
+                    Home &amp; Property Services
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Close menu"
+                  onClick={() => setMenuOpen(false)}
+                  className="text-brand-200 hover:text-white text-2xl leading-none"
+                >
+                  &times;
+                </button>
+              </div>
+              {founder && (portfolio?.length ?? 0) > 1 && (
+                <label className="block mb-4">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-300">
+                    Viewing property
+                  </span>
+                  <select
+                    value={activePropertyId || ""}
+                    onChange={(e) => setActiveProperty(e.target.value)}
+                    className="mt-1.5 w-full bg-brand-800 text-brand-50 text-sm rounded-md px-2 py-1.5 border border-brand-700"
+                  >
+                    {portfolio.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.address}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {founder && (
+                <select
+                  value={viewAs}
+                  onChange={(e) => changeViewAs(e.target.value)}
+                  className="mb-4 w-full bg-brand-800 text-brand-50 text-xs rounded-md px-2 py-1.5 border border-brand-700"
+                  aria-label="View as"
+                >
+                  {Object.entries(ROLE_LABELS).map(([role, label]) => (
+                    <option key={role} value={role}>
+                      View as: {label}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <nav className="flex flex-col gap-4">
+                {navSections.map((section) => (
+                  <div key={section.heading} className="flex flex-col gap-0.5">
+                    <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-300">
+                      {section.heading}
+                    </p>
+                    {section.items.map((item) => (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        end={item.end}
+                        onClick={() => setMenuOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors ${
+                            isActive
+                              ? "bg-brand-50 text-brand-900 font-medium"
+                              : "text-brand-100 hover:bg-brand-800"
+                          }`
+                        }
+                      >
+                        <NavIcon name={item.icon} />
+                        {item.label}
+                      </NavLink>
+                    ))}
+                  </div>
+                ))}
+              </nav>
+              <button
+                type="button"
+                onClick={() => signOut(auth)}
+                className="mt-8 text-sm text-brand-200 hover:text-white underline underline-offset-2"
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        )}
         <header className="hidden md:flex items-center justify-between border-b border-line bg-surface px-8 py-3.5">
           <div>
             <p className="text-xs text-ink-3">Welcome back</p>
