@@ -4,6 +4,7 @@ import { useItems } from "./useItems"
 import { addItem } from "./firestoreApi"
 import { todayLabel } from "./dates"
 import { isUnderway, isOpenWorkOrder } from "./workOrders"
+import { buildRecap, formatSpend } from "./valueRecap"
 import { seedAddressHint } from "./seedData"
 import { TEAM } from "./team"
 import hero895 from "./assets/hero-895.jpg"
@@ -43,7 +44,9 @@ export default function HomeownerHome() {
   const { items: workOrders } = useItems(uid, "workOrders")
   const { items: jobs } = useItems(uid, "jobHistory")
   const { items: visitNotes } = useItems(uid, "visitNotes")
+  const { items: priorities } = useItems(uid, "priorityList")
   const latestNote = visitNotes[visitNotes.length - 1]
+  const recap = buildRecap({ jobs, priorities })
 
   const [requesting, setRequesting] = useState(false)
   const [message, setMessage] = useState("")
@@ -148,6 +151,46 @@ export default function HomeownerHome() {
                   </li>
                 ))}
               </ul>
+            </Card>
+          )}
+
+          {recap.hasAnything && (
+            <Card>
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-3 mb-3">
+                Your membership, the last 12 months
+              </p>
+              <div className="flex flex-wrap gap-x-8 gap-y-3">
+                <div>
+                  <p className="font-display text-2xl font-semibold text-ink leading-tight">
+                    {recap.tasksDone}
+                  </p>
+                  <p className="text-xs text-ink-3">
+                    task{recap.tasksDone === 1 ? "" : "s"} completed
+                  </p>
+                </div>
+                <div>
+                  <p className="font-display text-2xl font-semibold text-ink leading-tight">
+                    {recap.withPros}
+                  </p>
+                  <p className="text-xs text-ink-3">handled by trusted pros</p>
+                </div>
+                <div>
+                  <p className="font-display text-2xl font-semibold text-ink leading-tight">
+                    {recap.issuesResolved}
+                  </p>
+                  <p className="text-xs text-ink-3">
+                    issue{recap.issuesResolved === 1 ? "" : "s"} closed out
+                  </p>
+                </div>
+                {recap.coordinatedSpend > 0 && (
+                  <div>
+                    <p className="font-display text-2xl font-semibold text-ink leading-tight">
+                      {formatSpend(recap.coordinatedSpend)}
+                    </p>
+                    <p className="text-xs text-ink-3">of work coordinated for you</p>
+                  </div>
+                )}
+              </div>
             </Card>
           )}
 
