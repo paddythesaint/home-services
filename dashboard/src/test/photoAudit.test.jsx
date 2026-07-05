@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { screen, fireEvent, waitFor } from "@testing-library/react"
+import { screen, fireEvent, waitFor, within } from "@testing-library/react"
 import { renderPage } from "./renderPage"
 import HealthReport from "../pages/HealthReport"
 import { parseVisionReply } from "../nameplateVision"
@@ -49,6 +49,28 @@ describe("photo visibility and audit", () => {
     // Count backfill stamped the water heater.
     const wh = __getItems("prop-ballard", "healthReport").find((s) => s.id === "sys-waterheater")
     expect(wh.photoCount).toBe(1)
+  })
+
+  it("deleting a system takes its photos with it — no new orphans", async () => {
+    renderPage(<HealthReport />)
+    // HVAC carries photo-hvac-1. Delete the system from its card.
+    const hvacCard = (await screen.findByText("HVAC")).closest(".bg-surface")
+    fireEvent.click(within(hvacCard).getByText("Delete"))
+    expect(
+      await screen.findByText(/Its 1 photo will be removed with it/)
+    ).toBeInTheDocument()
+    // The confirm modal's Delete is the last one rendered.
+    const deletes = screen.getAllByText("Delete")
+    fireEvent.click(deletes[deletes.length - 1])
+    await waitFor(() => {
+      expect(
+        __getItems("prop-ballard", "healthReport").find((s) => s.id === "sys-hvac")
+      ).toBeUndefined()
+    })
+    const photos = await fetchAllPhotos("prop-ballard")
+    expect(photos.find((p) => p.id === "photo-hvac-1")).toBeUndefined()
+    // The pre-existing orphan (filed under a long-gone system) is untouched.
+    expect(photos.find((p) => p.id === "photo-orphan-1")).toBeDefined()
   })
 
   it("hides the audit tool from non-founders", async () => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { NavLink, Outlet } from "react-router-dom"
 import { signOut } from "firebase/auth"
 import { auth } from "./firebase"
@@ -368,17 +368,20 @@ export default function Layout({ user }) {
                 : "Let your service operator know."}
             </div>
           )}
-          <Outlet
-            context={{
-              uid: activePropertyId,
-              profile,
-              saveProfile: save,
-              user,
-              portfolio,
-              setActiveProperty,
-              refreshPortfolio,
-            }}
-          />
+          {/* Lazy page chunks suspend here — the chrome stays put. */}
+          <Suspense fallback={<p className="text-sm text-ink-3">Loading…</p>}>
+            <Outlet
+              context={{
+                uid: activePropertyId,
+                profile,
+                saveProfile: save,
+                user,
+                portfolio,
+                setActiveProperty,
+                refreshPortfolio,
+              }}
+            />
+          </Suspense>
         </main>
       </div>
     </div>

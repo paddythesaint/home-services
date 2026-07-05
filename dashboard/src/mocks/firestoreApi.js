@@ -208,6 +208,16 @@ export function setPhotoCount(uid, systemId, count) {
   return updateItem(uid, "healthReport", systemId, { photoCount: count })
 }
 
+// Mirrors the real deleteSystemDeep: a deleted system takes its photos.
+export async function deleteSystemDeep(uid, systemId) {
+  const photos = coll(uid, "photos")
+  const removed = photos.filter((p) => p.systemId === systemId).length
+  prop(uid).collections.photos = photos.filter((p) => p.systemId !== systemId)
+  emitItems(uid, "photos")
+  await removeItem(uid, "healthReport", systemId)
+  return removed
+}
+
 export function subscribeContractors(callback, onError) {
   if (MOCK_DENY === "contractors-network") {
     onError?.(deniedError())

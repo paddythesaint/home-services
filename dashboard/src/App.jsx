@@ -1,19 +1,25 @@
+import { lazy } from "react"
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import AuthGate from "./AuthGate"
 import Layout from "./Layout"
+
+// Every page is its own chunk — the first paint ships the shell (auth,
+// layout, Firebase core) and each page loads on first visit. Overview is
+// what everyone lands on, so it rides with the shell eagerly. The Suspense
+// boundary lives in Layout, around the Outlet, so the chrome never blinks.
 import Overview from "./pages/Overview"
-import Walkthrough from "./pages/Walkthrough"
-import Ops from "./pages/Ops"
-import HealthReport from "./pages/HealthReport"
-import CareCalendar from "./pages/CareCalendar"
-import PriorityList from "./pages/PriorityList"
-import Forecast from "./pages/Forecast"
-import JobHistory from "./pages/JobHistory"
-import Contractors from "./pages/Contractors"
-import BusinessContractors from "./pages/BusinessContractors"
-import WorkOrders from "./pages/WorkOrders"
-import ContractorProfile from "./pages/ContractorProfile"
-import ImportBundle from "./pages/ImportBundle"
+const Walkthrough = lazy(() => import("./pages/Walkthrough"))
+const Ops = lazy(() => import("./pages/Ops"))
+const HealthReport = lazy(() => import("./pages/HealthReport"))
+const CareCalendar = lazy(() => import("./pages/CareCalendar"))
+const PriorityList = lazy(() => import("./pages/PriorityList"))
+const Forecast = lazy(() => import("./pages/Forecast"))
+const JobHistory = lazy(() => import("./pages/JobHistory"))
+const Contractors = lazy(() => import("./pages/Contractors"))
+const BusinessContractors = lazy(() => import("./pages/BusinessContractors"))
+const WorkOrders = lazy(() => import("./pages/WorkOrders"))
+const ContractorProfile = lazy(() => import("./pages/ContractorProfile"))
+const ImportBundle = lazy(() => import("./pages/ImportBundle"))
 
 export default function App() {
   return (

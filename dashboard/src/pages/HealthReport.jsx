@@ -5,7 +5,7 @@ import PhotoSection from "../PhotoSection"
 import PhotoAudit from "../PhotoAudit"
 import ActivitySection from "../ActivitySection"
 import { viewFor } from "../roles"
-import { addItem } from "../firestoreApi"
+import { addItem, deleteSystemDeep } from "../firestoreApi"
 import { todayLabel, todayISO, isoToLabel, addMonthsISO } from "../dates"
 import { replacementHorizon, fmtMoneyRange } from "../benchmarks"
 import {
@@ -60,7 +60,7 @@ function dueClass(nextDue) {
 
 export default function HealthReport() {
   const { uid, profile, user } = useOutletContext()
-  const { items, add, update, remove } = useItems(uid, "healthReport")
+  const { items, add, update } = useItems(uid, "healthReport")
   const [editing, setEditing] = useState(null) // null | "new" | item
   const [confirmDelete, setConfirmDelete] = useState(null)
 
@@ -250,6 +250,10 @@ export default function HealthReport() {
         <Modal title="Delete system?" onClose={() => setConfirmDelete(null)}>
           <p className="text-sm text-ink-2 mb-4">
             Remove "{confirmDelete.category}" from your Property Health Report?
+            {(confirmDelete.photoCount || 0) > 0 &&
+              ` Its ${confirmDelete.photoCount} photo${
+                confirmDelete.photoCount === 1 ? "" : "s"
+              } will be removed with it.`}
           </p>
           <div className="flex justify-end gap-2">
             <Button variant="subtle" onClick={() => setConfirmDelete(null)}>
@@ -258,7 +262,9 @@ export default function HealthReport() {
             <Button
               variant="danger"
               onClick={() => {
-                remove(confirmDelete.id)
+                // Deep delete: the system's photos go with it, so they
+                // never linger as orphans.
+                deleteSystemDeep(uid, confirmDelete.id)
                 setConfirmDelete(null)
               }}
             >

@@ -23,6 +23,21 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: mode === 'mock' || mode === 'test' ? mockAliases : [],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Vendor code changes far less often than ours — separate chunks
+        // mean returning browsers only re-download the app, not the SDKs.
+        // (Rolldown accepts only the function form of manualChunks.)
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (id.includes('firebase')) return 'firebase'
+          if (id.includes('react') || id.includes('scheduler')) return 'react'
+          return undefined
+        },
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,
