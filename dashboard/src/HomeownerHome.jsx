@@ -42,6 +42,8 @@ export default function HomeownerHome() {
   const { items: systems } = useItems(uid, "healthReport")
   const { items: workOrders } = useItems(uid, "workOrders")
   const { items: jobs } = useItems(uid, "jobHistory")
+  const { items: visitNotes } = useItems(uid, "visitNotes")
+  const latestNote = visitNotes[visitNotes.length - 1]
 
   const [requesting, setRequesting] = useState(false)
   const [message, setMessage] = useState("")
@@ -124,6 +126,15 @@ export default function HomeownerHome() {
               </Button>
             </div>
           </Card>
+
+          {latestNote && (
+            <Card>
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-3 mb-2">
+                A note from your team{latestNote.sentOn ? ` · ${latestNote.sentOn}` : ""}
+              </p>
+              <p className="text-sm text-ink-2 whitespace-pre-line">{latestNote.body}</p>
+            </Card>
+          )}
 
           {happening.length > 0 && (
             <Card>
