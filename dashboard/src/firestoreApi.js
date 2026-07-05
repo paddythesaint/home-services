@@ -221,6 +221,19 @@ export function setPhotoCount(uid, systemId, count) {
   })
 }
 
+// Deleting a system takes its photos with it — otherwise they linger as
+// orphans only the founder's audit tool can find. Returns how many photos
+// went with the system.
+export async function deleteSystemDeep(uid, systemId) {
+  const snap = await getDocs(collectionRef(uid, "photos"))
+  const mine = snap.docs.filter((d) => d.data().systemId === systemId)
+  for (const d of mine) {
+    await deleteDoc(d.ref)
+  }
+  await deleteDoc(doc(db, "properties", uid, "healthReport", systemId))
+  return mine.length
+}
+
 // Business-plane contractor network: a top-level collection, one profile
 // per contractor across all properties. Founder-only via firestore.rules
 // isFounder — a denied subscription surfaces through onError.

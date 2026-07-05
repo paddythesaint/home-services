@@ -48,6 +48,18 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 29 — tech debt: code-split + orphan-proof deletes (7/4/26)
+- **Code-split**: every page is a lazy chunk behind a Suspense boundary
+  in Layout (the chrome never blinks); Firebase and React live in
+  their own long-cached vendor chunks. The app's own main chunk went
+  from ~1,014KB to ~71KB — first paint ships the shell + Overview,
+  everything else loads on first visit, and future deploys only
+  invalidate the small app chunk.
+- **Orphan-proof deletes**: deleting a Health Report system now takes
+  its photos with it (deleteSystemDeep, real + mock), with the confirm
+  dialog stating the photo count. The audit tool remains for legacy
+  orphans only.
+
 ## Slice 28 — roster unification: network is truth (7/4/26)
 Closes the last deliberate double-bookkeeping. The Contractor Network
 is now the single source of truth for shared vendors; each property
@@ -543,8 +555,8 @@ Property = homeowner view, Business = command center — already shipped.)
 ## Engineering
 - [ ] Proper backend (Cloud Functions or similar) — unblocks the three items
       above and removes the paste-your-own-API-key setup for the assistant.
-- [ ] Code-split the main bundle (build warns at ~840KB minified).
-- [ ] Clean up orphaned photos when a system is deleted.
+- [x] Code-split the main bundle (Slice 29: lazy pages + vendor chunks; app chunk ~71KB).
+- [x] Clean up orphaned photos when a system is deleted (Slice 29: deleteSystemDeep).
 - [ ] Dark mode (deliberately skipped in redesign; do it properly if wanted).
 
 ## Business concept notes (from closing-docs review, 7/1/26)
