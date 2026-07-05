@@ -325,6 +325,42 @@ export async function scrubOrphanedApiKeys(email) {
   return count
 }
 
+// --- Founders' shared idea board ---
+
+const ideasSorted = () =>
+  structuredClone([...(store.ideas || [])].sort((a, b) => (b.order || 0) - (a.order || 0)))
+
+export function subscribeIdeas(callback, onError) {
+  if (MOCK_DENY === "ideas") {
+    onError?.(deniedError())
+    return () => {}
+  }
+  const off = on("ideas", callback)
+  callback(ideasSorted())
+  return off
+}
+
+export function addIdea(data) {
+  if (!store.ideas) store.ideas = []
+  const item = { ...data, id: genId("idea"), order: Date.now() }
+  store.ideas.push(item)
+  emit("ideas", ideasSorted())
+  return Promise.resolve({ id: item.id })
+}
+
+export function updateIdea(id, data) {
+  const item = (store.ideas || []).find((i) => i.id === id)
+  if (item) Object.assign(item, data)
+  emit("ideas", ideasSorted())
+  return Promise.resolve()
+}
+
+export function removeIdea(id) {
+  store.ideas = (store.ideas || []).filter((i) => i.id !== id)
+  emit("ideas", ideasSorted())
+  return Promise.resolve()
+}
+
 // --- Client relationship store (founder-only) ---
 
 const clientEntry = (pid) => {
@@ -417,6 +453,16 @@ export async function runDiagnostics(user) {
       fix: denied ? "Publish dashboard/firestore.rules in the Firebase console." : undefined,
     })
   }
+  results.push({
+    key: "ideas",
+    label: "Idea board (founder-only)",
+    ok: MOCK_DENY !== "ideas",
+    detail: MOCK_DENY === "ideas" ? "permission-denied" : "readable",
+    fix:
+      MOCK_DENY === "ideas"
+        ? "Publish dashboard/firestore.rules in the Firebase console."
+        : undefined,
+  })
   results.push({
     key: "clients",
     label: "Client relationship store (founder-only)",

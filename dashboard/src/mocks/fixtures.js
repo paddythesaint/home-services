@@ -376,6 +376,27 @@ export const fixtureData = {
       notes: "",
     },
   ],
+  // Founders' shared idea board (top-level `ideas` collection in prod).
+  ideas: [
+    {
+      id: "idea-1",
+      title: "Seasonal photo report — before/after each visit",
+      notes: "Clients love seeing the place cared for. Could ride on visit notes.",
+      addedBy: "Paddy",
+      createdOn: "July 4, 2026",
+      status: "open",
+      order: 2,
+    },
+    {
+      id: "idea-2",
+      title: "Holiday lights install as a winter add-on",
+      notes: "",
+      addedBy: "Paddy",
+      createdOn: "July 2, 2026",
+      status: "done",
+      order: 1,
+    },
+  ],
   // Founder-only relationship store (clients/{propertyId} in production).
   clients: {
     "prop-ballard": {
