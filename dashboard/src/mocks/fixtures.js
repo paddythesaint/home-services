@@ -299,6 +299,27 @@ export const fixtureData = {
         ],
         workOrders: [
           {
+            // Homeowner-submitted request, still in triage: exercises the
+            // "Received — we're arranging it" path on the calm home screen
+            // and the Client request chip on the board.
+            id: "wo-disposal",
+            title: "Disposal is jammed",
+            category: "",
+            priorityId: "",
+            lane: "triage",
+            source: "homeowner",
+            requestedBy: "alton@example.com",
+            assigneeType: "",
+            contractorId: "",
+            contractorName: "",
+            quoteStatus: "none",
+            quoteAmount: "",
+            scheduledFor: "",
+            notes: "Kitchen disposal hums but won't spin.",
+            createdOn: "July 4, 2026",
+            order: 2,
+          },
+          {
             id: "wo-tabs",
             title: "Re-seat lifted shingle tabs",
             category: "Roof",

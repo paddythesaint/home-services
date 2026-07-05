@@ -48,6 +48,23 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 31 — the bell to ring: Request button + calm homeowner home (7/5/26)
+CRM assessment finding #1: the product had no way for a client to ask
+for anything. Homeowners now land on a calm home screen instead of the
+operational overview:
+- **"Need anything?" → Request service**: one tap, a sentence, done.
+  Lands as a work order in Triage tagged `source: homeowner` (Client
+  request chip on the founder board), and shows the homeowner
+  "Received — we're arranging it" under Happening now from the moment
+  they send it — no request ever disappears into a void.
+- **Is my home okay?** — one status line derived from the systems
+  record ("Your home is in good shape" / "N items on our watch list" /
+  "We're on it — N urgent items being handled").
+- **Your team** card (team.js — swap in Sally's real contact details),
+  Recent care (last completed jobs), Happening now.
+- Staff and founders keep the full overview; a founder previewing via
+  View-as sees the real calm screen.
+
 ## Slice 29 — tech debt: code-split + orphan-proof deletes (7/4/26)
 - **Code-split**: every page is a lazy chunk behind a Suspense boundary
   in Layout (the chrome never blinks); Firebase and React live in
