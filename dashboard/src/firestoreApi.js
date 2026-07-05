@@ -357,6 +357,46 @@ export async function scrubOrphanedApiKeys(email) {
   return holders.length
 }
 
+// --- Client relationship store (founder-only; see firestore.rules) ---
+// What the business remembers about the relationship: household
+// preferences, access notes, key dates, and a touch log. Lives in its own
+// top-level collection (clients/{propertyId}) so members can never read
+// it — this is ours, not the property record's.
+
+export function subscribeClientCard(pid, callback, onError) {
+  return onSnapshot(
+    doc(db, "clients", pid),
+    (snap) => callback(snap.exists() ? snap.data() : {}),
+    onError
+  )
+}
+
+export function saveClientCard(pid, data) {
+  return setDoc(doc(db, "clients", pid), data, { merge: true })
+}
+
+export function addTouch(pid, data) {
+  return addDoc(collection(db, "clients", pid, "touches"), {
+    ...data,
+    order: Date.now(),
+  })
+}
+
+export function subscribeTouches(pid, callback, onError) {
+  return onSnapshot(
+    query(collection(db, "clients", pid, "touches"), orderBy("order", "desc")),
+    (snap) => callback(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    onError
+  )
+}
+
+export async function fetchLatestTouch(pid) {
+  const snap = await getDocs(
+    query(collection(db, "clients", pid, "touches"), orderBy("order", "desc"), limit(1))
+  )
+  return snap.docs.length ? { id: snap.docs[0].id, ...snap.docs[0].data() } : null
+}
+
 // Live permission probes for the founder-only System status panel. Rules are
 // published by hand in the Firebase console and can drift from the repo's
 // firestore.rules — these cheap, read-only checks tell you which capabilities
@@ -422,6 +462,20 @@ export async function runDiagnostics(user) {
       } catch (err) {
         add(`sub-${name}`, `Property data: ${name}`, false, err.code || String(err), RULES_FIX)
       }
+    }
+    try {
+      await getDoc(doc(db, "clients", pid))
+      add("clients", "Client relationship store (founder-only)", true, "readable")
+    } catch (err) {
+      add(
+        "clients",
+        "Client relationship store (founder-only)",
+        false,
+        err.code || String(err),
+        "The clients/{propertyId} rule isn't live — the relationship card and touch log " +
+          "can't load or save until it is. " +
+          RULES_FIX
+      )
     }
   } else {
     add(

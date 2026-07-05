@@ -325,6 +325,53 @@ export async function scrubOrphanedApiKeys(email) {
   return count
 }
 
+// --- Client relationship store (founder-only) ---
+
+const clientEntry = (pid) => {
+  if (!store.clients) store.clients = {}
+  if (!store.clients[pid]) store.clients[pid] = { card: {}, touches: [] }
+  return store.clients[pid]
+}
+
+export function subscribeClientCard(pid, callback, onError) {
+  if (MOCK_DENY === "clients") {
+    onError?.(deniedError())
+    return () => {}
+  }
+  const off = on(`clients/${pid}`, callback)
+  callback(structuredClone(clientEntry(pid).card))
+  return off
+}
+
+export function saveClientCard(pid, data) {
+  Object.assign(clientEntry(pid).card, data)
+  emit(`clients/${pid}`, structuredClone(clientEntry(pid).card))
+  return Promise.resolve()
+}
+
+export function addTouch(pid, data) {
+  const entry = clientEntry(pid)
+  const item = { ...data, id: genId("touch"), order: Date.now() }
+  entry.touches.push(item)
+  emit(`clients-touches/${pid}`, structuredClone(entry.touches.slice().reverse()))
+  return Promise.resolve({ id: item.id })
+}
+
+export function subscribeTouches(pid, callback, onError) {
+  if (MOCK_DENY === "clients") {
+    onError?.(deniedError())
+    return () => {}
+  }
+  const off = on(`clients-touches/${pid}`, callback)
+  callback(structuredClone(clientEntry(pid).touches.slice().reverse()))
+  return off
+}
+
+export async function fetchLatestTouch(pid) {
+  const touches = clientEntry(pid).touches
+  return touches.length ? structuredClone(touches[touches.length - 1]) : null
+}
+
 // Mirrors the real runDiagnostics shape. Everything passes unless
 // VITE_MOCK_DENY names a collection, which fails its matching probe —
 // handy for previewing the failure UI.
@@ -370,6 +417,16 @@ export async function runDiagnostics(user) {
       fix: denied ? "Publish dashboard/firestore.rules in the Firebase console." : undefined,
     })
   }
+  results.push({
+    key: "clients",
+    label: "Client relationship store (founder-only)",
+    ok: MOCK_DENY !== "clients",
+    detail: MOCK_DENY === "clients" ? "permission-denied" : "readable",
+    fix:
+      MOCK_DENY === "clients"
+        ? "Publish dashboard/firestore.rules in the Firebase console."
+        : undefined,
+  })
   results.push({
     key: "backend",
     label: "Backend (AI proxy)",

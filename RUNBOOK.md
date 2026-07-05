@@ -12,6 +12,8 @@ about two minutes.
 | `match /contractors/{contractorId}` (founder-only) | Slice 7 (7/4/26) | Contractor Network page, Job History contractor picker. **If this was never published, both are silently broken in prod today.** |
 | `allow create` on `/properties/{propertyId}` | Slice 13 (7/4/26) | The Command Center "+ New property" onboarding flow. |
 | Membership rules (`isMemberOf`, `isLegacyOwner`) | earlier, believed live | Everything else — if these were missing you couldn't sign in usefully at all. |
+| `match /clients/{propertyId}` (founder-only) | Slice 34 (7/5/26) | The client relationship card + touch log on the founder Overview, and "last touch" on the Command Center. System status shows a red "Client relationship store" row until published. |
+| `isStaff()` on properties + subcollections | Slice 34 (7/5/26) | Staff (relationship/technician seats) can work on any property **without being made co-owners** of a client's home. Placeholder emails in the rules — swap for real ones alongside `src/roles.js` when hiring. |
 
 Publishing the whole file is idempotent: clauses that are already live are
 simply re-published unchanged. There is nothing to diff by hand.
