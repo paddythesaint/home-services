@@ -48,6 +48,13 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 33 — the receipt of value (7/5/26)
+CRM finding #5: clients cancel things that feel dormant. The calm home
+gains "Your membership, the last 12 months" — tasks completed, work
+handled by trusted pros, issues closed out, and dollars of work
+coordinated, all computed straight from the record (valueRecap.js,
+trailing-365-day window). Renders only once there's anything to show.
+
 ## Slice 32 — visit notes: silent excellence made visible (7/5/26)
 CRM finding #3. Job History (founders) gains a "Visit note" composer:
 one click drafts a warm, client-ready note from the record — completed
