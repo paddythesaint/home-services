@@ -109,7 +109,7 @@ export default function HomeownerHome() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 flex flex-col gap-4">
-          <Card>
+          <Card className="scroll-mt-4" data-tour="request">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="font-display text-lg font-semibold text-ink">Need anything?</h2>
@@ -213,7 +213,7 @@ export default function HomeownerHome() {
           )}
         </div>
 
-        <Card title="Your team">
+        <Card title="Your team" data-tour="team">
           <ul className="flex flex-col gap-3">
             {TEAM.map((t) => (
               <li key={t.name}>

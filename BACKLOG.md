@@ -48,6 +48,17 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 35 — first-login guided tour (7/5/26)
+Built for Mike's arrival: a lightweight spotlight tour on first sign-in
+(no library — dimmed overlay, white ring on the real UI, a small card
+with Next/Skip and progress dots). Role-aware scripts (tourSteps.js):
+founders get five stops (welcome → the home's record → View-as → the
+business side → start with your own home); homeowners get three calm
+ones (welcome → Request → your team) — so it also greets every future
+client. Once per device (localStorage), replayable via "App tour" in
+the sidebar; steps anchor to data-tour attributes and fall back to
+centered cards on mobile.
+
 ## Slice 34 — the relationship layer + staff rules (7/5/26)
 CRM findings #2 and #6. The business now has a memory of the household,
 not just the house:

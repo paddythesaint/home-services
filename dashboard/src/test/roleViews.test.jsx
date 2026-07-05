@@ -5,7 +5,12 @@ import Layout from "../Layout"
 import { viewFor, businessRole, setViewAs } from "../roles"
 import { MOCK_FOUNDER } from "../mocks/fixtures"
 
-beforeEach(() => localStorage.clear())
+beforeEach(() => {
+  localStorage.clear()
+  // These tests exercise nav/roles, not onboarding — keep the first-login
+  // tour out of the way (it has its own suite in tour.test.jsx).
+  localStorage.setItem("hpsTourSeen", "1")
+})
 
 const SALLY = { email: "sally@example.com", displayName: "Sally", uid: "u-sally" }
 const TECH = { email: "tech@example.com", displayName: "Tech", uid: "u-tech" }

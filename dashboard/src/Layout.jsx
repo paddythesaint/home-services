@@ -7,6 +7,8 @@ import { fetchMemberProperties } from "./firestoreApi"
 import { subscribeDataErrors } from "./dataErrors"
 import { isFounder } from "./founders"
 import { viewFor, getViewAs, setViewAs, ROLE_LABELS } from "./roles"
+import Tour, { tourSeen, markTourSeen } from "./Tour"
+import { tourStepsFor } from "./tourSteps"
 
 const icons = {
   overview: <path d="M3 10.5L12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5" />,
@@ -94,6 +96,16 @@ export default function Layout({ user }) {
 
   // Mobile: hamburger → left drawer (the full sidebar, not scroll chips).
   const [menuOpen, setMenuOpen] = useState(false)
+
+  // First-login guided tour: once per device, role-aware, replayable from
+  // the sidebar. Steps follow the effective view, so a founder previewing
+  // as homeowner replays the client tour.
+  const tourSteps = tourStepsFor(view.role)
+  const [tourOpen, setTourOpen] = useState(() => !tourSeen() && tourSteps.length > 0)
+  function closeTour() {
+    setTourOpen(false)
+    markTourSeen()
+  }
 
   // Founders can view any property in their portfolio; the switcher below
   // picks which one the Property-plane pages show. Homeowners keep the
@@ -210,7 +222,11 @@ export default function Layout({ user }) {
         )}
         <nav className="flex flex-col gap-4">
           {navSections.map((section) => (
-            <div key={section.heading} className="flex flex-col gap-0.5">
+            <div
+              key={section.heading}
+              className="flex flex-col gap-0.5"
+              data-tour={section.heading === "Business" ? "business-nav" : "property-nav"}
+            >
               <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-300">
                 {section.heading}
               </p>
@@ -235,6 +251,13 @@ export default function Layout({ user }) {
           ))}
         </nav>
         <div className="mt-auto pt-8 px-2 text-xs text-brand-200 leading-relaxed">
+          <button
+            type="button"
+            onClick={() => setTourOpen(true)}
+            className="mb-3 text-brand-200 hover:text-white underline underline-offset-2"
+          >
+            App tour
+          </button>
           <p className="font-medium text-brand-100">{profile.tier}</p>
           <p>{profile.address}</p>
           <p>{profile.areaLabel}</p>
@@ -381,7 +404,7 @@ export default function Layout({ user }) {
           </div>
           <div className="flex items-center gap-6">
             {founder && (
-              <label className="flex items-center gap-2 text-xs text-ink-3">
+              <label className="flex items-center gap-2 text-xs text-ink-3" data-tour="view-as">
                 View as
                 <select
                   value={viewAs}
@@ -451,6 +474,7 @@ export default function Layout({ user }) {
           </Suspense>
         </main>
       </div>
+      {tourOpen && <Tour steps={tourSteps} onClose={closeTour} />}
     </div>
   )
 }
