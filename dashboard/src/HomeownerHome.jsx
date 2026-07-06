@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useOutletContext } from "react-router-dom"
+import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "./useItems"
 import { addItem } from "./firestoreApi"
 import { todayLabel } from "./dates"
@@ -115,7 +115,11 @@ export default function HomeownerHome() {
                 <h2 className="font-display text-lg font-semibold text-ink">Need anything?</h2>
                 <p className="text-sm text-ink-2 mt-1">
                   A repair, a question, something that doesn't look right — send it over and
-                  we'll take it from there.
+                  we'll take it from there. Prefer to chat?{" "}
+                  <Link to="/assistant" className="text-brand-600 hover:text-brand-800 underline">
+                    Ask the assistant
+                  </Link>
+                  , any hour.
                 </p>
                 {sent && (
                   <p className="text-sm font-medium text-brand-700 mt-2">

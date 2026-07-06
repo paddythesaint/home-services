@@ -24,6 +24,7 @@ const icons = {
   import: <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />,
   workorders: <path d="M9 3h6a1 1 0 011 1v2H8V4a1 1 0 011-1zM8 6H6a2 2 0 00-2 2v11a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-2M9 12l2 2 4-4" />,
   ideas: <path d="M9 18h6M10 21h4M12 3a6 6 0 00-3.9 10.6c.57.5.9 1.2.9 1.9V16h6v-.5c0-.7.33-1.4.9-1.9A6 6 0 0012 3z" />,
+  assistant: <path d="M21 12a8 8 0 01-8 8H5l-2 2V12a8 8 0 018-8h2a8 8 0 018 8zM9 11h.01M13 11h.01M17 11h.01" />,
 }
 
 function NavIcon({ name }) {
@@ -47,6 +48,7 @@ function NavIcon({ name }) {
 
 const PROPERTY_NAV = [
   { key: "overview", to: "/", label: "Overview", icon: "overview", end: true },
+  { key: "assistant", to: "/assistant", label: "Assistant", icon: "assistant" },
   { key: "walkthrough", to: "/walkthrough", label: "Walkthrough", icon: "walkthrough" },
   { key: "import", to: "/import", label: "Import Bundle", icon: "import" },
   { key: "health", to: "/health-report", label: "Health Report", icon: "health" },

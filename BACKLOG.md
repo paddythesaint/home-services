@@ -48,6 +48,28 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 37a — the assistant returns: one home's concierge, 24/7 (7/5/26)
+The owner's three objectives, phase one:
+- **Knows one home, nothing else**: context assembled per conversation
+  from the member's own property (profile, systems, plan, calendar,
+  history, work in motion) plus a growing per-property **facts**
+  collection. Isolation is structural — the client only ever holds its
+  own home's data and the backend's membership check gates the call.
+- **Confirm-then-write learning**: the model proposes
+  <action> tags; the UI renders Save/Send chips; writes happen
+  client-side only after the member confirms. New powers (e.g. future
+  rescheduling) extend ACTION_TYPES + prompt, not the architecture.
+- **Two powers live**: answer from the record; file service requests →
+  work orders in Triage (source homeowner, via assistant). General
+  repair advice is deflected to "want the team to look?" by prompt.
+- **Full transcripts** stored per property (conversations collection,
+  photos stored as a flag not base64), listed under Past conversations
+  — disclosed in the intro line. Photo attach rides the vision path.
+- Mock backendApi alias gives deterministic scripted replies for tests
+  and preview. Nav "Assistant" for every role; calm home links to it.
+- Agentic outreach (objective 3) stays schema-only for now: facts,
+  transcripts, touches all dated and queryable.
+
 ## Slice 36 — founders' Ideas board (7/5/26)
 Owner request: a place in the Business nav to capture ideas the moment
 they occur, visible only to the two owners. New founder-only top-level
