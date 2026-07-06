@@ -20,7 +20,13 @@ export async function callClaude(propertyId, system, messages) {
       : (content || []).find((b) => b.type === "text")?.text || ""
   ).toLowerCase()
   const hasImage = Array.isArray(content) && content.some((b) => b.type === "image")
+  const hasDocument = Array.isArray(content) && content.some((b) => b.type === "document")
 
+  if (hasDocument) {
+    return reply(
+      'This looks like an HVAC service invoice: Monticello Air serviced the Trane XR16 on June 24, 2026 and replaced the run capacitor under the parts warranty.\n<action>{"type":"save_fact","fact":"HVAC run capacitor replaced under warranty on June 24, 2026 by Monticello Air.","category":"HVAC"}</action>\n<action>{"type":"save_fact","fact":"Trane XR16 parts warranty confirmed active as of June 2026.","category":"HVAC"}</action>'
+    )
+  }
   if (hasImage) {
     // Vision path (nameplate reads + chat photos): canned nameplate JSON.
     return reply(

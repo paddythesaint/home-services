@@ -4,6 +4,7 @@ import { useItems } from "../useItems"
 import { addItem } from "../firestoreApi"
 import { callClaude } from "../backendApi"
 import { compressImage } from "../photoUtils"
+import { uploadDocument, MAX_DOC_BYTES } from "../storageApi"
 import { todayLabel } from "../dates"
 import {
   buildAssistantContext,
@@ -47,15 +48,18 @@ export default function Assistant() {
   const { items: workOrders } = useItems(uid, "workOrders")
   const factsApi = useItems(uid, "facts")
   const convApi = useItems(uid, "conversations")
+  const { items: documents } = useItems(uid, "documents")
 
   const [messages, setMessages] = useState([]) // {role, text, hadPhoto?, actions?}
   const [input, setInput] = useState("")
   const [photo, setPhoto] = useState(null) // dataUrl pending attach
+  const [doc, setDoc] = useState(null) // {file, base64} pending attach
   const [sending, setSending] = useState(false)
   const [error, setError] = useState("")
   const [openConv, setOpenConv] = useState(null)
   const convIdRef = useRef(null)
   const fileRef = useRef(null)
+  const docRef = useRef(null)
 
   // The running API-shaped history (may include image blocks; kept out of
   // React state so transcripts never carry base64).
@@ -81,22 +85,43 @@ export default function Assistant() {
     if (!text || sending) return
     setError("")
     setSending(true)
-    const userMsg = { role: "user", text, hadPhoto: Boolean(photo) }
+    const userMsg = { role: "user", text, hadPhoto: Boolean(photo), hadDoc: doc?.file?.name }
     const shown = [...messages, userMsg]
     setMessages(shown)
     setInput("")
 
-    const content = photo
-      ? [
-          {
-            type: "image",
-            source: { type: "base64", media_type: "image/jpeg", data: photo.split(",")[1] },
-          },
-          { type: "text", text },
-        ]
-      : text
+    let content = text
+    if (photo) {
+      content = [
+        {
+          type: "image",
+          source: { type: "base64", media_type: "image/jpeg", data: photo.split(",")[1] },
+        },
+        { type: "text", text },
+      ]
+    } else if (doc) {
+      content = [
+        {
+          type: "document",
+          source: { type: "base64", media_type: "application/pdf", data: doc.base64 },
+        },
+        { type: "text", text },
+      ]
+    }
     apiHistoryRef.current = [...apiHistoryRef.current, { role: "user", content }]
     setPhoto(null)
+    const pendingDoc = doc
+    setDoc(null)
+    if (pendingDoc) {
+      // File it on the property regardless of what the model says about it.
+      try {
+        await uploadDocument(uid, pendingDoc.file, user?.email)
+      } catch {
+        setError(
+          "The document was read but couldn't be filed to storage — if this persists, the Storage rules may need publishing (see System status)."
+        )
+      }
+    }
 
     try {
       const context = buildAssistantContext({
@@ -169,7 +194,28 @@ export default function Assistant() {
   async function attachPhoto(e) {
     const file = e.target.files?.[0]
     if (!file) return
+    setDoc(null)
     setPhoto(await compressImage(file))
+    e.target.value = ""
+  }
+
+  async function attachDoc(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > MAX_DOC_BYTES) {
+      setError("That file is over 10MB — email it to the team instead.")
+      e.target.value = ""
+      return
+    }
+    const buf = await file.arrayBuffer()
+    let binary = ""
+    const bytes = new Uint8Array(buf)
+    for (let i = 0; i < bytes.length; i += 0x8000) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+    }
+    setPhoto(null)
+    setDoc({ file, base64: btoa(binary) })
+    setError("")
     e.target.value = ""
   }
 
@@ -200,6 +246,7 @@ export default function Assistant() {
                 }
               >
                 {m.hadPhoto && <span className="block text-xs opacity-75 mb-1">📷 photo attached</span>}
+                {m.hadDoc && <span className="block text-xs opacity-75 mb-1">📎 {m.hadDoc}</span>}
                 {m.text}
               </div>
               {m.actions?.length > 0 && (
@@ -233,6 +280,15 @@ export default function Assistant() {
               📷{photo ? " ✓" : ""}
             </button>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={attachPhoto} />
+            <button
+              type="button"
+              aria-label="Attach document"
+              onClick={() => docRef.current?.click()}
+              className={`shrink-0 rounded-full border px-3 py-2 text-sm ${doc ? "border-brand-400 bg-brand-100" : "border-line text-ink-3 hover:text-ink"}`}
+            >
+              📎{doc ? " ✓" : ""}
+            </button>
+            <input ref={docRef} type="file" accept="application/pdf" className="hidden" onChange={attachDoc} />
             <textarea
               rows={2}
               value={input}
@@ -252,6 +308,34 @@ export default function Assistant() {
           </div>
         </div>
       </Card>
+
+      {documents.length > 0 && (
+        <Card title={`Documents (${documents.length})`} className="mb-4">
+          <ul className="divide-y divide-line">
+            {[...documents].reverse().map((d) => (
+              <li key={d.id} className="py-2 flex items-center justify-between gap-3 text-sm">
+                <span className="min-w-0 truncate text-ink-2">{d.name}</span>
+                <span className="shrink-0 text-xs text-ink-3">
+                  {d.uploadedOn}
+                  {d.url && !d.url.startsWith("mock://") && (
+                    <>
+                      {" · "}
+                      <a
+                        href={d.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-brand-600 hover:text-brand-800 underline"
+                      >
+                        open
+                      </a>
+                    </>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       {pastConversations.length > 0 && (
         <Card title={`Past conversations (${pastConversations.length})`}>

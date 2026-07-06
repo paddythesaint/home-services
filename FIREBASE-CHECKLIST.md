@@ -10,47 +10,34 @@ Console: [console.firebase.google.com](https://console.firebase.google.com)
 
 ---
 
-## Outstanding (as of 7/5/26 evening)
+## Outstanding (as of 7/6/26)
 
-### 1. Republish the Firestore rules (~2 min)
-The repo's rules have moved ahead of production again — the new
-founder-only `ideas` collection (Slice 36) isn't live, so the Ideas
-board can't read or write in production yet.
+### 1. Publish the Storage rules (~2 min)
+Slice 37b shipped document uploads through the assistant. Files are
+member-gated by `dashboard/storage.rules` — until it's published,
+production uploads will be denied (the chat shows the error politely,
+but uploads won't stick).
 
-- GitHub → `dashboard/firestore.rules` on **main** → copy the whole file
-  (copy icon, top right of the file view).
-- Console → **Build → Firestore Database → Rules** tab → select all →
-  delete → paste → **Publish**.
+- GitHub → `dashboard/storage.rules` on **main** → copy the whole file.
+- Console → **Build → Storage → Rules** tab → select all → delete →
+  paste → **Publish**.
 
-**Verify:** app → Command Center → System status → Run checks →
-**"Idea board (founder-only)"** row goes green (all other rows should
-already be green).
-
-### 2. Enable Firebase Storage (~2 min)
-Prerequisite for Slice 37b (document uploads through the assistant —
-manuals, invoices, closing packages). Nothing in the app uses it until
-37b ships, so this is pure pre-work.
-
-- Console → **Build → Storage** → **Get started**.
-- Choose **production mode** (we'll publish proper rules with 37b).
-- Location: pick **us-central1** if offered (matches the backend
-  functions region).
-
-**Verify:** the Storage page shows an empty bucket (`<project>.appspot.com`
-or `.firebasestorage.app`). Tell Claude it's enabled — 37b starts there.
+**Verify:** in the live app, Assistant → 📎 → attach any small PDF →
+send. The "Documents" card on the Assistant page should list it with an
+"open" link that works.
 
 ---
 
 ## Coming soon (no action yet)
 
-- **Storage rules publish** — will be added here when Slice 37b ships
-  (a `storage.rules` file will appear in the repo, same copy-paste-publish
-  drill as Firestore rules, on the Storage → Rules tab).
+- (nothing queued)
 
 ---
 
 ## Done
 
+- 7/5 — Rules republish #4: founder-only `ideas` collection (Slice 36 —
+  Ideas board live). Enabled Firebase Storage (production mode).
 - 7/5 — Rules republish #3: Mike as founder (`isFounder`) + Sally's real
   staff email. Created 1505 Brook Hill Ln + added Mike to People with
   access.

@@ -6,5 +6,6 @@
 export const app = null
 export const auth = {}
 export const db = null
+export const storage = null
 export const googleProvider = {}
 export const OWNER_EMAIL = "paddythesaint@gmail.com"

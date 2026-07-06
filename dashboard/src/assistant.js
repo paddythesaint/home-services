@@ -118,7 +118,7 @@ ACTIONS — when appropriate, append action tags on their own lines after your r
 <action>{"type":"save_fact","fact":"<one clear sentence, past tense, with dates if given>","category":"<matching system category if any, else empty>"}</action>
 2. When something needs fixing, checking, or doing, offer to file it:
 <action>{"type":"service_request","title":"<short title>","details":"<what the member described, plus any timing/access notes>"}</action>
-Use at most one action of each type per reply. If a photo is attached, describe what you see briefly and use it to sharpen the fact or request.`
+Use at most one action of each type per reply — EXCEPT when a document is attached: then summarize it in 2-3 sentences and propose up to five save_fact actions for durable facts worth keeping (equipment and models, install/service dates, warranties, costs, contractor names). If a photo is attached, describe what you see briefly and use it to sharpen the fact or request.`
 }
 
 // Split a model reply into display text + proposed actions.
@@ -138,13 +138,14 @@ export function parseAssistantReply(raw) {
   return { text, actions }
 }
 
-// Transcript-safe copy of a message (images become a placeholder so the
-// stored conversation stays small and readable).
+// Transcript-safe copy of a message (images/documents become placeholders
+// so the stored conversation stays small and readable).
 export function transcriptMessage(m) {
   return {
     role: m.role,
     text: m.text,
     ...(m.hadPhoto ? { hadPhoto: true } : {}),
+    ...(m.hadDoc ? { hadDoc: m.hadDoc } : {}),
     ...(m.actions && m.actions.length
       ? { actions: m.actions.map(({ type, fact, title, status }) => ({ type, fact, title, status })) }
       : {}),

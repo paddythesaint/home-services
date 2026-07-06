@@ -48,6 +48,18 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 37b — assistant uploads: documents via Firebase Storage (7/6/26)
+The internal document pipeline, arriving through the assistant's front
+door. 📎 in the chat accepts a PDF (≤10MB): the file uploads to Cloud
+Storage under properties/{pid}/documents (member-gated by the new
+dashboard/storage.rules — cross-service check against the property's
+memberEmails, same allowlists as Firestore), its metadata lands in the
+property's `documents` collection ("Documents" card on the Assistant
+page with open links), and the content goes to the model in the same
+message — summary + up to five proposed save_fact chips
+(confirm-then-write, as ever). storageApi.js real + mock (vite alias);
+FIREBASE-CHECKLIST gained the one-time storage.rules publish.
+
 ## Slice 37a — the assistant returns: one home's concierge, 24/7 (7/5/26)
 The owner's three objectives, phase one:
 - **Knows one home, nothing else**: context assembled per conversation
