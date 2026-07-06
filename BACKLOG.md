@@ -48,6 +48,23 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 38 — system dossiers + trade grouping (7/6/26)
+Owner insight: "grouping by systems may help consolidate — easier to
+stay on top of lots of individual items."
+- **trades.js**: canonical trade taxonomy (Plumbing, Water & Septic,
+  HVAC, Electrical, Appliances, Roof & Exterior, Landscaping,
+  Safety & Air) with fuzzy matching from free-text categories/titles —
+  order-aware so "Water Heater" lands in Plumbing, not HVAC.
+- **System dossier** (/system/:id): every Health Report card title is
+  now a door to the full story of that system — the record (brand,
+  install year, serial, lifespan window), photos, learned facts from
+  the assistant, trade-related open priorities + work orders, care
+  calendar tasks, complete job history, and documents.
+- **Group-by-system lens** on 90-Day Priorities and Job History:
+  a toggle (sticky per device) swaps the ranked/date view for trade
+  sections — ranked stays the default; resolution proximity still runs
+  the show.
+
 ## Slice 37b — assistant uploads: documents via Firebase Storage (7/6/26)
 The internal document pipeline, arriving through the assistant's front
 door. 📎 in the chat accepts a PDF (≤10MB): the file uploads to Cloud

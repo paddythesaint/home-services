@@ -125,7 +125,15 @@ export default function HealthReport() {
               <Card key={system.id}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-ink">{system.category}</p>
+                    <p className="font-semibold text-ink">
+                      <Link
+                        to={`/system/${system.id}`}
+                        className="hover:text-brand-700"
+                        title="Open the full dossier for this system"
+                      >
+                        {system.category}
+                      </Link>
+                    </p>
                     <p className="text-sm text-ink-2">{system.detail}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
