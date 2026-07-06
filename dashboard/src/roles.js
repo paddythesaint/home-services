@@ -33,16 +33,16 @@ export const businessRole = (email) => STAFF_ROLES[(email || "").toLowerCase()] 
 // Nav item keys per role (keys match Layout's item list).
 const NAV = {
   founder: [
-    "overview", "walkthrough", "import", "health", "calendar",
+    "overview", "assistant", "walkthrough", "import", "health", "calendar",
     "priorities", "forecast", "history", "contractors",
   ],
   relationship: [
-    "overview", "walkthrough", "import", "health", "calendar",
+    "overview", "assistant", "walkthrough", "import", "health", "calendar",
     "priorities", "history", "contractors",
   ],
-  technician: ["overview", "health", "calendar", "priorities", "walkthrough", "history"],
+  technician: ["overview", "assistant", "health", "calendar", "priorities", "walkthrough", "history"],
   homeowner: [
-    "overview", "health", "calendar", "priorities", "forecast",
+    "overview", "assistant", "health", "calendar", "priorities", "forecast",
     "history", "contractors",
   ],
 }
