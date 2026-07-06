@@ -100,6 +100,36 @@ describe("assistant page", () => {
     })
   })
 
+  it("reads an attached document, files it, and proposes facts to save", async () => {
+    renderPage(<Assistant />)
+    await screen.findByText(/I'm the HPS assistant/)
+    const file = new File(["%PDF-1.4 fake invoice"], "hvac-invoice.pdf", {
+      type: "application/pdf",
+    })
+    const input = document.querySelector('input[accept="application/pdf"]')
+    fireEvent.change(input, { target: { files: [file] } })
+    // attachDoc reads the file asynchronously — wait for the ✓ marker.
+    await screen.findByText("📎 ✓")
+    await ask("here's the invoice from the HVAC visit")
+
+    // Summary + two proposed facts from the scripted document reply.
+    expect(await screen.findByText(/HVAC service invoice/)).toBeInTheDocument()
+    const saves = await screen.findAllByText("Save")
+    expect(saves).toHaveLength(2)
+    fireEvent.click(saves[0])
+    await screen.findByText(/Saved to the record/)
+    expect(
+      __getItems("prop-ballard", "facts").find((f) => f.text.includes("run capacitor"))
+    ).toBeTruthy()
+
+    // The file itself landed in the property's documents.
+    await waitFor(() => {
+      const docs = __getItems("prop-ballard", "documents")
+      expect(docs).toHaveLength(1)
+      expect(docs[0].name).toBe("hvac-invoice.pdf")
+    })
+  })
+
   it("persists the transcript on the property", async () => {
     renderPage(<Assistant />)
     await screen.findByText(/I'm the HPS assistant/)

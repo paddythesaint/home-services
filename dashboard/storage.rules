@@ -1,0 +1,34 @@
+rules_version = '2';
+
+// Cloud Storage rules — mirror of the Firestore access model. Files live
+// under properties/{pid}/…; access requires membership of that property
+// (checked cross-service against the Firestore property doc), or a founder
+// or staff identity. Keep the email allowlists in sync with
+// dashboard/firestore.rules, src/founders.js, and src/roles.js.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function verified() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isFounder() {
+      return verified()
+        && request.auth.token.email in ['paddythesaint@gmail.com', 'michael.e.sutton@gmail.com'];
+    }
+
+    function isStaff() {
+      return verified()
+        && request.auth.token.email in ['sallyrryan@gmail.com', 'tech@example.com'];
+    }
+
+    function isMemberOf(pid) {
+      return verified()
+        && request.auth.token.email in
+          firestore.get(/databases/(default)/documents/properties/$(pid)).data.memberEmails;
+    }
+
+    match /properties/{pid}/{allPaths=**} {
+      allow read, write: if isMemberOf(pid) || isFounder() || isStaff();
+    }
+  }
+}

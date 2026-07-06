@@ -15,6 +15,7 @@ const mockAliases = [
   { find: /^(\.\.?\/)+firestoreApi(\.js)?$/, replacement: `${mockDir}/firestoreApi.js` },
   { find: /^(\.\.?\/)+AuthGate(\.jsx)?$/, replacement: `${mockDir}/AuthGate.jsx` },
   { find: /^(\.\.?\/)+backendApi(\.js)?$/, replacement: `${mockDir}/backendApi.js` },
+  { find: /^(\.\.?\/)+storageApi(\.js)?$/, replacement: `${mockDir}/storageApi.js` },
 ]
 
 // https://vite.dev/config/
