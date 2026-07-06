@@ -1,0 +1,87 @@
+import { describe, it, expect } from "vitest"
+import { screen, fireEvent } from "@testing-library/react"
+import { renderPage } from "./renderPage"
+import SystemProfile from "../pages/SystemProfile"
+import HealthReport from "../pages/HealthReport"
+import PriorityList from "../pages/PriorityList"
+import JobHistory from "../pages/JobHistory"
+import { tradeForText, groupByTrade } from "../trades"
+import { addItem } from "../mocks/firestoreApi"
+
+const atSystem = (id) => ({ path: `/system/${id}`, routePath: "system/:systemId" })
+
+describe("trade taxonomy", () => {
+  it("maps free-text categories onto canonical trades", () => {
+    expect(tradeForText("HVAC").key).toBe("hvac")
+    expect(tradeForText("Water Heater").key).toBe("plumbing") // not HVAC via 'heat'
+    expect(tradeForText("Gutter guards on rear roofline").key).toBe("exterior")
+    expect(tradeForText("Radon Mitigation").key).toBe("water")
+    expect(tradeForText("Standby Generator").key).toBe("electrical")
+    expect(tradeForText("Mystery widget").key).toBe("other")
+  })
+
+  it("groups in canonical order and drops empty trades", () => {
+    const groups = groupByTrade([
+      { category: "HVAC", title: "a" },
+      { category: "Exterior", title: "Gutter clean" },
+      { category: "HVAC", title: "b" },
+    ])
+    expect(groups.map((g) => g.trade.key)).toEqual(["hvac", "exterior"])
+    expect(groups[0].items).toHaveLength(2)
+  })
+})
+
+describe("system dossier page", () => {
+  it("assembles the full story of one system", async () => {
+    await addItem("prop-ballard", "facts", {
+      text: "HVAC run capacitor replaced under warranty on June 24, 2026.",
+      category: "HVAC",
+      date: "July 5, 2026",
+    })
+    renderPage(<SystemProfile />, atSystem("sys-hvac"))
+
+    expect(await screen.findByRole("heading", { name: "HVAC" })).toBeInTheDocument()
+    // The record card: brand + install year + lifespan line.
+    expect(screen.getByText("Trane XR16")).toBeInTheDocument()
+    expect(screen.getByText(/replacement window/)).toBeInTheDocument()
+    // Trade-related jobs (both HVAC jobs).
+    expect(screen.getByText("Spring HVAC tune-up")).toBeInTheDocument()
+    expect(screen.getByText("Capacitor replacement")).toBeInTheDocument()
+    // Open priority in the trade.
+    expect(screen.getByText(/Replace HVAC filter/)).toBeInTheDocument()
+    // Learned fact and photo.
+    expect(screen.getByText(/run capacitor replaced under warranty/)).toBeInTheDocument()
+    expect(screen.getByText("Photos (1)")).toBeInTheDocument()
+  })
+
+  it("shows a not-found state for unknown systems", async () => {
+    renderPage(<SystemProfile />, atSystem("sys-nope"))
+    expect(await screen.findByText("System not found")).toBeInTheDocument()
+  })
+})
+
+describe("doors and lenses", () => {
+  it("Health Report card titles link to the dossier", async () => {
+    renderPage(<HealthReport />)
+    const title = await screen.findByText("HVAC")
+    expect(title.closest("a")).toHaveAttribute("href", "/system/sys-hvac")
+  })
+
+  it("Priority List groups by system on demand", async () => {
+    renderPage(<PriorityList />)
+    fireEvent.click(await screen.findByText("Group by system"))
+    expect(await screen.findByText("HVAC (1)")).toBeInTheDocument()
+    expect(screen.getByText("Roof & Exterior (1)")).toBeInTheDocument()
+    // Ranking chrome is hidden in the grouped lens.
+    expect(screen.queryByText("↑")).not.toBeInTheDocument()
+    fireEvent.click(screen.getByText("View ranked"))
+    expect(await screen.findByText("Group by system")).toBeInTheDocument()
+  })
+
+  it("Job History groups by system on demand", async () => {
+    renderPage(<JobHistory />)
+    fireEvent.click(await screen.findByText("Group by system"))
+    expect(await screen.findByText("HVAC (2)")).toBeInTheDocument()
+    expect(screen.getByText("Roof & Exterior (1)")).toBeInTheDocument()
+  })
+})

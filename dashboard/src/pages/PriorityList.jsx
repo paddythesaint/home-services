@@ -6,6 +6,7 @@ import { todayLabel } from "../dates"
 import { viewFor } from "../roles"
 import { workOrderFromPriority } from "../workOrders"
 import { suggestRequirements } from "../requirementSuggestions"
+import { groupByTrade } from "../trades"
 import {
   RESOLUTION_PATHS,
   PATH_META,
@@ -410,6 +411,24 @@ export default function PriorityList() {
   const [editing, setEditing] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [resolving, setResolving] = useState(null) // item being resolved/dismissed
+  // Organizing lens: ranked by urgency (default) or grouped by trade.
+  const [grouped, setGrouped] = useState(() => {
+    try {
+      return localStorage.getItem("groupPriorities") === "1"
+    } catch {
+      return false
+    }
+  })
+  function toggleGrouped() {
+    setGrouped((g) => {
+      try {
+        localStorage.setItem("groupPriorities", g ? "" : "1")
+      } catch {
+        /* fine */
+      }
+      return !g
+    })
+  }
   const [resolveMode, setResolveMode] = useState("resolved")
   const [resolveNote, setResolveNote] = useState("")
 
@@ -533,6 +552,14 @@ export default function PriorityList() {
         </div>
       )}
 
+      {openItems.length > 0 && (
+        <div className="flex justify-end mb-2">
+          <Button variant="ghost" className="!px-0" onClick={toggleGrouped}>
+            {grouped ? "View ranked" : "Group by system"}
+          </Button>
+        </div>
+      )}
+
       {openItems.length === 0 ? (
         <Card>
           <p className="text-sm text-ink-2">
@@ -541,14 +568,16 @@ export default function PriorityList() {
           </p>
         </Card>
       ) : (
-        <div className="flex flex-col gap-3">
-          {openItems.map((item, index) => (
+        (() => {
+          const priorityCard = (item, index) => (
             <Card key={item.id}>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
-                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-brand-100 text-ink-2 text-sm font-semibold shrink-0">
-                    {index + 1}
-                  </span>
+                  {index !== null && (
+                    <span className="flex items-center justify-center w-7 h-7 rounded-full bg-brand-100 text-ink-2 text-sm font-semibold shrink-0">
+                      {index + 1}
+                    </span>
+                  )}
                   <div>
                     <p className="font-semibold text-ink">
                       {item.title}
@@ -610,6 +639,7 @@ export default function PriorityList() {
                 <div className="text-right shrink-0 flex flex-col items-end gap-2">
                   <UrgencyBadge urgency={item.urgency} />
                   <p className="text-sm text-ink-2">{item.estCost}</p>
+                  {index !== null && (
                   <div className="flex gap-1">
                     <button
                       type="button"
@@ -628,12 +658,31 @@ export default function PriorityList() {
                       &darr;
                     </button>
                   </div>
+                  )}
                 </div>
               </div>
               <ResolutionSection item={item} update={update} />
             </Card>
-          ))}
-        </div>
+          )
+          return grouped ? (
+            <div className="flex flex-col gap-5">
+              {groupByTrade(openItems).map(({ trade, items: groupItems }) => (
+                <div key={trade.key}>
+                  <h2 className="text-sm font-semibold text-ink-2 mb-2">
+                    {trade.label} ({groupItems.length})
+                  </h2>
+                  <div className="flex flex-col gap-3">
+                    {groupItems.map((item) => priorityCard(item, null))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {openItems.map((item, index) => priorityCard(item, index))}
+            </div>
+          )
+        })()
       )}
 
       {closedItems.length > 0 && (

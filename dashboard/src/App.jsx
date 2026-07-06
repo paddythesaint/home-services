@@ -22,6 +22,7 @@ const ContractorProfile = lazy(() => import("./pages/ContractorProfile"))
 const ImportBundle = lazy(() => import("./pages/ImportBundle"))
 const Ideas = lazy(() => import("./pages/Ideas"))
 const Assistant = lazy(() => import("./pages/Assistant"))
+const SystemProfile = lazy(() => import("./pages/SystemProfile"))
 
 export default function App() {
   return (
@@ -45,6 +46,7 @@ export default function App() {
               <Route path="contractor-network/:contractorId" element={<ContractorProfile />} />
               <Route path="ideas" element={<Ideas />} />
               <Route path="assistant" element={<Assistant />} />
+              <Route path="system/:systemId" element={<SystemProfile />} />
             </Route>
           </Routes>
         )}

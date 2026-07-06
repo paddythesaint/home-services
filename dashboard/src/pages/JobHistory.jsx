@@ -4,6 +4,7 @@ import { useItems } from "../useItems"
 import { subscribeContractors } from "../firestoreApi"
 import { viewFor } from "../roles"
 import VisitNoteCard from "../VisitNoteCard"
+import { groupByTrade } from "../trades"
 import { Card, PageHeader, StatusBadge, Button, Modal, DynamicForm } from "../components"
 
 const baseFields = [
@@ -30,6 +31,23 @@ export default function JobHistory() {
   const [contractors, setContractors] = useState([])
   const founder = viewFor(user?.email).business
   const orderedItems = [...items].reverse()
+  const [grouped, setGrouped] = useState(() => {
+    try {
+      return localStorage.getItem("groupJobs") === "1"
+    } catch {
+      return false
+    }
+  })
+  function toggleGrouped() {
+    setGrouped((g) => {
+      try {
+        localStorage.setItem("groupJobs", g ? "" : "1")
+      } catch {
+        /* fine */
+      }
+      return !g
+    })
+  }
 
   // Founders get a picker into the shared contractor network, so new jobs
   // carry a real contractorId from creation instead of relying on the
@@ -83,13 +101,21 @@ export default function JobHistory() {
 
       {founder && <VisitNoteCard uid={uid} profile={profile} jobs={items} />}
 
+      {orderedItems.length > 0 && (
+        <div className="flex justify-end mb-2">
+          <Button variant="ghost" className="!px-0" onClick={toggleGrouped}>
+            {grouped ? "View by date" : "Group by system"}
+          </Button>
+        </div>
+      )}
+
       {orderedItems.length === 0 ? (
         <Card>
           <p className="text-sm text-ink-2">No jobs logged yet.</p>
         </Card>
       ) : (
-        <div className="flex flex-col gap-3">
-          {orderedItems.map((job) => (
+        (() => {
+          const jobCard = (job) => (
             <Card key={job.id}>
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -127,8 +153,22 @@ export default function JobHistory() {
                 </div>
               </div>
             </Card>
-          ))}
-        </div>
+          )
+          return grouped ? (
+            <div className="flex flex-col gap-5">
+              {groupByTrade(orderedItems).map(({ trade, items: groupItems }) => (
+                <div key={trade.key}>
+                  <h2 className="text-sm font-semibold text-ink-2 mb-2">
+                    {trade.label} ({groupItems.length})
+                  </h2>
+                  <div className="flex flex-col gap-3">{groupItems.map(jobCard)}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">{orderedItems.map(jobCard)}</div>
+          )
+        })()
       )}
 
       {editing && (
