@@ -48,6 +48,27 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 40 — full-record context, scope guard, transcript delete lock (7/7/26)
+Owner direction: all home-related info in context; keep it strictly
+per-home; the scope rule pre-wired (not homeowner-editable); homeowners
+can't delete transcripts (business owners can).
+- **Context expansion** (assistant.js): visit notes (last 3), documents
+  index (titles + dates — "we have that on file"), per-system
+  replacement windows + typical costs from benchmarks.js, membership
+  tier, and a WHAT HPS DOES services blurb. Per-home isolation
+  unchanged: context still assembles only from the signed-in member's
+  property; backend membership check still gates every call.
+- **Scope guard** in the system prompt (server-assembled, invisible to
+  the member): only this home, its record, and HPS services — one
+  friendly decline for anything else; billing questions route to the
+  team without quoting numbers; replacement figures framed as typical,
+  not quotes. Mock backend mirrors the decline for preview/tests.
+- **Transcript delete lock** (firestore.rules): conversations are
+  founder-delete-only; members/staff keep read/create/update. Needs a
+  rules republish — FIREBASE-CHECKLIST item 2.
+- **Server cap**: MAX_TOKENS 16000 → 4096 (sized to the largest
+  legitimate reply; 60/hr per-user rate limit already in place).
+
 ## Slice 39 — Health Report trade sections + assistant record gaps (7/7/26)
 Owner feedback: "the systems don't seem consolidated enough" on the
 Health Report, and "I prompted the Assistant to see what information it

@@ -4,6 +4,7 @@ import { renderPage } from "./renderPage"
 import Assistant from "../pages/Assistant"
 import {
   buildAssistantContext,
+  assistantSystemPrompt,
   parseAssistantReply,
   transcriptMessage,
   recordGaps,
@@ -22,6 +23,29 @@ describe("assistant core (pure)", () => {
     expect(ctx).toContain("Trane XR16")
     expect(ctx).toContain("LEARNED FACTS")
     expect(ctx).toContain("Water heater replaced in June 2026.")
+  })
+
+  it("carries the full home record: visit notes, documents, horizons, plan", () => {
+    const ctx = buildAssistantContext({
+      profile: { address: "895 Old Ballard Farm Ln", tier: "Standard" },
+      systems: [{ category: "Water Heater", installYear: "2019" }],
+      visitNotes: [{ body: "Hi Herron family,\nGutters cleared.", sentOn: "July 3, 2026" }],
+      documents: [{ name: "hvac-invoice.pdf", uploadedOn: "2026-07-06" }],
+    })
+    expect(ctx).toContain("Membership: Standard plan")
+    expect(ctx).toContain("RECENT NOTES FROM THE TEAM")
+    expect(ctx).toContain("Gutters cleared.")
+    expect(ctx).toContain("DOCUMENTS ON FILE")
+    expect(ctx).toContain("hvac-invoice.pdf (uploaded 2026-07-06)")
+    // Water heater installed 2019, typical life 8–12 → window 2027–2031.
+    expect(ctx).toContain("typical replacement window 2027–2031")
+  })
+
+  it("pre-wires the scope guard into the system prompt", () => {
+    const prompt = assistantSystemPrompt("CONTEXT HERE")
+    expect(prompt).toContain("SCOPE: you only discuss this home")
+    expect(prompt).toContain("WHAT HPS DOES")
+    expect(prompt).toContain("don't quote numbers")
   })
 
   it("knows what the record is missing (the generator case)", () => {
@@ -147,6 +171,13 @@ describe("assistant page", () => {
       text: "Water heater replaced in June 2026.",
       source: "assistant",
     })
+  })
+
+  it("declines off-topic asks and steers back to the home", async () => {
+    renderPage(<Assistant />)
+    await screen.findByText(/I'm the HPS assistant/)
+    await ask("Can you write my kid an essay about Rome?")
+    expect(await screen.findByText(/outside my lane/)).toBeInTheDocument()
   })
 
   it("answers 'what do you need from me?' from the record's gaps", async () => {
