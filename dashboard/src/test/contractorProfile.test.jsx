@@ -82,8 +82,12 @@ describe("job history cross-links", () => {
     renderPage(<JobHistory />, {
       user: { email: "sally@example.com", displayName: "Sally", uid: "u-sally" },
     })
-    // Rendered inline as text, so match the whole line and check for no link.
-    const line = await screen.findByText(/HVAC · Monticello Air$/)
-    expect(line.querySelector("a")).toBeNull()
+    // The category may link to the (member-visible) Health Report, but the
+    // contractor name must never link into the founder-only network.
+    const els = await screen.findAllByText(/Monticello Air/)
+    for (const el of els) {
+      const href = el.closest("a")?.getAttribute("href") || ""
+      expect(href).not.toContain("/contractor-network/")
+    }
   })
 })

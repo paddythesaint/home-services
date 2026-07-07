@@ -4,7 +4,7 @@ import { useItems } from "../useItems"
 import { subscribeContractors } from "../firestoreApi"
 import { viewFor } from "../roles"
 import VisitNoteCard from "../VisitNoteCard"
-import { groupByTrade } from "../trades"
+import { groupByTrade, tradeForItem } from "../trades"
 import { Card, PageHeader, StatusBadge, Button, Modal, DynamicForm } from "../components"
 
 const baseFields = [
@@ -121,7 +121,18 @@ export default function JobHistory() {
                 <div>
                   <p className="font-semibold text-ink">{job.title}</p>
                   <p className="text-sm text-ink-2">
-                    {job.date} · {job.category} ·{" "}
+                    {job.date} ·{" "}
+                    {job.category ? (
+                      <Link
+                        to={`/health-report#trade-${tradeForItem(job).key}`}
+                        className="hover:text-brand-700"
+                      >
+                        {job.category}
+                      </Link>
+                    ) : (
+                      "—"
+                    )}{" "}
+                    ·{" "}
                     {founder && job.contractorId ? (
                       <Link
                         to={`/contractor-network/${job.contractorId}`}

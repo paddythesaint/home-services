@@ -6,7 +6,7 @@ import { todayLabel } from "../dates"
 import { viewFor } from "../roles"
 import { workOrderFromPriority } from "../workOrders"
 import { suggestRequirements } from "../requirementSuggestions"
-import { groupByTrade } from "../trades"
+import { groupByTrade, tradeForItem } from "../trades"
 import {
   RESOLUTION_PATHS,
   PATH_META,
@@ -587,7 +587,14 @@ export default function PriorityList() {
                         </span>
                       )}
                     </p>
-                    <p className="text-sm text-ink-2">{item.category}</p>
+                    {item.category ? (
+                      <Link
+                        to={`/health-report#trade-${tradeForItem(item).key}`}
+                        className="text-sm text-ink-2 hover:text-brand-700"
+                      >
+                        {item.category}
+                      </Link>
+                    ) : null}
                     <p className="text-sm text-ink-2 mt-1.5">{item.reason}</p>
                     <div className="flex gap-3 mt-3 flex-wrap">
                       <Button variant="ghost" className="!px-0" onClick={() => setEditing(item)}>

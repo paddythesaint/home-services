@@ -1,9 +1,10 @@
-import { useState } from "react"
-import { Link, useOutletContext } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { Link, useLocation, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import PhotoSection from "../PhotoSection"
 import PhotoAudit from "../PhotoAudit"
 import ActivitySection from "../ActivitySection"
+import SystemsGlance, { tradeRollup } from "../SystemsGlance"
 import { viewFor } from "../roles"
 import { groupByTrade } from "../trades"
 import { addItem, deleteSystemDeep } from "../firestoreApi"
@@ -59,27 +60,22 @@ function dueClass(nextDue) {
   return nextDue <= todayISO() ? "text-status-critical" : "text-ink-3"
 }
 
-// One line of truth about a trade group: how many systems, how many are
-// crying for attention, how many we haven't laid eyes on yet.
-function tradeRollup(list) {
-  const urgent = list.filter((s) => s.condition === "urgent").length
-  const attention = list.filter((s) => s.condition === "attention").length
-  const unverified = list.filter((s) => !s.verified).length
-  const parts = [`${list.length} system${list.length === 1 ? "" : "s"}`]
-  if (urgent) parts.push(`${urgent} urgent`)
-  if (attention) parts.push(`${attention} need${attention === 1 ? "s" : ""} attention`)
-  if (!urgent && !attention) parts.push("all good")
-  if (unverified) parts.push(`${unverified} unverified`)
-  return parts.join(" · ")
-}
-
 export default function HealthReport() {
   const { uid, profile, user } = useOutletContext()
   const { items, add, update } = useItems(uid, "healthReport")
   const [editing, setEditing] = useState(null) // null | "new" | item
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const location = useLocation()
 
   const unverifiedCount = items.filter((i) => !i.verified).length
+
+  // Arriving with a #trade-… hash (from a Systems-at-a-glance row anywhere
+  // in the app), land on that trade's section once the data has rendered.
+  useEffect(() => {
+    if (!location.hash) return
+    const el = document.getElementById(location.hash.slice(1))
+    el?.scrollIntoView?.({ block: "start", behavior: "smooth" })
+  }, [location.hash, items.length])
 
   // Record a verification: stamp the system, roll its next-due date forward by
   // its frequency, and drop a dated entry in the activity log so the history
@@ -245,31 +241,8 @@ export default function HealthReport() {
           return (
             <>
               <Card className="mb-5">
-                <h2 className="font-semibold text-ink">Systems at a glance</h2>
-                <p className="text-sm text-ink-2 mt-1 mb-3">
-                  {items.length} system{items.length === 1 ? "" : "s"} across{" "}
-                  {groups.length} trade group{groups.length === 1 ? "" : "s"}.
-                  Each system is tracked on its own — grouped here by the trade
-                  that services it.
-                </p>
-                <div className="divide-y divide-line">
-                  {groups.map(({ trade, items: groupItems }) => (
-                    <div
-                      key={trade.key}
-                      className="flex items-baseline justify-between gap-3 py-1.5"
-                    >
-                      <a
-                        href={`#trade-${trade.key}`}
-                        className="text-sm font-medium text-ink hover:text-brand-700"
-                      >
-                        {trade.label}
-                      </a>
-                      <span className="text-xs text-ink-3 text-right">
-                        {tradeRollup(groupItems)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                <h2 className="font-semibold text-ink mb-1">Systems at a glance</h2>
+                <SystemsGlance items={items} intro />
               </Card>
 
               <div className="flex flex-col gap-6">

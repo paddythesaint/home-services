@@ -5,6 +5,7 @@ import SystemProfile from "../pages/SystemProfile"
 import HealthReport from "../pages/HealthReport"
 import PriorityList from "../pages/PriorityList"
 import JobHistory from "../pages/JobHistory"
+import Overview from "../pages/Overview"
 import { tradeForText, groupByTrade } from "../trades"
 import { addItem } from "../mocks/firestoreApi"
 
@@ -83,6 +84,43 @@ describe("doors and lenses", () => {
     expect(screen.getAllByText(/1 needs attention/).length).toBeGreaterThan(0)
     // …and the never-verified septic system counts as unverified.
     expect(screen.getAllByText(/2 systems · all good · 1 unverified/).length).toBeGreaterThan(0)
+  })
+
+  it("Overview stat tiles are doors to their pages", async () => {
+    renderPage(<Overview />)
+    const tile = (await screen.findByText("Open priorities")).closest("a")
+    expect(tile).toHaveAttribute("href", "/priority-list")
+    expect(screen.getByText("Jobs completed").closest("a")).toHaveAttribute(
+      "href",
+      "/job-history"
+    )
+    expect(screen.getByText("Systems verified").closest("a")).toHaveAttribute(
+      "href",
+      "/health-report"
+    )
+  })
+
+  it("Overview shares Systems at a glance; rows land on trade sections", async () => {
+    renderPage(<Overview />)
+    expect(await screen.findByText("Systems at a glance")).toBeInTheDocument()
+    const row = screen.getByText("Water & Septic").closest("a")
+    expect(row).toHaveAttribute("href", "/health-report#trade-water")
+  })
+
+  it("due-check banner names link to the system dossier", async () => {
+    renderPage(<Overview />)
+    const link = (await screen.findAllByText("Radon Mitigation"))
+      .map((el) => el.closest("a"))
+      .find((a) => a?.getAttribute("href") === "/system/sys-radon")
+    expect(link).toBeTruthy()
+  })
+
+  it("job categories link to their trade section", async () => {
+    renderPage(<JobHistory />)
+    const cat = (await screen.findAllByText("HVAC"))
+      .map((el) => el.closest("a"))
+      .find((a) => a?.getAttribute("href") === "/health-report#trade-hvac")
+    expect(cat).toBeTruthy()
   })
 
   it("Priority List groups by system on demand", async () => {
