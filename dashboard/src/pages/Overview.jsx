@@ -16,6 +16,7 @@ import hero895 from "../assets/hero-895.jpg"
 import { closingDocsInsights } from "../documentInsights"
 import { recordsIndexInsights } from "../recordsIndexInsights"
 import { energyAuditInsights } from "../energyAuditInsights"
+import { serviceRecordsInsights } from "../serviceRecordsInsights"
 import { todayISO, isoToLabel } from "../dates"
 import { resolutionCounts } from "../resolution"
 import {
@@ -179,6 +180,22 @@ function FullOverview() {
           buttonLabel="Apply energy-audit insights"
           flagField="energyAuditAppliedOn"
           insights={energyAuditInsights}
+          healthApi={healthApi}
+          priorityApi={priorityApi}
+          jobApi={jobApi}
+          calendarApi={calendarApi}
+          saveProfile={saveProfile}
+          uid={uid}
+        />
+      )}
+
+      {!dashboardEmpty && isSeedProperty && !profile.serviceRecords2026AppliedOn && (
+        <InsightsBanner
+          title="Apply your 2026 service records from Gmail?"
+          description="We swept every label from January 1, 2026 onward. This adds nine service visits to your job history — Monticello Air's April upstairs-HVAC repair ($327.15, reversing-valve wire) and June maintenance visit ($285.21 with refrigerant), Dodson's February and April visits, Bartlett's spring tree treatment, Jimmie Mills' spring cleanup & mulch ($650) and latest mow, and two Fitch Services entries — plus four systems the record was missing (the upstairs Carrier system, the mini-split, and your Ting and Airthings monitors), the lapsed Generac coverage as a priority, and two calendar tasks. Amounts and contacts come straight from the receipts; nothing already on the record is duplicated."
+          buttonLabel="Apply service records"
+          flagField="serviceRecords2026AppliedOn"
+          insights={serviceRecordsInsights}
           healthApi={healthApi}
           priorityApi={priorityApi}
           jobApi={jobApi}
