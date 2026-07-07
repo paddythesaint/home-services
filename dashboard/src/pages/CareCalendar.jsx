@@ -2,8 +2,19 @@ import { useState } from "react"
 import { PlanTabs } from "../HubTabs"
 import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
+import { addItem } from "../firestoreApi"
+import { todayLabel } from "../dates"
 import { tradeForItem } from "../trades"
 import { Card, PageHeader, Button, Modal, DynamicForm } from "../components"
+
+const THIS_YEAR = new Date().getFullYear()
+export const isDoneThisYear = (item) => item.doneYear === THIS_YEAR
+
+const jobFields = [
+  { name: "date", label: "When was it done?", type: "text" },
+  { name: "sub", label: "Who did it?", type: "text", placeholder: "e.g. Owner (DIY) or company name" },
+  { name: "cost", label: "Cost", type: "text", placeholder: "optional" },
+]
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -22,6 +33,14 @@ export default function CareCalendar() {
   const { items, add, update, remove } = useItems(uid, "careCalendar")
   const [editing, setEditing] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const [loggingJob, setLoggingJob] = useState(null) // task just marked done
+
+  // Done is per-year: the stamp names this year, so every January the
+  // schedule resets itself without anyone touching it.
+  async function markDone(item) {
+    await update(item.id, { doneOn: todayLabel(), doneYear: THIS_YEAR })
+    setLoggingJob(item)
+  }
 
   return (
     <div>
@@ -51,16 +70,34 @@ export default function CareCalendar() {
                 <ul className="text-sm text-ink-2 space-y-1.5">
                   {monthItems.map((item) => (
                     <li key={item.id} className="flex items-start justify-between gap-2">
-                      <span>
-                        &bull;{" "}
+                      <span className={isDoneThisYear(item) ? "text-ink-3" : ""}>
+                        {isDoneThisYear(item) ? (
+                          <span className="text-status-good font-medium" aria-hidden="true">
+                            ✓{" "}
+                          </span>
+                        ) : (
+                          <>&bull; </>
+                        )}
                         <Link
                           to={`/health-report#trade-${tradeForItem(item).key}`}
                           className="hover:text-brand-700"
                         >
                           {item.task}
                         </Link>
+                        {isDoneThisYear(item) && (
+                          <span className="text-xs text-ink-3"> · done {item.doneOn}</span>
+                        )}
                       </span>
                       <span className="flex gap-2 shrink-0">
+                        {!isDoneThisYear(item) && (
+                          <button
+                            type="button"
+                            className="text-brand-600 hover:text-brand-800 text-xs font-medium"
+                            onClick={() => markDone(item)}
+                          >
+                            mark done
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="text-ink-3 hover:text-ink-2 text-xs"
@@ -99,6 +136,40 @@ export default function CareCalendar() {
               setEditing(null)
             }}
           />
+        </Modal>
+      )}
+
+      {loggingJob && (
+        <Modal
+          title={`Done — log "${loggingJob.task}" as a job?`}
+          onClose={() => setLoggingJob(null)}
+        >
+          <p className="text-sm text-ink-2 mb-4">
+            The task is checked off for {THIS_YEAR}. Logging it as a job keeps the
+            history complete — who did it, when, and what it cost.
+          </p>
+          <DynamicForm
+            fields={jobFields}
+            initialValues={{ date: todayLabel(), sub: "Owner (DIY)" }}
+            submitLabel="Log job"
+            onSubmit={async (v) => {
+              await addItem(uid, "jobHistory", {
+                date: v.date || todayLabel(),
+                title: loggingJob.task,
+                category: tradeForItem(loggingJob).label,
+                sub: v.sub || "",
+                cost: v.cost || "",
+                status: "completed",
+                notes: "Care calendar task.",
+              })
+              setLoggingJob(null)
+            }}
+          />
+          <div className="flex justify-end mt-2">
+            <Button variant="ghost" onClick={() => setLoggingJob(null)}>
+              Skip — just check it off
+            </Button>
+          </div>
         </Modal>
       )}
 

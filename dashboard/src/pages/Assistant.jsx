@@ -19,21 +19,32 @@ import { Card, PageHeader, Button } from "../components"
 // through a confirm chip the member tapped. Transcripts are stored on the
 // property and visible to the whole household and the HPS team.
 
+const CHIP_DONE = {
+  save_fact: "Saved to the record",
+  service_request: "Request filed — see Happening now",
+  log_job: "Logged — job history + care calendar updated",
+}
+const CHIP_BUTTON = { save_fact: "Save", service_request: "Send request", log_job: "Log job" }
+
+function chipPrompt(action) {
+  if (action.type === "save_fact") return `Record: "${action.fact}"`
+  if (action.type === "log_job") return `Log job: "${action.title}"${action.task ? " — checks off its care task" : ""}`
+  return `File request: "${action.title}"`
+}
+
 function ActionChip({ action, onConfirm }) {
   if (action.status === "done") {
     return (
       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-700 bg-brand-100 rounded-full px-3 py-1.5">
-        ✓ {action.type === "save_fact" ? "Saved to the record" : "Request filed — see Happening now"}
+        ✓ {CHIP_DONE[action.type]}
       </span>
     )
   }
   return (
     <span className="inline-flex items-center gap-2 bg-plane border border-line rounded-xl px-3 py-2">
-      <span className="text-xs text-ink-2">
-        {action.type === "save_fact" ? `Record: "${action.fact}"` : `File request: "${action.title}"`}
-      </span>
+      <span className="text-xs text-ink-2">{chipPrompt(action)}</span>
       <Button variant="subtle" className="!py-1 !px-3 !text-xs shrink-0" onClick={onConfirm}>
-        {action.type === "save_fact" ? "Save" : "Send request"}
+        {CHIP_BUTTON[action.type]}
       </Button>
     </span>
   )
@@ -43,8 +54,10 @@ export default function Assistant() {
   const { uid, profile, user } = useOutletContext()
   const { items: systems } = useItems(uid, "healthReport")
   const { items: priorities } = useItems(uid, "priorityList")
-  const { items: calendar } = useItems(uid, "careCalendar")
-  const { items: jobs } = useItems(uid, "jobHistory")
+  const calendarApi = useItems(uid, "careCalendar")
+  const calendar = calendarApi.items
+  const jobsApi = useItems(uid, "jobHistory")
+  const jobs = jobsApi.items
   const { items: workOrders } = useItems(uid, "workOrders")
   const factsApi = useItems(uid, "facts")
   const convApi = useItems(uid, "conversations")
@@ -164,6 +177,27 @@ export default function Assistant() {
         confirmedBy: user?.email || "",
         date: todayLabel(),
       })
+    } else if (action.type === "log_job") {
+      // One confirmation, two writes: the job enters the history, and if
+      // the model matched a care-calendar task, this year's is checked off.
+      await jobsApi.add({
+        date: action.date || todayLabel(),
+        title: action.title,
+        category: action.category || "",
+        sub: action.sub || "",
+        status: "completed",
+        notes: "Reported via assistant.",
+        via: "assistant",
+      })
+      if (action.task) {
+        const t = calendar.find((x) => x.task === action.task)
+        if (t) {
+          await calendarApi.update(t.id, {
+            doneOn: todayLabel(),
+            doneYear: new Date().getFullYear(),
+          })
+        }
+      }
     } else if (action.type === "service_request") {
       await addItem(uid, "workOrders", {
         title: action.title,

@@ -56,6 +56,19 @@ export async function callClaude(propertyId, system, messages) {
       "Your HVAC takes a 16x25x1 MERV 11 filter — there's a 3-pack noted on the record from Home Depot."
     )
   }
+  if (/i (just )?(flushed|pressure.?washed|cleaned|did|finished)/.test(text)) {
+    // Completed-work report → log_job, with the care-calendar task matched
+    // when the fixture has one (the water-heater flush) so the full
+    // flow-through — job logged + task checked off — is exercisable.
+    if (text.includes("flush")) {
+      return reply(
+        'Nicely done. Want me to log that and check it off this year\'s care calendar?\n<action>{"type":"log_job","title":"Flushed water heater","date":"July 5, 2026","category":"Plumbing","sub":"Owner (DIY)","task":"Flush water heater"}</action>'
+      )
+    }
+    return reply(
+      'Nicely done. Want me to log that in the home\'s job history?\n<action>{"type":"log_job","title":"Pressure washed house & walkways","date":"July 5, 2026","category":"Exterior","sub":"Owner (DIY)","task":""}</action>'
+    )
+  }
   if (text.includes("replaced") || text.includes("new water heater")) {
     return reply(
       'Good to know — congratulations on the upgrade. Want me to add that to the home\'s record?\n<action>{"type":"save_fact","fact":"Water heater replaced in June 2026.","category":"Water Heater"}</action>'

@@ -113,6 +113,27 @@ describe("assistant core (pure)", () => {
     expect(complete).not.toContain("RECORD GAPS")
   })
 
+  it("marks done care tasks in context and accepts log_job actions", () => {
+    const ctx = buildAssistantContext({
+      profile: { address: "x" },
+      calendar: [
+        {
+          month: "July",
+          task: "Flush water heater",
+          doneYear: new Date().getFullYear(),
+          doneOn: "July 7, 2026",
+        },
+        { month: "October", task: "Clean gutters" },
+      ],
+    })
+    expect(ctx).toContain("Flush water heater (done July 7, 2026)")
+    expect(ctx).not.toContain("Clean gutters (done")
+    const { actions } = parseAssistantReply(
+      'ok\n<action>{"type":"log_job","title":"Pressure washed","date":"July 5, 2026","task":""}</action>'
+    )
+    expect(actions[0]).toMatchObject({ type: "log_job", status: "pending" })
+  })
+
   it("parses action tags out of replies and tolerates malformed ones", () => {
     const { text, actions } = parseAssistantReply(
       'Sure thing.\n<action>{"type":"save_fact","fact":"New roof 2026.","category":"Roof"}</action>\n<action>not json</action>'

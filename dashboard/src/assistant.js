@@ -15,7 +15,7 @@
 
 import { replacementHorizon, fmtMoneyRange } from "./benchmarks"
 
-export const ACTION_TYPES = ["save_fact", "service_request"]
+export const ACTION_TYPES = ["save_fact", "service_request", "log_job"]
 
 const line = (label, value) => (value ? `${label}: ${value}` : null)
 
@@ -109,8 +109,17 @@ export function buildAssistantContext({
   }
 
   if (calendar.length) {
+    const thisYear = new Date().getFullYear()
     parts.push(
-      "CARE CALENDAR:\n" + calendar.map((t) => `- ${t.month || "?"}: ${t.task}`).join("\n")
+      "CARE CALENDAR:\n" +
+        calendar
+          .map(
+            (t) =>
+              `- ${t.month || "?"}: ${t.task}${
+                t.doneYear === thisYear ? ` (done ${t.doneOn || "this year"})` : ""
+              }`
+          )
+          .join("\n")
     )
   }
 
@@ -197,6 +206,9 @@ ACTIONS — when appropriate, append action tags on their own lines after your r
 <action>{"type":"save_fact","fact":"<one clear sentence, past tense, with dates if given>","category":"<matching system category if any, else empty>"}</action>
 2. When something needs fixing, checking, or doing, offer to file it:
 <action>{"type":"service_request","title":"<short title>","details":"<what the member described, plus any timing/access notes>"}</action>
+3. When the member reports work that is already DONE (by them or by a pro they hired), offer to log it:
+<action>{"type":"log_job","title":"<short job title>","date":"<when it was done, e.g. July 5, 2026>","category":"<matching system category if any, else empty>","sub":"<who did it, e.g. Owner (DIY) or the company name, else empty>","task":"<the EXACT task text from CARE CALENDAR that this completes, if any, else empty>"}</action>
+Confirming a log_job writes the job history entry AND checks the matching care-calendar task off for the year — so copy the task text exactly as it appears above.
 Use at most one action of each type per reply — EXCEPT when a document is attached: then summarize it in 2-3 sentences and propose up to five save_fact actions for durable facts worth keeping (equipment and models, install/service dates, warranties, costs, contractor names). If a photo is attached, describe what you see briefly and use it to sharpen the fact or request.`
 }
 
