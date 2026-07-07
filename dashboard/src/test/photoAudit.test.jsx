@@ -54,7 +54,10 @@ describe("photo visibility and audit", () => {
   it("deleting a system takes its photos with it — no new orphans", async () => {
     renderPage(<HealthReport />)
     // HVAC carries photo-hvac-1. Delete the system from its card.
-    const hvacCard = (await screen.findByText("HVAC")).closest(".bg-surface")
+    const hvacTitle = (await screen.findAllByText("HVAC")).find(
+      (el) => el.closest("a")?.getAttribute("href") === "/system/sys-hvac"
+    )
+    const hvacCard = hvacTitle.closest(".bg-surface")
     fireEvent.click(within(hvacCard).getByText("Delete"))
     expect(
       await screen.findByText(/Its 1 photo will be removed with it/)
@@ -77,7 +80,7 @@ describe("photo visibility and audit", () => {
     renderPage(<HealthReport />, {
       user: { email: "sally@example.com", displayName: "Sally", uid: "u-sally" },
     })
-    await screen.findByText("HVAC")
+    await screen.findAllByText("HVAC")
     expect(screen.queryByText("Photo audit")).not.toBeInTheDocument()
   })
 })

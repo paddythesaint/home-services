@@ -33,6 +33,24 @@ export async function callClaude(propertyId, system, messages) {
       '{"brand":"Generac","model":"Guardian 22kW","serial":"3012345678","installYear":"2021","condition_note":"Light debris on housing top."}'
     )
   }
+  if (/you need|\bmissing\b|complete the record/.test(text)) {
+    // Answer from the RECORD GAPS section of the system prompt — same
+    // source the real model reads — so preview matches production behavior.
+    const m = (system || "").match(/RECORD GAPS[^\n]*\n((?:- [^\n]*\n?)*)/)
+    const gaps = m
+      ? m[1]
+          .trim()
+          .split("\n")
+          .map((l) => l.replace(/^- /, ""))
+          .filter(Boolean)
+      : []
+    if (!gaps.length) {
+      return reply("The record looks complete — nothing I need from you right now.")
+    }
+    return reply(
+      `A few things would round out the record: ${gaps.slice(0, 3).join("; ")}. A quick nameplate photo is usually the fastest win.`
+    )
+  }
   if (text.includes("filter")) {
     return reply(
       "Your HVAC takes a 16x25x1 MERV 11 filter — there's a 3-pack noted on the record from Home Depot."

@@ -63,8 +63,26 @@ describe("system dossier page", () => {
 describe("doors and lenses", () => {
   it("Health Report card titles link to the dossier", async () => {
     renderPage(<HealthReport />)
-    const title = await screen.findByText("HVAC")
-    expect(title.closest("a")).toHaveAttribute("href", "/system/sys-hvac")
+    // "HVAC" now appears in the summary and section heading too — find the
+    // card title, the one that links into the dossier.
+    const title = (await screen.findAllByText("HVAC")).find(
+      (el) => el.closest("a")?.getAttribute("href") === "/system/sys-hvac"
+    )
+    expect(title).toBeTruthy()
+  })
+
+  it("Health Report consolidates systems under trade sections with rollups", async () => {
+    renderPage(<HealthReport />)
+    expect(await screen.findByText("Systems at a glance")).toBeInTheDocument()
+    expect(screen.getByText(/4 systems across 3 trade groups/)).toBeInTheDocument()
+    // Water Heater sits under Plumbing; Radon + Septic under Water & Septic —
+    // separate records, one section each. Label shows as summary row + heading.
+    expect(screen.getAllByText("Plumbing")).toHaveLength(2)
+    expect(screen.getAllByText("Water & Septic")).toHaveLength(2)
+    // Rollups: the water heater's condition surfaces on its trade…
+    expect(screen.getAllByText(/1 needs attention/).length).toBeGreaterThan(0)
+    // …and the never-verified septic system counts as unverified.
+    expect(screen.getAllByText(/2 systems · all good · 1 unverified/).length).toBeGreaterThan(0)
   })
 
   it("Priority List groups by system on demand", async () => {

@@ -5,6 +5,7 @@ import PhotoSection from "../PhotoSection"
 import PhotoAudit from "../PhotoAudit"
 import ActivitySection from "../ActivitySection"
 import { viewFor } from "../roles"
+import { groupByTrade } from "../trades"
 import { addItem, deleteSystemDeep } from "../firestoreApi"
 import { todayLabel, todayISO, isoToLabel, addMonthsISO } from "../dates"
 import { replacementHorizon, fmtMoneyRange } from "../benchmarks"
@@ -56,6 +57,20 @@ const fields = [
 function dueClass(nextDue) {
   if (!nextDue) return ""
   return nextDue <= todayISO() ? "text-status-critical" : "text-ink-3"
+}
+
+// One line of truth about a trade group: how many systems, how many are
+// crying for attention, how many we haven't laid eyes on yet.
+function tradeRollup(list) {
+  const urgent = list.filter((s) => s.condition === "urgent").length
+  const attention = list.filter((s) => s.condition === "attention").length
+  const unverified = list.filter((s) => !s.verified).length
+  const parts = [`${list.length} system${list.length === 1 ? "" : "s"}`]
+  if (urgent) parts.push(`${urgent} urgent`)
+  if (attention) parts.push(`${attention} need${attention === 1 ? "s" : ""} attention`)
+  if (!urgent && !attention) parts.push("all good")
+  if (unverified) parts.push(`${unverified} unverified`)
+  return parts.join(" · ")
 }
 
 export default function HealthReport() {
@@ -118,8 +133,9 @@ export default function HealthReport() {
           </p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {items.map((system) => {
+        (() => {
+          const groups = groupByTrade(items)
+          const systemCard = (system) => {
             const freq = Number(system.verifyFrequencyMonths) || 0
             return (
               <Card key={system.id}>
@@ -224,8 +240,58 @@ export default function HealthReport() {
                 </div>
               </Card>
             )
-          })}
-        </div>
+          }
+
+          return (
+            <>
+              <Card className="mb-5">
+                <h2 className="font-semibold text-ink">Systems at a glance</h2>
+                <p className="text-sm text-ink-2 mt-1 mb-3">
+                  {items.length} system{items.length === 1 ? "" : "s"} across{" "}
+                  {groups.length} trade group{groups.length === 1 ? "" : "s"}.
+                  Each system is tracked on its own — grouped here by the trade
+                  that services it.
+                </p>
+                <div className="divide-y divide-line">
+                  {groups.map(({ trade, items: groupItems }) => (
+                    <div
+                      key={trade.key}
+                      className="flex items-baseline justify-between gap-3 py-1.5"
+                    >
+                      <a
+                        href={`#trade-${trade.key}`}
+                        className="text-sm font-medium text-ink hover:text-brand-700"
+                      >
+                        {trade.label}
+                      </a>
+                      <span className="text-xs text-ink-3 text-right">
+                        {tradeRollup(groupItems)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              <div className="flex flex-col gap-6">
+                {groups.map(({ trade, items: groupItems }) => (
+                  <section key={trade.key} id={`trade-${trade.key}`}>
+                    <div className="flex items-baseline justify-between gap-3 mb-2">
+                      <h2 className="text-sm font-semibold text-ink-2 uppercase tracking-wide">
+                        {trade.label}
+                      </h2>
+                      <span className="text-xs text-ink-3">
+                        {tradeRollup(groupItems)}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {groupItems.map(systemCard)}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            </>
+          )
+        })()
       )}
 
       {viewFor(user?.email).business && items.length > 0 && (
