@@ -30,7 +30,10 @@ export default function WhatsNext() {
 
   const inFlight = workOrders.filter(isUnderway)
   const month = new Date().toLocaleDateString("en-US", { month: "long" })
-  const monthTasks = calendar.filter((t) => t.month === month)
+  // Tasks already done this year are off the list — done means done.
+  const monthTasks = calendar.filter(
+    (t) => t.month === month && t.doneYear !== new Date().getFullYear()
+  )
   const dueChecks = systems
     .filter((s) => s.nextDue && s.nextDue <= todayISO())
     .sort((a, b) => a.nextDue.localeCompare(b.nextDue))

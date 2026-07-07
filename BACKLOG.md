@@ -48,6 +48,23 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 43 — care-task completion loop (7/7/26)
+Owner found the gap doing it for real: "I pressure washed this weekend —
+how do I enter that to complete the action in the care calendar?"
+- **Done-for-the-year state**: care tasks gain doneOn/doneYear. "mark
+  done" on the calendar stamps the year; the row shows ✓ + date; every
+  January the schedule resets itself (the stamp names the year, no
+  cleanup needed). What's Next drops done tasks.
+- **Mark done → offer the job log**: one prefilled modal (when, who,
+  cost) writes the matching completed Job History entry; "Skip — just
+  check it off" for pure checkoffs.
+- **Assistant flow-through** (new log_job action): reporting finished
+  work ("I flushed the water heater this weekend") gets a "Log job"
+  confirm chip; one tap writes the job history entry AND checks off the
+  matching care-calendar task (the model copies the exact task text
+  from context). Context now marks done tasks so the assistant doesn't
+  nag about them. Confirm-then-write, as ever.
+
 ## Slice 42 — intent-shaped nav: hubs, What's Next, naming pass (7/7/26)
 UX assessment recs #3 + #4 + #5, owner-approved. Routes unchanged —
 every old URL still works; this is wayfinding, not plumbing.
