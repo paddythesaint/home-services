@@ -143,6 +143,20 @@ describe("assistant core (pure)", () => {
     expect(actions[0]).toMatchObject({ type: "save_fact", fact: "New roof 2026.", status: "pending" })
   })
 
+  it("omits action fields it doesn't have — Firestore rejects undefined", () => {
+    const t = transcriptMessage({
+      role: "assistant",
+      text: "done",
+      actions: [{ type: "log_job", title: "Generator service", task: "x", status: "pending" }],
+    })
+    expect(t.actions[0]).toEqual({
+      type: "log_job",
+      title: "Generator service",
+      status: "pending",
+    })
+    expect("fact" in t.actions[0]).toBe(false)
+  })
+
   it("keeps transcripts small: photos become a flag, actions slim down", () => {
     const t = transcriptMessage({
       role: "user",

@@ -48,6 +48,18 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 44 — hotfix: transcript persist crash on log_job (7/7/26)
+Owner hit it live (generator service upload): the writes landed (job,
+calendar, facts — chips confirmed), but persisting the transcript threw
+"addDoc() called with invalid data: undefined". transcriptMessage was
+writing undefined for fields an action doesn't carry (log_job has no
+`fact`); production Firestore rejects undefined, the mock tolerated it —
+so 177 tests never saw it.
+- transcriptMessage now OMITS absent fields instead of writing undefined.
+- The mock's addItem/updateItem now throw on undefined (deeply), exactly
+  like Firestore — this bug class can't pass tests again. Full suite
+  stayed green after hardening: no other latent writers.
+
 ## Slice 43 — care-task completion loop (7/7/26)
 Owner found the gap doing it for real: "I pressure washed this weekend —
 how do I enter that to complete the action in the care calendar?"

@@ -143,7 +143,24 @@ export function subscribeItems(uid, name, callback, onError) {
   return off
 }
 
+// Firestore rejects undefined field values outright ("Function addDoc()
+// called with invalid data"). The mock mirrors that, deeply, so tests
+// catch the bug class instead of shipping it.
+function assertNoUndefined(value, path) {
+  if (value === undefined) {
+    throw new Error(
+      `Function addDoc() called with invalid data. Unsupported field value: undefined (found in field ${path}) (mock)`
+    )
+  }
+  if (Array.isArray(value)) {
+    value.forEach((v, i) => assertNoUndefined(v, `${path}[${i}]`))
+  } else if (value && typeof value === "object") {
+    for (const [k, v] of Object.entries(value)) assertNoUndefined(v, `${path}.${k}`)
+  }
+}
+
 export function addItem(uid, name, data) {
+  assertNoUndefined(data, name)
   const item = { order: Date.now(), ...data, id: genId(name) }
   coll(uid, name).push(item)
   emitItems(uid, name)
@@ -151,6 +168,7 @@ export function addItem(uid, name, data) {
 }
 
 export function updateItem(uid, name, id, data) {
+  assertNoUndefined(data, name)
   const item = coll(uid, name).find((d) => d.id === id)
   if (item) Object.assign(item, data)
   emitItems(uid, name)

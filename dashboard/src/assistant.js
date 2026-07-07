@@ -230,7 +230,9 @@ export function parseAssistantReply(raw) {
 }
 
 // Transcript-safe copy of a message (images/documents become placeholders
-// so the stored conversation stays small and readable).
+// so the stored conversation stays small and readable). Fields an action
+// doesn't carry are OMITTED, never written as undefined — Firestore
+// rejects undefined values outright.
 export function transcriptMessage(m) {
   return {
     role: m.role,
@@ -238,7 +240,14 @@ export function transcriptMessage(m) {
     ...(m.hadPhoto ? { hadPhoto: true } : {}),
     ...(m.hadDoc ? { hadDoc: m.hadDoc } : {}),
     ...(m.actions && m.actions.length
-      ? { actions: m.actions.map(({ type, fact, title, status }) => ({ type, fact, title, status })) }
+      ? {
+          actions: m.actions.map(({ type, fact, title, status }) => ({
+            type,
+            ...(fact !== undefined ? { fact } : {}),
+            ...(title !== undefined ? { title } : {}),
+            status,
+          })),
+        }
       : {}),
   }
 }
