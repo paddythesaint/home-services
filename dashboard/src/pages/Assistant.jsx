@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import { addItem } from "../firestoreApi"
@@ -12,7 +12,7 @@ import {
   parseAssistantReply,
   transcriptMessage,
 } from "../assistant"
-import { Card, PageHeader, Button } from "../components"
+import { Card, Button } from "../components"
 
 // The 24/7 concierge: knows this home's record (and nothing else), answers
 // from it, files service requests, and learns — every fact saved here came
@@ -74,6 +74,13 @@ export default function Assistant() {
   const convIdRef = useRef(null)
   const fileRef = useRef(null)
   const docRef = useRef(null)
+  const threadEndRef = useRef(null)
+  const composerRef = useRef(null)
+
+  // Keep the newest message in view, like every native chat.
+  useEffect(() => {
+    threadEndRef.current?.scrollIntoView?.({ behavior: "smooth", block: "end" })
+  }, [messages, sending])
 
   // The running API-shaped history (may include image blocks; kept out of
   // React state so transcripts never carry base64).
@@ -103,6 +110,7 @@ export default function Assistant() {
     const shown = [...messages, userMsg]
     setMessages(shown)
     setInput("")
+    if (composerRef.current) composerRef.current.style.height = "auto"
 
     let content = text
     if (photo) {
@@ -260,26 +268,36 @@ export default function Assistant() {
 
   return (
     <div>
-      <PageHeader
-        title="Assistant"
-        subtitle={`Knows ${profile.address || "your home"} inside out — ask anything, any hour. Conversations are shared with your HPS team.`}
-      />
+      {/* Compact header — on a phone the thread is the page, so the chrome
+          shrinks to one line and the chat takes the rest of the viewport. */}
+      <div className="mb-3 md:mb-4">
+        <h1 className="font-display text-xl md:text-3xl font-semibold text-ink">Assistant</h1>
+        <p className="hidden md:block text-sm text-ink-2 mt-1">
+          Knows {profile.address || "your home"} inside out — ask anything, any hour.
+          Conversations are shared with your HPS team.
+        </p>
+      </div>
 
-      <Card className="mb-4">
-        <div className="flex flex-col gap-3">
-          <div className="bg-plane rounded-xl px-4 py-3 text-sm text-ink-2 max-w-[85%]">
+      {/* The chat shell: a fixed-height column — thread scrolls, composer
+          stays pinned — full-bleed on mobile like a native chat app. */}
+      <div className="flex flex-col bg-surface border-y md:border border-line md:rounded-2xl md:shadow-(--shadow-card) -mx-4 md:mx-0 mb-4 h-[calc(100dvh-13.5rem)] md:h-[calc(100dvh-16rem)] min-h-[20rem]">
+        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 flex flex-col gap-3">
+          <div className="bg-plane rounded-2xl rounded-bl-md px-4 py-2.5 text-sm text-ink-2 max-w-[85%] self-start">
             I'm the HPS assistant for {profile.address || "your home"}. I know its systems,
             plan, and history — ask me anything, tell me what's changed, or send a photo of
             something that doesn't look right. Prefer a person? The team is one call away.
           </div>
 
           {messages.map((m, i) => (
-            <div key={i} className={m.role === "user" ? "self-end max-w-[85%]" : "max-w-[85%]"}>
+            <div
+              key={i}
+              className={m.role === "user" ? "self-end max-w-[85%]" : "self-start max-w-[85%]"}
+            >
               <div
                 className={
                   m.role === "user"
-                    ? "bg-brand-700 text-white rounded-xl px-4 py-3 text-sm whitespace-pre-line"
-                    : "bg-plane text-ink-2 rounded-xl px-4 py-3 text-sm whitespace-pre-line"
+                    ? "bg-brand-700 text-white rounded-2xl rounded-br-md px-4 py-2.5 text-sm whitespace-pre-line"
+                    : "bg-plane text-ink-2 rounded-2xl rounded-bl-md px-4 py-2.5 text-sm whitespace-pre-line"
                 }
               >
                 {m.hadPhoto && <span className="block text-xs opacity-75 mb-1">📷 photo attached</span>}
@@ -296,7 +314,11 @@ export default function Assistant() {
             </div>
           ))}
 
-          {sending && <p className="text-xs text-ink-3">Thinking…</p>}
+          {sending && (
+            <div className="self-start bg-plane rounded-2xl rounded-bl-md px-4 py-2.5">
+              <span className="text-sm text-ink-3 animate-pulse">Thinking…</span>
+            </div>
+          )}
           {error && (
             <p className="text-sm text-status-critical">
               {error} — you can also use the{" "}
@@ -306,45 +328,86 @@ export default function Assistant() {
               on your home page.
             </p>
           )}
+          <div ref={threadEndRef} aria-hidden="true" />
+        </div>
 
-          <div className="flex items-end gap-2 pt-2 border-t border-line">
+        <div className="shrink-0 border-t border-line px-3 md:px-4 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))]">
+          {(photo || doc) && (
+            <div className="flex gap-2 mb-2">
+              {photo && (
+                <span className="inline-flex items-center gap-1.5 text-xs text-ink-2 bg-brand-100 border border-brand-400/40 rounded-full px-3 py-1">
+                  📷 ✓ photo ready
+                  <button type="button" aria-label="Remove photo" onClick={() => setPhoto(null)} className="text-ink-3 hover:text-ink">
+                    ×
+                  </button>
+                </span>
+              )}
+              {doc && (
+                <span className="inline-flex items-center gap-1.5 text-xs text-ink-2 bg-brand-100 border border-brand-400/40 rounded-full px-3 py-1 min-w-0">
+                  <span className="truncate max-w-40">📎 ✓ {doc.file.name}</span>
+                  <button type="button" aria-label="Remove document" onClick={() => setDoc(null)} className="text-ink-3 hover:text-ink shrink-0">
+                    ×
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
+          <div className="flex items-end gap-1.5">
             <button
               type="button"
               aria-label="Attach photo"
               onClick={() => fileRef.current?.click()}
-              className={`shrink-0 rounded-full border px-3 py-2 text-sm ${photo ? "border-brand-400 bg-brand-100" : "border-line text-ink-3 hover:text-ink"}`}
+              className="shrink-0 w-9 h-9 mb-0.5 flex items-center justify-center rounded-full text-ink-3 hover:text-ink hover:bg-plane text-base"
             >
-              📷{photo ? " ✓" : ""}
+              📷
             </button>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={attachPhoto} />
             <button
               type="button"
               aria-label="Attach document"
               onClick={() => docRef.current?.click()}
-              className={`shrink-0 rounded-full border px-3 py-2 text-sm ${doc ? "border-brand-400 bg-brand-100" : "border-line text-ink-3 hover:text-ink"}`}
+              className="shrink-0 w-9 h-9 mb-0.5 flex items-center justify-center rounded-full text-ink-3 hover:text-ink hover:bg-plane text-base"
             >
-              📎{doc ? " ✓" : ""}
+              📎
             </button>
             <input ref={docRef} type="file" accept="application/pdf" className="hidden" onChange={attachDoc} />
             <textarea
-              rows={2}
+              ref={composerRef}
+              rows={1}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value)
+                // Grow with the text, like every native chat composer.
+                e.target.style.height = "auto"
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault()
                   send()
                 }
               }}
-              placeholder="Ask about the home, report something, or request service…"
-              className="flex-1 border border-line rounded-xl px-3.5 py-2.5 bg-surface text-ink text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/25"
+              placeholder="Ask about the home…"
+              className="flex-1 resize-none border border-line rounded-3xl px-4 py-2 bg-surface text-ink text-[16px] md:text-sm leading-6 focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/25"
             />
-            <Button onClick={send} disabled={sending || !input.trim()}>
-              Send
-            </Button>
+            <button
+              type="button"
+              aria-label="Send"
+              onClick={send}
+              disabled={sending || !input.trim()}
+              className={`shrink-0 w-9 h-9 mb-0.5 flex items-center justify-center rounded-full text-white transition-colors ${
+                sending || !input.trim()
+                  ? "bg-ink-3/40"
+                  : "bg-brand-700 hover:bg-brand-800"
+              }`}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M8 13V3M8 3L3.5 7.5M8 3l4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
           </div>
         </div>
-      </Card>
+      </div>
 
       {documents.length > 0 && (
         <Card title={`Documents (${documents.length})`} className="mb-4">
