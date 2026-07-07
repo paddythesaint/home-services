@@ -30,21 +30,30 @@ export const STAFF_ROLES = {
 
 export const businessRole = (email) => STAFF_ROLES[(email || "").toLowerCase()] || null
 
-// Nav item keys per role (keys match Layout's item list).
+// Nav item keys per role (keys match Layout's item list). The nav is
+// intent-shaped, not table-shaped: two hubs (record, plan) hold the
+// detail pages as tabs, and the intake tools live under Tools for the
+// seats that use them.
 const NAV = {
-  founder: [
-    "overview", "assistant", "walkthrough", "import", "health", "calendar",
-    "priorities", "forecast", "history", "contractors",
-  ],
-  relationship: [
-    "overview", "assistant", "walkthrough", "import", "health", "calendar",
-    "priorities", "history", "contractors",
-  ],
-  technician: ["overview", "assistant", "health", "calendar", "priorities", "walkthrough", "history"],
-  homeowner: [
-    "overview", "assistant", "health", "calendar", "priorities", "forecast",
-    "history", "contractors",
-  ],
+  founder: ["overview", "assistant", "record", "plan", "walkthrough", "import"],
+  relationship: ["overview", "assistant", "record", "plan", "walkthrough", "import"],
+  technician: ["overview", "assistant", "record", "plan", "walkthrough"],
+  homeowner: ["overview", "assistant", "record", "plan"],
+}
+
+// Tabs inside the two hubs, per role — the old page-level trims live on
+// here (technicians see no vendors, staff see no money).
+const RECORD_TABS = {
+  founder: ["health", "history", "contractors"],
+  relationship: ["health", "history", "contractors"],
+  technician: ["health", "history"],
+  homeowner: ["health", "history", "contractors"],
+}
+const PLAN_TABS = {
+  founder: ["next", "calendar", "priorities", "forecast"],
+  relationship: ["next", "calendar", "priorities"],
+  technician: ["next", "calendar", "priorities"],
+  homeowner: ["next", "calendar", "priorities", "forecast"],
 }
 
 // --- "View as" preview (founders only) ---
@@ -89,6 +98,8 @@ export function viewFor(email) {
     actualRole,
     preview: actualRole === "founder" && role !== "founder",
     navKeys: new Set(NAV[role]),
+    recordTabs: new Set(RECORD_TABS[role]),
+    planTabs: new Set(PLAN_TABS[role]),
     business: role === "founder", // Business nav section + its pages
     staff: role !== "homeowner", // internal instruments (onboarding checklist)
     showBilling: role === "founder" || role === "homeowner",

@@ -1,4 +1,5 @@
 import { useOutletContext, Link } from "react-router-dom"
+import { PlanTabs } from "../HubTabs"
 import { useItems } from "../useItems"
 import { replacementHorizon, fmtMoneyRange } from "../benchmarks"
 import { buildForecast } from "../forecast"
@@ -42,6 +43,7 @@ export default function Forecast() {
 
   return (
     <div>
+      <PlanTabs />
       <PageHeader
         title="3-Year Cost Forecast"
         subtitle="Planning ranges computed from each system's age against typical lifespans, plus open priorities with cost estimates. Typical figures — not quotes."

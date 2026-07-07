@@ -5,6 +5,7 @@ import PhotoSection from "../PhotoSection"
 import PhotoAudit from "../PhotoAudit"
 import ActivitySection from "../ActivitySection"
 import SystemsGlance, { tradeRollup } from "../SystemsGlance"
+import { RecordTabs } from "../HubTabs"
 import { viewFor } from "../roles"
 import { groupByTrade } from "../trades"
 import { addItem, deleteSystemDeep } from "../firestoreApi"
@@ -100,6 +101,7 @@ export default function HealthReport() {
 
   return (
     <div>
+      <RecordTabs />
       <PageHeader
         title="Property Health Report"
         subtitle={

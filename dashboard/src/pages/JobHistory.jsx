@@ -4,6 +4,7 @@ import { useItems } from "../useItems"
 import { subscribeContractors } from "../firestoreApi"
 import { viewFor } from "../roles"
 import VisitNoteCard from "../VisitNoteCard"
+import { RecordTabs } from "../HubTabs"
 import { groupByTrade, tradeForItem } from "../trades"
 import { Card, PageHeader, StatusBadge, Button, Modal, DynamicForm } from "../components"
 
@@ -93,6 +94,7 @@ export default function JobHistory() {
 
   return (
     <div>
+      <RecordTabs />
       <PageHeader
         title="Job History"
         subtitle="A complete record of every job dispatched on your property."

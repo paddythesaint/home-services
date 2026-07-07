@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { PlanTabs } from "../HubTabs"
 import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import { addItem } from "../firestoreApi"
@@ -462,8 +463,9 @@ export default function PriorityList() {
 
   return (
     <div>
+      <PlanTabs />
       <PageHeader
-        title="90-Day Priority List"
+        title="90-Day Priorities"
         subtitle="Ranked recommendations — and for each one, what's needed to close it out and how it gets done."
         action={<Button onClick={() => setEditing("new")}>+ Add item</Button>}
       />

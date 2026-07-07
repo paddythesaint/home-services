@@ -65,12 +65,12 @@ describe("first-login tour", () => {
   it("stays quiet for staff, and for anyone who has seen it", async () => {
     localStorage.setItem("hpsTourSeen", "1")
     renderLayout(MOCK_FOUNDER)
-    await screen.findAllByText("Overview")
+    await screen.findAllByText("Home")
     expect(screen.queryByText(/lay of the land/)).not.toBeInTheDocument()
 
     localStorage.clear()
     renderLayout(TECH)
-    await screen.findAllByText("Overview")
+    await screen.findAllByText("Home")
     expect(screen.queryByText(/lay of the land/)).not.toBeInTheDocument()
     expect(screen.queryByText("Your home, handled")).not.toBeInTheDocument()
   })

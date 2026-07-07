@@ -72,44 +72,70 @@ const sees = async (label) =>
 const hidden = (label) => expect(screen.queryAllByText(label)).toHaveLength(0)
 
 describe("role-tailored navigation (Layout)", () => {
-  it("founder sees everything: business section, forecast, billing", async () => {
+  it("founder sees everything: hubs, tools, business section, billing", async () => {
     renderLayout(MOCK_FOUNDER)
+    await sees("Property Record")
+    await sees("The Plan")
     await sees("Command Center")
     await sees("Contractor Network")
-    await sees("Cost Forecast")
+    await sees("Import Records")
     await sees(/Next invoice/)
   })
 
-  it("relationship (Sally) keeps intake tools, loses business plane, forecast, billing", async () => {
+  it("relationship (Sally) keeps intake tools, loses business plane and billing", async () => {
     renderLayout(SALLY)
     await sees("Walkthrough")
-    await sees("Import Bundle")
+    await sees("Import Records")
+    await sees("Property Record")
     hidden("Command Center")
     hidden("Contractor Network")
-    hidden("Cost Forecast")
     hidden(/Next invoice/)
   })
 
-  it("technician gets the visit set: systems, calendar, priorities — no money or vendors", async () => {
+  it("technician gets the visit set: hubs + walkthrough — no import, no money", async () => {
     renderLayout(TECH)
-    await sees("Health Report")
-    await sees("90-Day Priorities")
+    await sees("Property Record")
+    await sees("The Plan")
     await sees("Walkthrough")
-    hidden("Contractors")
-    hidden("Import Bundle")
-    hidden("Cost Forecast")
+    hidden("Import Records")
     hidden("Command Center")
     hidden(/Next invoice/)
   })
 
-  it("homeowner gets a clean record: no intake tools, no business plane, billing shown", async () => {
+  it("homeowner gets a clean four-item nav: no tools, no business plane, billing shown", async () => {
     renderLayout(ALTON)
-    await sees("Cost Forecast")
-    await sees("Contractors")
+    await sees("Home")
+    await sees("Assistant")
+    await sees("Property Record")
+    await sees("The Plan")
     hidden("Walkthrough")
-    hidden("Import Bundle")
+    hidden("Import Records")
+    hidden("Tools")
     hidden("Command Center")
     await sees(/Next invoice/)
+  })
+})
+
+// The old page-level nav trims live on as tab trims inside the hubs.
+describe("hub tab gating", () => {
+  it("technicians see no Contractors tab and no Cost Forecast tab", async () => {
+    const { renderPage } = await import("./renderPage")
+    const { default: JobHistory } = await import("../pages/JobHistory")
+    renderPage(<JobHistory />, { user: TECH })
+    await screen.findAllByText("Job History")
+    expect(screen.queryByText("Contractors")).not.toBeInTheDocument()
+    const { default: CareCalendar } = await import("../pages/CareCalendar")
+    renderPage(<CareCalendar />, { user: TECH })
+    await screen.findAllByText("What's Next")
+    expect(screen.queryByText("Cost Forecast")).not.toBeInTheDocument()
+  })
+
+  it("homeowners get all four plan tabs including Cost Forecast", async () => {
+    const { renderPage } = await import("./renderPage")
+    const { default: CareCalendar } = await import("../pages/CareCalendar")
+    renderPage(<CareCalendar />, { user: ALTON })
+    const tab = await screen.findByText("Cost Forecast")
+    expect(tab.closest("a")).toHaveAttribute("href", "/forecast")
   })
 })
 

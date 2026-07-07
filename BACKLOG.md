@@ -48,6 +48,25 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 42 — intent-shaped nav: hubs, What's Next, naming pass (7/7/26)
+UX assessment recs #3 + #4 + #5, owner-approved. Routes unchanged —
+every old URL still works; this is wayfinding, not plumbing.
+- **Two hubs**: the ten-item property nav collapses to four — Home,
+  Assistant, Property Record, The Plan. The record pages (Systems &
+  Health, Job History, Contractors) and the plan pages (What's Next,
+  Care Calendar, 90-Day Priorities, Cost Forecast) become tabs
+  (HubTabs.jsx); the hub stays lit for every route it contains
+  (navActive match lists). Role trims moved from nav keys to tab keys
+  (technicians: no vendors; staff: no money).
+- **What's Next** (/whats-next): the merged timeline — in-flight work
+  orders, this month's care tasks + overdue recurring checks +
+  scheduled jobs, and the 90-day queue — every row linked to the page
+  or dossier that explains it. It's The Plan's landing tab.
+- **Tools section**: Walkthrough + Import Records live under a
+  staff/founder-only Tools heading; homeowners see exactly four items.
+- **Naming pass**: Overview → "Home", Import Bundle → "Import
+  Records", page title aligned to "90-Day Priorities".
+
 ## Slice 41 — numbers as doors (7/7/26)
 UX assessment rec #1 + #2, owner-approved: every figure drills down;
 the system entity is the hub.
