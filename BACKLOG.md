@@ -48,6 +48,26 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 45 — 2026 service-records wave from Gmail (7/7/26)
+Owner: "search to populate all my service records… 1/1/2026 onwards…
+check all labels." Full-mailbox sweep via the Gmail connector, shipped
+as the fourth one-click InsightsBanner wave (serviceRecordsInsights.js,
+flag serviceRecords2026AppliedOn).
+- **9 jobs with real amounts**: Monticello Air Apr 22 upstairs repair
+  ($327.15, reversing-valve wire + short) and Jun 12 ACC visit #2
+  ($285.21 incl. R-410a); Dodson Feb 20 + Apr 24; Bartlett spring tree
+  treatment; Jimmie Mills spring cleanup & mulch ($650) + May mow
+  ($100); Fitch Services Apr estimate + Jun 15 service call.
+- **4 new systems**: upstairs Carrier HVAC (attic, 2016), mini-split,
+  Ting fire monitor (serial 48D496817, $49/yr), Airthings monitor.
+- **Facts/priorities**: Generac coverage lapsed 11/04/2023 (priority);
+  Fitch receipts scope unknown (records priority); roof-docs priority
+  updated (requested from Insured Roofs 7/2, Franco's email was hacked
+  in Feb — verify by phone); ACC plan note on the main HVAC record;
+  Jimmie Mills as the landscaping vendor of record.
+- Dedupe honored: generator 6/15, Dodson 6/19, and the roof claim were
+  already on the record and are not re-added.
+
 ## Slice 44 — hotfix: transcript persist crash on log_job (7/7/26)
 Owner hit it live (generator service upload): the writes landed (job,
 calendar, facts — chips confirmed), but persisting the transcript threw
