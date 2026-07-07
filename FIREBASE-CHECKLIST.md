@@ -10,7 +10,21 @@ Console: [console.firebase.google.com](https://console.firebase.google.com)
 
 ---
 
-## Outstanding (as of 7/6/26)
+## Outstanding (as of 7/7/26)
+
+### 2. Republish the Firestore rules — transcript delete lock (~2 min)
+Slice 40 makes assistant conversation transcripts founder-delete-only:
+members and staff can read and write them as chats accrue, but cannot
+delete one (the audit trail stays intact). Until published, production
+still allows member deletes.
+
+- GitHub → `dashboard/firestore.rules` on **main** → copy the whole file.
+- Console → **Build → Firestore Database → Rules** tab → select all →
+  delete → paste → **Publish**.
+
+**Verify:** rules playground (or just trust the diff) — `delete` on
+`properties/{pid}/conversations/{id}` as a non-founder member should be
+denied; as you (founder), allowed.
 
 ### 1. Publish the Storage rules (~2 min)
 Slice 37b shipped document uploads through the assistant. Files are

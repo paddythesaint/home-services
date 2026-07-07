@@ -79,9 +79,17 @@ service cloud.firestore {
       allow write: if isLegacyOwner(propertyId) || isMemberOf(resource.data) || isStaff();
 
       match /{sub}/{docId} {
-        allow read, write: if isLegacyOwner(propertyId)
+        allow read, create, update: if isLegacyOwner(propertyId)
           || isMemberOf(propertyData(propertyId))
           || isStaff();
+        // Assistant transcripts are the audit trail — members and staff
+        // write them as conversations accrue, but only founders may delete
+        // one. Everything else keeps normal member delete.
+        allow delete: if isFounder()
+          || (sub != 'conversations'
+              && (isLegacyOwner(propertyId)
+                || isMemberOf(propertyData(propertyId))
+                || isStaff()));
       }
     }
   }

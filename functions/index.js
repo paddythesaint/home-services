@@ -30,9 +30,11 @@ const ALLOWED_ORIGINS = [
 ]
 
 // The model and output cap are fixed server-side — clients ask for work,
-// not for spend parameters.
+// not for spend parameters. The cap is sized to the biggest legitimate
+// reply (a document summary plus five proposed facts); anything needing
+// more output than this is not a home-services conversation.
 const MODEL = "claude-sonnet-5"
-const MAX_TOKENS = 16000
+const MAX_TOKENS = 4096
 
 // Light per-instance rate limit (per user, per hour). Honest limitation:
 // it's per warm instance, so the true ceiling is LIMIT × maxInstances —

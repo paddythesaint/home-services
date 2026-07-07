@@ -49,6 +49,7 @@ export default function Assistant() {
   const factsApi = useItems(uid, "facts")
   const convApi = useItems(uid, "conversations")
   const { items: documents } = useItems(uid, "documents")
+  const { items: visitNotes } = useItems(uid, "visitNotes")
 
   const [messages, setMessages] = useState([]) // {role, text, hadPhoto?, actions?}
   const [input, setInput] = useState("")
@@ -132,6 +133,8 @@ export default function Assistant() {
         jobs,
         workOrders,
         facts: factsApi.items,
+        visitNotes,
+        documents,
       })
       const data = await callClaude(
         uid,

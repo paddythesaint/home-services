@@ -66,6 +66,12 @@ export async function callClaude(propertyId, system, messages) {
       'That sounds annoying — I can have the team take care of it. Shall I file the request?\n<action>{"type":"service_request","title":"Disposal jammed","details":"Kitchen disposal hums but will not spin."}</action>'
     )
   }
+  if (/essay|homework|poem|recipe|stock|news|capital of/.test(text)) {
+    // The scope guard, scripted: mirrors the SCOPE rule in the real prompt.
+    return reply(
+      "That one's outside my lane — I only cover this home and HPS services. Anything about the house I can help with?"
+    )
+  }
   return reply(
     "Happy to help with anything about the home — its systems, the plan, or filing a request for the team."
   )
