@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link } from "react-router-dom"
 
 export function Card({ title, children, className = "", ...rest }) {
   return (
@@ -76,14 +77,29 @@ export function VerifiedBadge({ verified }) {
 
 // Stat tile per the dataviz figure contract: sentence-case label,
 // semibold value, optional secondary line. Values stay proportional-figure.
-export function StatTile({ label, value, sub }) {
-  return (
-    <div className="bg-surface border border-line rounded-2xl p-4 md:p-5 shadow-(--shadow-card)">
+// Pass `to` to make the number a door — the whole tile links through to
+// the page that explains it.
+export function StatTile({ label, value, sub, to }) {
+  const body = (
+    <>
       <p className="text-xs font-medium text-ink-2">{label}</p>
       <p className="font-display text-[28px] font-semibold text-ink mt-1 leading-tight">{value}</p>
       {sub && <p className="text-xs text-ink-3 mt-1">{sub}</p>}
-    </div>
+    </>
   )
+  const frame = "bg-surface border border-line rounded-2xl p-4 md:p-5 shadow-(--shadow-card)"
+  if (to) {
+    return (
+      <Link
+        to={to}
+        className={`${frame} block hover:border-brand-400 hover:shadow-md transition-shadow`}
+        aria-label={`${label}: open`}
+      >
+        {body}
+      </Link>
+    )
+  }
+  return <div className={frame}>{body}</div>
 }
 
 // Horizontal segmented meter of system conditions. Status colors carry the

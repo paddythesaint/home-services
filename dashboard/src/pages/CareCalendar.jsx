@@ -1,6 +1,7 @@
 import { useState } from "react"
-import { useOutletContext } from "react-router-dom"
+import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
+import { tradeForItem } from "../trades"
 import { Card, PageHeader, Button, Modal, DynamicForm } from "../components"
 
 const MONTHS = [
@@ -48,7 +49,15 @@ export default function CareCalendar() {
                 <ul className="text-sm text-ink-2 space-y-1.5">
                   {monthItems.map((item) => (
                     <li key={item.id} className="flex items-start justify-between gap-2">
-                      <span>&bull; {item.task}</span>
+                      <span>
+                        &bull;{" "}
+                        <Link
+                          to={`/health-report#trade-${tradeForItem(item).key}`}
+                          className="hover:text-brand-700"
+                        >
+                          {item.task}
+                        </Link>
+                      </span>
                       <span className="flex gap-2 shrink-0">
                         <button
                           type="button"

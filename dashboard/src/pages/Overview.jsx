@@ -10,6 +10,8 @@ import { viewFor } from "../roles"
 import { isUnderway } from "../workOrders"
 import HomeownerHome from "../HomeownerHome"
 import RelationshipCard from "../RelationshipCard"
+import SystemsGlance from "../SystemsGlance"
+import { tradeForText } from "../trades"
 import hero895 from "../assets/hero-895.jpg"
 import { closingDocsInsights } from "../documentInsights"
 import { recordsIndexInsights } from "../recordsIndexInsights"
@@ -22,7 +24,6 @@ import {
   UrgencyBadge,
   StatusBadge,
   StatTile,
-  ConditionMeter,
   Button,
   Modal,
   DynamicForm,
@@ -70,10 +71,6 @@ function FullOverview() {
     healthItems.length === 0 && priorityItems.length === 0 && calendarItems.length === 0
 
   const verifiedCount = healthItems.filter((s) => s.verified).length
-  const conditionCounts = healthItems.reduce((acc, s) => {
-    acc[s.condition] = (acc[s.condition] || 0) + 1
-    return acc
-  }, {})
   const completedJobs = jobItems.filter((j) => j.status === "completed").length
   const openPriorities = priorityItems.filter(
     (p) => !p.status || p.status === "open" || p.status === "scheduled"
@@ -216,7 +213,16 @@ function FullOverview() {
           <span className="font-medium">
             {dueChecks.length} recurring check{dueChecks.length === 1 ? "" : "s"} due:
           </span>{" "}
-          {dueChecks.map((s) => `${s.category} (${isoToLabel(s.nextDue)})`).join(", ")}.{" "}
+          {dueChecks.map((s, i) => (
+            <span key={s.id}>
+              {i > 0 && ", "}
+              <Link to={`/system/${s.id}`} className="font-medium underline">
+                {s.category}
+              </Link>{" "}
+              ({isoToLabel(s.nextDue)})
+            </span>
+          ))}
+          .{" "}
           <Link to="/health-report" className="font-medium underline">
             Log them on the Health Report
           </Link>
@@ -228,6 +234,7 @@ function FullOverview() {
         <StatTile
           label="Systems verified"
           value={healthItems.length > 0 ? `${verifiedCount}/${healthItems.length}` : "—"}
+          to="/health-report"
           sub={
             verifiedCount < healthItems.length
               ? "Run the walkthrough to verify"
@@ -239,6 +246,7 @@ function FullOverview() {
         <StatTile
           label="Open priorities"
           value={openPriorities.length}
+          to="/priority-list"
           sub={(() => {
             const c = resolutionCounts(priorityItems)
             return c.open > 0
@@ -249,18 +257,20 @@ function FullOverview() {
         <StatTile
           label="Jobs completed"
           value={completedJobs}
+          to="/job-history"
           sub="All time"
         />
         <StatTile
           label="This month"
           value={thisMonthTasks.length}
+          to="/care-calendar"
           sub={`${currentMonth} care tasks`}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-        <Card title="Property health">
-          <ConditionMeter counts={conditionCounts} />
+        <Card title="Systems at a glance">
+          <SystemsGlance items={healthItems} />
           <Link
             to="/health-report"
             className="inline-block mt-3 text-sm font-medium text-brand-600 hover:text-brand-800"
@@ -294,7 +304,14 @@ function FullOverview() {
                 <li key={item.id} className="py-2.5 flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium text-ink">{item.title}</p>
-                    <p className="text-xs text-ink-3">{item.category}</p>
+                    {item.category && (
+                      <Link
+                        to={`/health-report#trade-${tradeForText(item.category, item.title).key}`}
+                        className="text-xs text-ink-3 hover:text-brand-700"
+                      >
+                        {item.category}
+                      </Link>
+                    )}
                   </div>
                   <UrgencyBadge urgency={item.urgency} />
                 </li>
@@ -317,7 +334,12 @@ function FullOverview() {
               {recentJobs.map((job) => (
                 <li key={job.id} className="py-2.5 flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-medium text-ink">{job.title}</p>
+                    <Link
+                      to="/job-history"
+                      className="text-sm font-medium text-ink hover:text-brand-700"
+                    >
+                      {job.title}
+                    </Link>
                     <p className="text-xs text-ink-3">
                       {job.date} · {job.sub}
                     </p>

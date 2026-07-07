@@ -121,7 +121,11 @@ export default function Forecast() {
               <tbody>
                 {outlook.map(({ system, horizon }) => (
                   <tr key={system.id} className="border-t border-line">
-                    <td className="py-2 pr-3 font-medium text-ink">{system.category}</td>
+                    <td className="py-2 pr-3 font-medium text-ink">
+                      <Link to={`/system/${system.id}`} className="hover:text-brand-700">
+                        {system.category}
+                      </Link>
+                    </td>
                     <td className="py-2 pr-3 text-ink-2">{horizon.age} yrs</td>
                     <td className="py-2 pr-3 text-ink-2">
                       {horizon.benchmark.lifeYears[0]}–{horizon.benchmark.lifeYears[1]} yrs

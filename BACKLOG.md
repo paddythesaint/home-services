@@ -48,6 +48,22 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 41 — numbers as doors (7/7/26)
+UX assessment rec #1 + #2, owner-approved: every figure drills down;
+the system entity is the hub.
+- **StatTile links**: Overview's four tiles click through (health
+  report, priorities, job history, calendar). Hover ring signals it.
+- **SystemsGlance** extracted as the one shared summary — Overview and
+  Health Report render the identical trade rollup; every row lands on
+  its trade section via /health-report#trade-… (hash-scroll effect on
+  the report).
+- **Dossier/trade links everywhere**: due-checks banner names →
+  /system/:id; Forecast outlook rows → dossier; priority, job, and
+  care-calendar categories/tasks → their trade section; Overview's
+  recent-activity titles → job history.
+- Guard preserved: contractor names still never link into the
+  founder-only network for non-founders (test re-aimed at exactly that).
+
 ## Slice 40 — full-record context, scope guard, transcript delete lock (7/7/26)
 Owner direction: all home-related info in context; keep it strictly
 per-home; the scope rule pre-wired (not homeowner-editable); homeowners
