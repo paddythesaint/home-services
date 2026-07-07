@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react"
+import { RecordTabs } from "../HubTabs"
 import { useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import { viewFor } from "../roles"
@@ -147,6 +148,7 @@ export default function Contractors() {
 
   return (
     <div>
+      <RecordTabs />
       <PageHeader
         title="Contractors"
         subtitle="Your trusted network — every vendor who has worked on the property, with trades, contact info, and job history."

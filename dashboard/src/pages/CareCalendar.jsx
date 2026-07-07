@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { PlanTabs } from "../HubTabs"
 import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import { tradeForItem } from "../trades"
@@ -24,6 +25,7 @@ export default function CareCalendar() {
 
   return (
     <div>
+      <PlanTabs />
       <PageHeader
         title="Annual Care Calendar"
         subtitle="Your seasonal maintenance schedule — add tasks month by month."

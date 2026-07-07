@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useState } from "react"
-import { NavLink, Outlet } from "react-router-dom"
+import { NavLink, Outlet, useLocation } from "react-router-dom"
 import { signOut } from "firebase/auth"
 import { auth } from "./firebase"
 import { useProperty, usePropertyId } from "./useProperty"
@@ -46,20 +46,43 @@ function NavIcon({ name }) {
   )
 }
 
+// Two hubs instead of ten pages: "Property Record" and "The Plan" hold
+// the detail pages as tabs (HubTabs.jsx); `match` lists the routes that
+// keep the hub highlighted while you're inside it.
 const PROPERTY_NAV = [
-  { key: "overview", to: "/", label: "Overview", icon: "overview", end: true },
+  { key: "overview", to: "/", label: "Home", icon: "overview", end: true },
   { key: "assistant", to: "/assistant", label: "Assistant", icon: "assistant" },
-  { key: "walkthrough", to: "/walkthrough", label: "Walkthrough", icon: "walkthrough" },
-  { key: "import", to: "/import", label: "Import Bundle", icon: "import" },
-  { key: "health", to: "/health-report", label: "Health Report", icon: "health" },
-  { key: "calendar", to: "/care-calendar", label: "Care Calendar", icon: "calendar" },
-  { key: "priorities", to: "/priority-list", label: "90-Day Priorities", icon: "priorities" },
-  { key: "forecast", to: "/forecast", label: "Cost Forecast", icon: "forecast" },
-  { key: "history", to: "/job-history", label: "Job History", icon: "history" },
-  { key: "contractors", to: "/contractors", label: "Contractors", icon: "contractors" },
+  {
+    key: "record",
+    to: "/health-report",
+    label: "Property Record",
+    icon: "health",
+    match: ["/health-report", "/job-history", "/contractors", "/system/"],
+  },
+  {
+    key: "plan",
+    to: "/whats-next",
+    label: "The Plan",
+    icon: "calendar",
+    match: ["/whats-next", "/care-calendar", "/priority-list", "/forecast"],
+  },
 ]
 
-// Each role gets a nav sized to its job (see roles.js). The Business
+const TOOLS_NAV = [
+  { key: "walkthrough", to: "/walkthrough", label: "Walkthrough", icon: "walkthrough" },
+  { key: "import", to: "/import", label: "Import Records", icon: "import" },
+]
+
+// Whether a nav item should read as active for the current path — hubs
+// light up for every route they contain, not just their landing page.
+export function navActive(item, pathname) {
+  if (item.end) return pathname === item.to
+  if (item.match) return item.match.some((m) => pathname.startsWith(m))
+  return pathname === item.to || pathname.startsWith(`${item.to}/`)
+}
+
+// Each role gets a nav sized to its job (see roles.js). Tools carries the
+// occasional-use intake instruments (staff seats only); the Business
 // section is founders-only — everyone else's screen stays a home screen.
 function buildNavSections(view) {
   const sections = [
@@ -68,6 +91,10 @@ function buildNavSections(view) {
       items: PROPERTY_NAV.filter((item) => view.navKeys.has(item.key)),
     },
   ]
+  const tools = TOOLS_NAV.filter((item) => view.navKeys.has(item.key))
+  if (tools.length) {
+    sections.push({ heading: "Tools", items: tools })
+  }
   if (view.business) {
     sections.push({
       heading: "Business",
@@ -85,6 +112,7 @@ function buildNavSections(view) {
 export default function Layout({ user }) {
   const { status, propertyId } = usePropertyId(user)
   const founder = isFounder(user?.email)
+  const { pathname } = useLocation()
 
   // Founder "View as": borrow another role's lens (persists until changed).
   // The state mirror only exists to re-render the tree — viewFor() reads
@@ -242,13 +270,11 @@ export default function Layout({ user }) {
                   key={item.to}
                   to={item.to}
                   end={item.end}
-                  className={({ isActive }) =>
-                    `flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors ${
-                      isActive
-                        ? "bg-brand-50 text-brand-900 font-medium"
-                        : "text-brand-100 hover:bg-brand-800"
-                    }`
-                  }
+                  className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors ${
+                    navActive(item, pathname)
+                      ? "bg-brand-50 text-brand-900 font-medium"
+                      : "text-brand-100 hover:bg-brand-800"
+                  }`}
                 >
                   <NavIcon name={item.icon} />
                   {item.label}
@@ -377,13 +403,11 @@ export default function Layout({ user }) {
                         to={item.to}
                         end={item.end}
                         onClick={() => setMenuOpen(false)}
-                        className={({ isActive }) =>
-                          `flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors ${
-                            isActive
-                              ? "bg-brand-50 text-brand-900 font-medium"
-                              : "text-brand-100 hover:bg-brand-800"
-                          }`
-                        }
+                        className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors ${
+                          navActive(item, pathname)
+                            ? "bg-brand-50 text-brand-900 font-medium"
+                            : "text-brand-100 hover:bg-brand-800"
+                        }`}
                       >
                         <NavIcon name={item.icon} />
                         {item.label}

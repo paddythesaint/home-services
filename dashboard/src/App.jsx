@@ -23,6 +23,7 @@ const ImportBundle = lazy(() => import("./pages/ImportBundle"))
 const Ideas = lazy(() => import("./pages/Ideas"))
 const Assistant = lazy(() => import("./pages/Assistant"))
 const SystemProfile = lazy(() => import("./pages/SystemProfile"))
+const WhatsNext = lazy(() => import("./pages/WhatsNext"))
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="/" element={<Layout user={user} />}>
               <Route index element={<Overview />} />
               <Route path="walkthrough" element={<Walkthrough />} />
+              <Route path="whats-next" element={<WhatsNext />} />
               <Route path="health-report" element={<HealthReport />} />
               <Route path="care-calendar" element={<CareCalendar />} />
               <Route path="priority-list" element={<PriorityList />} />
