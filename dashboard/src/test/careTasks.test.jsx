@@ -65,7 +65,7 @@ describe("care task completion loop", () => {
     fireEvent.change(screen.getByPlaceholderText(/Ask about the home/), {
       target: { value: "I flushed the water heater on Saturday" },
     })
-    fireEvent.click(screen.getByText("Send"))
+    fireEvent.click(screen.getByLabelText("Send"))
 
     expect(await screen.findByText(/Log job: "Flushed water heater"/)).toBeInTheDocument()
     // Nothing written until confirmed.

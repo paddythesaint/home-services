@@ -48,6 +48,22 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 46 — native chat UI for the Assistant (7/7/26)
+Owner: "renders clunky/compressed on mobile — make it feel native to AI
+chat interfaces (Claude/ChatGPT)."
+- **Chat shell**: fixed-height column (dvh-based) — the thread scrolls,
+  the composer stays pinned; full-bleed on mobile (no card chrome),
+  card-framed on desktop. Auto-scrolls to the newest message.
+- **Bubbles**: user right-aligned in brand green with a tail-corner,
+  assistant left in soft plane gray; "Thinking…" renders as a pulsing
+  assistant bubble.
+- **Composer**: single-line auto-growing textarea (caps at 8 lines,
+  resets after send), compact icon-only 📷/📎 buttons, circular ↑ send
+  button (disabled state greyed), pending attachments as removable
+  chips above the input, iOS safe-area padding, 16px input font so iOS
+  doesn't zoom on focus.
+- Header collapses to one line on mobile — the thread is the page.
+
 ## Slice 45 — 2026 service-records wave from Gmail (7/7/26)
 Owner: "search to populate all my service records… 1/1/2026 onwards…
 check all labels." Full-mailbox sweep via the Gmail connector, shipped

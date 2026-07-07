@@ -179,7 +179,7 @@ describe("assistant page", () => {
       screen.getByPlaceholderText(/Ask about the home/),
       { target: { value: text } }
     )
-    fireEvent.click(screen.getByText("Send"))
+    fireEvent.click(screen.getByLabelText("Send"))
   }
 
   it("introduces itself with the home and answers from the record", async () => {
@@ -249,8 +249,8 @@ describe("assistant page", () => {
     })
     const input = document.querySelector('input[accept="application/pdf"]')
     fireEvent.change(input, { target: { files: [file] } })
-    // attachDoc reads the file asynchronously — wait for the ✓ marker.
-    await screen.findByText("📎 ✓")
+    // attachDoc reads the file asynchronously — wait for the ready chip.
+    await screen.findByText(/📎 ✓/)
     await ask("here's the invoice from the HVAC visit")
 
     // Summary + two proposed facts from the scripted document reply.
