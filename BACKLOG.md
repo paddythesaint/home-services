@@ -48,6 +48,25 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 39 — Health Report trade sections + assistant record gaps (7/7/26)
+Owner feedback: "the systems don't seem consolidated enough" on the
+Health Report, and "I prompted the Assistant to see what information it
+needs from me and it says nothing."
+- **Health Report consolidation**: the inventory itself now renders as
+  trade sections (Plumbing, Water & Septic, HVAC, …) with a rollup line
+  per section (count, urgent/attention, unverified), topped by a
+  "Systems at a glance" summary card — one row per trade, anchor-linked
+  to its section. Systems stay separate records (a well and a water
+  heater age and fail independently); the trade is just how they're
+  read.
+- **recordGaps() in assistant.js**: the assistant now knows what a
+  *complete* record looks like — make/model, install year, serial,
+  location, a nameplate photo, an in-person verification per system,
+  plus unanswered info-asks on open priorities. Gaps ride into the
+  context as a RECORD GAPS section, and the prompt tells the model to
+  answer "what do you need from me?" with the 2-4 most useful concrete
+  asks and offer save_fact chips as answers come in.
+
 ## Slice 38 — system dossiers + trade grouping (7/6/26)
 Owner insight: "grouping by systems may help consolidate — easier to
 stay on top of lots of individual items."

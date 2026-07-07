@@ -17,6 +17,33 @@ export const ACTION_TYPES = ["save_fact", "service_request"]
 
 const line = (label, value) => (value ? `${label}: ${value}` : null)
 
+// What the record is still missing — so "what do you need from me?" gets a
+// concrete answer instead of a shrug. A complete system record has a make/
+// model, install year, serial, location, a photo, and an in-person
+// verification; open info-asks on priorities count too.
+export function recordGaps({ systems = [], priorities = [] }) {
+  const gaps = []
+  for (const s of systems) {
+    const missing = []
+    if (!s.brand) missing.push("make/model")
+    if (!s.installYear) missing.push("install year")
+    if (!s.serial) missing.push("serial number")
+    if (!s.location) missing.push("location in the home")
+    if (!(s.photoCount > 0)) missing.push("a nameplate photo")
+    if (!s.verified) missing.push("an in-person verification")
+    if (missing.length) gaps.push(`${s.category}: missing ${missing.join(", ")}`)
+  }
+  for (const p of priorities) {
+    if (p.status && p.status !== "open" && p.status !== "scheduled") continue
+    for (const ask of p.infoNeeded || []) {
+      if (ask.status !== "provided") {
+        gaps.push(`For "${p.title}": ${ask.ask}`)
+      }
+    }
+  }
+  return gaps
+}
+
 export function buildAssistantContext({
   profile = {},
   systems = [],
@@ -98,6 +125,14 @@ export function buildAssistantContext({
     )
   }
 
+  const gaps = recordGaps({ systems, priorities })
+  if (gaps.length) {
+    parts.push(
+      "RECORD GAPS (information we still need for a complete record):\n" +
+        gaps.map((g) => `- ${g}`).join("\n")
+    )
+  }
+
   return parts.join("\n\n")
 }
 
@@ -111,6 +146,7 @@ RULES:
 - You represent the HPS team (Sally — relationship manager, Paddy & Mike — property owners/operations). You are an assistant, not a human; if the member wants a person, tell them the team is one call away and offer to file a request.
 - Do NOT give repair instructions or diagnose safety issues yourself. For anything needing hands, eyes, or judgement at the house, offer to file a service request so the team handles it.
 - Keep replies short and warm: 1-3 sentences, plain language, no markdown headers or bullet lists unless listing record items.
+- If the member asks what information you need, what's missing, or how they can help complete the record, answer concretely from RECORD GAPS (pick the 2-4 most useful, e.g. a nameplate photo they could snap right now). As they supply answers, offer save_fact actions. If RECORD GAPS is absent, say the record looks complete.
 - Conversations are shared with the HPS team.
 
 ACTIONS — when appropriate, append action tags on their own lines after your reply text. The member sees each as a button and must confirm; never claim an action is done, only offer it.

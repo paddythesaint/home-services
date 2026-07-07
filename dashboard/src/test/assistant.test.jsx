@@ -6,6 +6,7 @@ import {
   buildAssistantContext,
   parseAssistantReply,
   transcriptMessage,
+  recordGaps,
 } from "../assistant"
 import { __getItems } from "../mocks/firestoreApi"
 
@@ -21,6 +22,71 @@ describe("assistant core (pure)", () => {
     expect(ctx).toContain("Trane XR16")
     expect(ctx).toContain("LEARNED FACTS")
     expect(ctx).toContain("Water heater replaced in June 2026.")
+  })
+
+  it("knows what the record is missing (the generator case)", () => {
+    const gaps = recordGaps({
+      systems: [
+        {
+          category: "Backup Generator",
+          brand: "Generac Guardian 22kW",
+          installYear: "2021",
+          // no serial, no location, no photo, never verified
+        },
+        {
+          category: "HVAC",
+          brand: "Trane XR16",
+          installYear: "2016",
+          serial: "XR1612345",
+          location: "Basement utility room",
+          photoCount: 1,
+          verified: true,
+        },
+      ],
+      priorities: [
+        {
+          title: "Generator load test",
+          status: "open",
+          infoNeeded: [
+            { ask: "When was the transfer switch last exercised?", status: "pending" },
+            { ask: "Fuel type confirmed?", status: "provided" },
+          ],
+        },
+        {
+          title: "Old resolved thing",
+          status: "resolved",
+          infoNeeded: [{ ask: "should not appear", status: "pending" }],
+        },
+      ],
+    })
+    expect(gaps).toEqual([
+      "Backup Generator: missing serial number, location in the home, a nameplate photo, an in-person verification",
+      'For "Generator load test": When was the transfer switch last exercised?',
+    ])
+  })
+
+  it("surfaces record gaps in the context so the model can answer 'what do you need?'", () => {
+    const withGaps = buildAssistantContext({
+      profile: { address: "895 Old Ballard Farm Ln" },
+      systems: [{ category: "Backup Generator", brand: "Generac" }],
+    })
+    expect(withGaps).toContain("RECORD GAPS")
+    expect(withGaps).toContain("Backup Generator: missing install year")
+    const complete = buildAssistantContext({
+      profile: { address: "895 Old Ballard Farm Ln" },
+      systems: [
+        {
+          category: "HVAC",
+          brand: "Trane",
+          installYear: "2016",
+          serial: "X1",
+          location: "Basement",
+          photoCount: 2,
+          verified: true,
+        },
+      ],
+    })
+    expect(complete).not.toContain("RECORD GAPS")
   })
 
   it("parses action tags out of replies and tolerates malformed ones", () => {
@@ -81,6 +147,15 @@ describe("assistant page", () => {
       text: "Water heater replaced in June 2026.",
       source: "assistant",
     })
+  })
+
+  it("answers 'what do you need from me?' from the record's gaps", async () => {
+    renderPage(<Assistant />)
+    await screen.findByText(/I'm the HPS assistant/)
+    await ask("What information do you need from me?")
+    const answer = await screen.findByText(/round out the record/)
+    // Fixture systems are missing serials — that concrete ask surfaces.
+    expect(answer.textContent).toMatch(/serial number/)
   })
 
   it("files a service request into triage after confirmation", async () => {

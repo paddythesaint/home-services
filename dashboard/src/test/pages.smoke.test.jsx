@@ -31,7 +31,7 @@ describe("page smoke tests (mock data layer)", () => {
 
   it("Health Report lists fixture systems", async () => {
     renderPage(<HealthReport />)
-    expect(await screen.findByText("HVAC")).toBeInTheDocument()
+    expect((await screen.findAllByText("HVAC")).length).toBeGreaterThan(0)
     expect(screen.getByText("Water Heater")).toBeInTheDocument()
   })
 
