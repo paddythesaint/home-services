@@ -10,35 +10,9 @@ Console: [console.firebase.google.com](https://console.firebase.google.com)
 
 ---
 
-## Outstanding (as of 7/7/26)
+## Outstanding
 
-### 2. Republish the Firestore rules — transcript delete lock (~2 min)
-Slice 40 makes assistant conversation transcripts founder-delete-only:
-members and staff can read and write them as chats accrue, but cannot
-delete one (the audit trail stays intact). Until published, production
-still allows member deletes.
-
-- GitHub → `dashboard/firestore.rules` on **main** → copy the whole file.
-- Console → **Build → Firestore Database → Rules** tab → select all →
-  delete → paste → **Publish**.
-
-**Verify:** rules playground (or just trust the diff) — `delete` on
-`properties/{pid}/conversations/{id}` as a non-founder member should be
-denied; as you (founder), allowed.
-
-### 1. Publish the Storage rules (~2 min)
-Slice 37b shipped document uploads through the assistant. Files are
-member-gated by `dashboard/storage.rules` — until it's published,
-production uploads will be denied (the chat shows the error politely,
-but uploads won't stick).
-
-- GitHub → `dashboard/storage.rules` on **main** → copy the whole file.
-- Console → **Build → Storage → Rules** tab → select all → delete →
-  paste → **Publish**.
-
-**Verify:** in the live app, Assistant → 📎 → attach any small PDF →
-send. The "Documents" card on the Assistant page should list it with an
-"open" link that works.
+- (nothing outstanding — all caught up as of 7/7/26)
 
 ---
 
@@ -49,6 +23,14 @@ send. The "Documents" card on the Assistant page should list it with an
 ---
 
 ## Done
+
+- 7/7 — Published **Storage rules** (`dashboard/storage.rules`): member/
+  founder/staff-gated document uploads under `properties/{pid}/…`.
+  Replaced the default `allow read, write: if false`. Unblocks assistant
+  document uploads (Slice 37b).
+- 7/7 — Republished **Firestore rules** (`dashboard/firestore.rules`):
+  transcript delete-lock — assistant `conversations` are founder-delete-
+  only; members/staff keep read/create/update (Slice 40).
 
 - 7/5 — Rules republish #4: founder-only `ideas` collection (Slice 36 —
   Ideas board live). Enabled Firebase Storage (production mode).
