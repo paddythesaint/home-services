@@ -93,6 +93,13 @@ export const energyAuditInsights = {
       urgency: "medium",
     },
     {
+      title: "Replace/vent the three dead bathroom exhaust fans",
+      category: "Ventilation",
+      reason: "Audit measured three bath fans at 0 CFM — not working or not ducted to the exterior. Replace/upsize and confirm they vent outside; this is the ventilation cause behind the window mold.",
+      estCost: "$500 – $1,500",
+      urgency: "medium",
+    },
+    {
       title: "Weatherization package: attic to R-49, air sealing, basement utility rooms",
       category: "Efficiency",
       reason: "The audit's modeled package saves ~$687/yr on a ~$7,800/yr energy spend. Attic insulation and utility-room weatherization are the big movers; get contractor quotes.",
