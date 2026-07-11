@@ -167,6 +167,12 @@ export function addItem(uid, name, data) {
   return Promise.resolve({ id: item.id })
 }
 
+export function fetchItems(uid, name) {
+  return Promise.resolve(
+    structuredClone([...coll(uid, name)].sort((a, b) => (a.order || 0) - (b.order || 0)))
+  )
+}
+
 export function updateItem(uid, name, id, data) {
   assertNoUndefined(data, name)
   const item = coll(uid, name).find((d) => d.id === id)

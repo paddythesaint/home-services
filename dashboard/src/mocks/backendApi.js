@@ -12,6 +12,15 @@ export async function callBackend(action) {
 const reply = (text) => ({ content: [{ type: "text", text }] })
 
 export async function callClaude(propertyId, system, messages) {
+  // Internal work-order briefing (founder ops tool) — scripted from the
+  // order title in the prompt so preview/tests exercise the real flow.
+  if (system && system.includes("INTERNAL WORK-ORDER BRIEFING")) {
+    const title = (system.match(/- Title: ([^\n]+)/) || [])[1] || "the reported issue"
+    return reply(
+      `Client is reporting: ${title}. Cross-check the relevant system's age and last service on the record before dispatch — if it's under an active plan or warranty, route it there first. Most likely a wear-or-maintenance item; confirm on site and grab a nameplate photo if we don't already have one. Best handled by the matching trade from the network.`
+    )
+  }
+
   const last = messages[messages.length - 1]
   const content = last?.content
   const text = (

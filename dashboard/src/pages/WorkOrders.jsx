@@ -3,10 +3,12 @@ import { Link, useOutletContext } from "react-router-dom"
 import {
   subscribeContractors,
   fetchMemberProperties,
+  fetchItems,
   addItem,
   updateItem,
   removeItem,
 } from "../firestoreApi"
+import { callClaude } from "../backendApi"
 import { viewFor } from "../roles"
 import { PropertyCollectionFeed } from "../PortfolioJobs"
 import {
@@ -19,13 +21,214 @@ import {
   nextLane,
   isOpenWorkOrder,
   jobFromWorkOrder,
+  ageSummary,
 } from "../workOrders"
+import { briefingSystemPrompt, briefingMessages } from "../workOrderBriefing"
 import { todayLabel } from "../dates"
 import { Card, PageHeader, Button, Modal, DynamicForm, StatTile } from "../components"
 
 // The operational spine: every open piece of work across the portfolio on
 // one board — who's doing it, where the quote stands, when it happens.
 // Completion writes the Job History entry and resolves the linked priority.
+
+// The ticket detail: a slide-over (bottom sheet on mobile) that turns a
+// card headline into the whole story — the client's own words, the
+// timeline, the workflow state, and a briefing the ops lead can read off
+// the home's record before dispatching anyone.
+function WorkOrderDrawer({ w, properties, onClose, onEdit, onDelete, onAdvance }) {
+  const [briefing, setBriefing] = useState("idle") // idle | loading | error
+  const next = nextLane(w.lane)
+
+  async function generate() {
+    setBriefing("loading")
+    try {
+      const [systems, priorities, jobs, facts] = await Promise.all([
+        fetchItems(w.propertyId, "healthReport"),
+        fetchItems(w.propertyId, "priorityList"),
+        fetchItems(w.propertyId, "jobHistory"),
+        fetchItems(w.propertyId, "facts"),
+      ])
+      const property = properties.find((p) => p.id === w.propertyId) || {}
+      const system = briefingSystemPrompt({
+        profile: property,
+        systems,
+        priorities,
+        jobs,
+        workOrders: [],
+        facts,
+        order: w,
+      })
+      const data = await callClaude(w.propertyId, system, briefingMessages())
+      const text = data.content?.find((b) => b.type === "text")?.text || ""
+      await updateItem(w.propertyId, "workOrders", w.id, {
+        aiSummary: text,
+        aiSummaryOn: todayLabel(),
+      })
+      setBriefing("idle")
+    } catch {
+      setBriefing("error")
+    }
+  }
+
+  const requester =
+    w.source === "homeowner"
+      ? `${w.requestedBy || "the client"}${w.via === "assistant" ? " · via assistant" : " · via Request button"}`
+      : "Filed by the team"
+
+  return (
+    <div className="fixed inset-0 z-40" role="dialog" aria-modal="true" aria-label="Work order details">
+      <button type="button" aria-label="Close" className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div className="absolute inset-x-0 bottom-0 max-h-[88vh] rounded-t-2xl md:rounded-t-none md:inset-y-0 md:right-0 md:left-auto md:w-[30rem] md:max-h-none bg-surface shadow-xl flex flex-col">
+        <div className="shrink-0 flex items-start justify-between gap-3 px-5 pt-5 pb-3 border-b border-line">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">
+                {LANE_META[w.lane]?.label || w.lane}
+              </span>
+              {w.source === "homeowner" && (
+                <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-50 border border-amber-200 text-amber-900 rounded-full px-2 py-0.5">
+                  Client request
+                </span>
+              )}
+            </div>
+            <h2 className="font-display text-lg font-semibold text-ink mt-1 leading-snug">{w.title}</h2>
+            <p className="text-xs text-ink-3 mt-0.5">{w.propertyLabel}</p>
+          </div>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-ink-3 hover:text-ink hover:bg-plane text-lg"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-5">
+          <p className="text-xs text-ink-2">{ageSummary(w)}</p>
+
+          <section>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-3 mb-1.5">
+              {w.source === "homeowner" ? "What the client said" : "The request"}
+            </h3>
+            {w.notes ? (
+              <blockquote className="text-sm text-ink whitespace-pre-line border-l-2 border-brand-400 pl-3 py-0.5">
+                {w.notes}
+              </blockquote>
+            ) : (
+              <p className="text-sm text-ink-3">No detail was captured on the request.</p>
+            )}
+            <p className="text-xs text-ink-3 mt-1.5">— {requester}</p>
+          </section>
+
+          <section>
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-3">
+                AI briefing
+              </h3>
+              {w.aiSummary && briefing !== "loading" && (
+                <button
+                  type="button"
+                  onClick={generate}
+                  className="text-xs font-medium text-brand-600 hover:text-brand-800"
+                >
+                  Regenerate
+                </button>
+              )}
+            </div>
+            {w.aiSummary ? (
+              <>
+                <p className="text-sm text-ink-2 whitespace-pre-line bg-plane rounded-xl px-3.5 py-3">
+                  {w.aiSummary}
+                </p>
+                {w.aiSummaryOn && (
+                  <p className="text-[11px] text-ink-3 mt-1">
+                    From the home's record · {w.aiSummaryOn}
+                  </p>
+                )}
+              </>
+            ) : briefing === "loading" ? (
+              <p className="text-sm text-ink-3 animate-pulse">Reading the home's record…</p>
+            ) : (
+              <div>
+                <p className="text-sm text-ink-3 mb-2">
+                  Pull what we know about this home and the system involved — likely causes,
+                  history, and the right trade — before dispatching.
+                </p>
+                <Button variant="subtle" onClick={generate}>
+                  Generate briefing
+                </Button>
+                {briefing === "error" && (
+                  <p className="text-sm text-status-critical mt-2">
+                    Couldn't reach the briefing service — try again.
+                  </p>
+                )}
+              </div>
+            )}
+          </section>
+
+          <section>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-3 mb-1.5">
+              Workflow
+            </h3>
+            <dl className="text-sm grid grid-cols-[7rem_1fr] gap-y-1.5">
+              <dt className="text-ink-3">Assigned</dt>
+              <dd className="text-ink">
+                {w.assigneeType === "contractor" ? (
+                  w.contractorId ? (
+                    <Link
+                      to={`/contractor-network/${w.contractorId}`}
+                      className="text-brand-600 hover:text-brand-800"
+                    >
+                      {w.contractorName || "Contractor"}
+                    </Link>
+                  ) : (
+                    "Contractor TBD"
+                  )
+                ) : w.assigneeType === "visit" ? (
+                  "Our visit (in-house)"
+                ) : (
+                  "Unassigned"
+                )}
+              </dd>
+              <dt className="text-ink-3">Quote</dt>
+              <dd className="text-ink">
+                {QUOTE_LABEL[w.quoteStatus] || "—"}
+                {w.quoteAmount ? ` · ${w.quoteAmount}` : ""}
+              </dd>
+              <dt className="text-ink-3">Category</dt>
+              <dd className="text-ink">{w.category || "—"}</dd>
+              {w.scheduledFor && (
+                <>
+                  <dt className="text-ink-3">Scheduled</dt>
+                  <dd className="text-ink">{w.scheduledFor}</dd>
+                </>
+              )}
+            </dl>
+          </section>
+        </div>
+
+        <div className="shrink-0 border-t border-line px-5 py-3 flex items-center gap-3">
+          {next && (
+            <Button onClick={onAdvance}>
+              {next === "done" ? "Mark done" : `→ ${LANE_META[next].label}`}
+            </Button>
+          )}
+          <Button variant="subtle" onClick={onEdit}>
+            Edit
+          </Button>
+          <button
+            type="button"
+            onClick={onDelete}
+            className="text-xs text-ink-3 hover:text-red-600 ml-auto"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function QuoteChip({ w }) {
   if (!w.quoteStatus || w.quoteStatus === "none") return null
@@ -52,6 +255,7 @@ export default function WorkOrders() {
   const [createFor, setCreateFor] = useState("")
   const [completing, setCompleting] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const [detailKey, setDetailKey] = useState(null) // {propertyId, id} of open drawer
 
   useEffect(() => {
     if (!founder) return
@@ -92,6 +296,13 @@ export default function WorkOrders() {
     .flat()
     .sort((a, b) => (a.order || 0) - (b.order || 0))
   const open = all.filter(isOpenWorkOrder)
+
+  // The drawer tracks the order by key, then reads the live copy from the
+  // feed — so a briefing generated inside it (or a lane advance) shows up
+  // immediately without stale props.
+  const detail = detailKey
+    ? all.find((w) => w.propertyId === detailKey.propertyId && w.id === detailKey.id) || null
+    : null
 
   const fields = [
     { name: "title", label: "What needs doing", type: "text" },
@@ -228,38 +439,36 @@ export default function WorkOrders() {
                       key={`${w.propertyId}-${w.id}`}
                       className="bg-surface border border-line rounded-xl p-3 shadow-(--shadow-card)"
                     >
-                      <p className="text-xs text-ink-3 flex items-center gap-2">
-                        {w.propertyLabel}
-                        {w.source === "homeowner" && (
-                          <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-50 border border-amber-200 text-amber-900 rounded-full px-2 py-0.5">
-                            Client request
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-sm font-semibold text-ink mt-0.5">{w.title}</p>
-                      <p className="text-xs text-ink-2 mt-1">
-                        {w.assigneeType === "contractor" ? (
-                          w.contractorId ? (
-                            <Link
-                              to={`/contractor-network/${w.contractorId}`}
-                              className="text-brand-600 hover:text-brand-800"
-                            >
-                              {w.contractorName || "Contractor"}
-                            </Link>
-                          ) : (
-                            "Contractor TBD"
-                          )
-                        ) : w.assigneeType === "visit" ? (
-                          "Our visit"
-                        ) : (
-                          "Unassigned"
-                        )}
-                        {w.scheduledFor && ` · ${w.scheduledFor}`}
-                        {w.lane === "done" && w.completedOn && ` · done ${w.completedOn}`}
-                      </p>
-                      <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-                        <QuoteChip w={w} />
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setDetailKey({ propertyId: w.propertyId, id: w.id })}
+                        className="w-full text-left group"
+                        title="Open ticket details"
+                      >
+                        <p className="text-xs text-ink-3 flex items-center gap-2">
+                          {w.propertyLabel}
+                          {w.source === "homeowner" && (
+                            <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-50 border border-amber-200 text-amber-900 rounded-full px-2 py-0.5">
+                              Client request
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-sm font-semibold text-ink mt-0.5 group-hover:text-brand-700">
+                          {w.title}
+                        </p>
+                        <p className="text-xs text-ink-2 mt-1">
+                          {w.assigneeType === "contractor"
+                            ? w.contractorName || "Contractor TBD"
+                            : w.assigneeType === "visit"
+                              ? "Our visit"
+                              : "Unassigned"}
+                          {w.scheduledFor && ` · ${w.scheduledFor}`}
+                          {w.lane === "done" && w.completedOn && ` · done ${w.completedOn}`}
+                        </p>
+                        <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                          <QuoteChip w={w} />
+                        </div>
+                      </button>
                       <div className="mt-2 pt-2 border-t border-line flex items-center gap-3 text-xs">
                         {lane !== "done" && (
                           <button
@@ -300,6 +509,26 @@ export default function WorkOrders() {
         Raise orders from the 90-Day Priorities page to keep them linked — completing a linked
         order resolves its priority and writes the job to Job History automatically.
       </p>
+
+      {detail && (
+        <WorkOrderDrawer
+          w={detail}
+          properties={properties}
+          onClose={() => setDetailKey(null)}
+          onEdit={() => {
+            setDetailKey(null)
+            setEditing(detail)
+          }}
+          onDelete={() => {
+            setDetailKey(null)
+            setConfirmDelete(detail)
+          }}
+          onAdvance={() => {
+            if (nextLane(detail.lane) === "done") setDetailKey(null)
+            advance(detail)
+          }}
+        />
+      )}
 
       {creating && (
         <Modal title="New work order" onClose={() => setCreating(false)}>

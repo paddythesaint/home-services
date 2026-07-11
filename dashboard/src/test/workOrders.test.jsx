@@ -4,7 +4,7 @@ import { renderPage } from "./renderPage"
 import WorkOrders from "../pages/WorkOrders"
 import PriorityList from "../pages/PriorityList"
 import Overview from "../pages/Overview"
-import { workOrderFromPriority, jobFromWorkOrder, nextLane } from "../workOrders"
+import { workOrderFromPriority, jobFromWorkOrder, nextLane, daysOpen, ageSummary } from "../workOrders"
 import { __getItems } from "../mocks/firestoreApi"
 
 describe("workOrders domain", () => {
@@ -56,11 +56,9 @@ describe("Work Orders board", () => {
     expect(await screen.findByText("Gutter guards on rear roofline")).toBeInTheDocument()
     expect(await screen.findByText("Re-seat lifted shingle tabs")).toBeInTheDocument()
     expect(screen.getByText("Quote requested")).toBeInTheDocument()
-    // The contractor on the card links into the network profile.
-    expect(screen.getByText("Blue Ridge Gutter Co").closest("a")).toHaveAttribute(
-      "href",
-      "/contractor-network/net-blueridge"
-    )
+    // The contractor name shows on the card as text; the link now lives in
+    // the detail drawer (a nested link inside the clickable card is invalid).
+    expect(screen.getByText("Blue Ridge Gutter Co")).toBeInTheDocument()
   })
 
   it("advances an order to the next lane", async () => {
@@ -99,6 +97,57 @@ describe("Work Orders board", () => {
       user: { email: "sally@example.com", displayName: "Sally", uid: "u-sally" },
     })
     expect(await screen.findByText("Business owners only.")).toBeInTheDocument()
+  })
+})
+
+describe("work order age helpers", () => {
+  it("counts days open and closes them off", () => {
+    const now = new Date("2026-07-10")
+    expect(daysOpen({ createdOn: "July 4, 2026" }, now)).toBe(6)
+    expect(daysOpen({ createdOn: "July 4, 2026", completedOn: "July 6, 2026", lane: "done" })).toBe(2)
+    expect(daysOpen({ createdOn: "not a date" }, now)).toBeNull()
+    expect(ageSummary({ createdOn: "July 4, 2026", lane: "triage" }, now)).toBe(
+      "Opened July 4, 2026 · open 6 days"
+    )
+    expect(
+      ageSummary({ createdOn: "July 4, 2026", completedOn: "July 6, 2026", lane: "done" })
+    ).toBe("Completed July 6, 2026 · 2 days to close")
+  })
+})
+
+describe("Work order detail drawer", () => {
+  it("opens a ticket showing the client's words, channel, and timeline", async () => {
+    renderPage(<WorkOrders />)
+    fireEvent.click(await screen.findByText("Disposal is jammed"))
+    expect(
+      await screen.findByText("Kitchen disposal hums but won't spin.")
+    ).toBeInTheDocument()
+    expect(screen.getByText(/via Request button/)).toBeInTheDocument()
+    expect(screen.getByText(/alton@example.com/)).toBeInTheDocument()
+    expect(screen.getByText(/Opened July 4, 2026/)).toBeInTheDocument()
+  })
+
+  it("puts the contractor link in the drawer", async () => {
+    renderPage(<WorkOrders />)
+    fireEvent.click(await screen.findByText("Gutter guards on rear roofline"))
+    const linked = (await screen.findAllByText("Blue Ridge Gutter Co"))
+      .map((el) => el.closest("a"))
+      .find(Boolean)
+    expect(linked).toHaveAttribute("href", "/contractor-network/net-blueridge")
+  })
+
+  it("generates and caches an AI briefing from the home's record", async () => {
+    renderPage(<WorkOrders />)
+    fireEvent.click(await screen.findByText("Disposal is jammed"))
+    fireEvent.click(await screen.findByText("Generate briefing"))
+    expect(
+      await screen.findByText(/Client is reporting: Disposal is jammed/)
+    ).toBeInTheDocument()
+    await waitFor(() => {
+      const w = __getItems("prop-ridge", "workOrders").find((x) => x.id === "wo-disposal")
+      expect(w.aiSummary).toContain("Client is reporting")
+      expect(w.aiSummaryOn).toBeTruthy()
+    })
   })
 })
 

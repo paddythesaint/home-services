@@ -48,6 +48,27 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 47 — work-order detail drawer + AI briefing (7/7/26)
+Owner: the board handled workflow but there was no way to read a ticket —
+"I am unable to see any more details other than the headline."
+- **Detail drawer**: clicking a card opens a slide-over (bottom sheet on
+  mobile) — the card headline becomes the whole ticket.
+- **The client's own words**: the verbatim request (already stored in
+  `notes` by the Request button and assistant, never surfaced) shown as a
+  quote, with who filed it and via which channel.
+- **Timeline**: opened date + how long it's been open (`ageSummary` /
+  `daysOpen`), or how long it took to close.
+- **AI briefing**: on-demand, reads THAT property's record (systems,
+  history, open priorities) and returns a staff-facing read — what the
+  client wants, what we know about the system, likely causes / what to
+  check, and the right trade. Cached on the order (`aiSummary` +
+  `aiSummaryOn`) with Regenerate. Reuses the assistant's context builder
+  via workOrderBriefing.js; new `fetchItems` one-shot read pulls the
+  property's collections from the portfolio-wide board.
+- **Workflow at a glance** + the same advance/edit/delete actions.
+- Contractor link moved from the card into the drawer (a nested link in a
+  now-clickable card is invalid HTML).
+
 ## Slice 46 — native chat UI for the Assistant (7/7/26)
 Owner: "renders clunky/compressed on mobile — make it feel native to AI
 chat interfaces (Claude/ChatGPT)."
