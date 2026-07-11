@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Link, useOutletContext } from "react-router-dom"
+import { Link, useOutletContext, useSearchParams } from "react-router-dom"
 import { useItems } from "../useItems"
 import { addItem } from "../firestoreApi"
 import { Card, Button, ConditionBadge, DynamicForm } from "../components"
@@ -137,19 +137,32 @@ function SystemStep({ uid, item, position, total, onConfirm, onRemove, onSkip })
 export default function Walkthrough() {
   const { uid, profile, saveProfile } = useOutletContext()
   const { items, loading, add, update, remove } = useItems(uid, "healthReport")
+  const [searchParams] = useSearchParams()
+
+  // "focus=unverified" (from the Health Report banner) drops straight onto
+  // the systems still needing an in-person check — no intro, no basics, no
+  // re-confirming systems already verified. This is the resume the banner
+  // was always implying.
+  const focusMode = searchParams.get("focus") === "unverified"
 
   // Snapshot the queue once so confirming/removing doesn't reshuffle steps.
   const [queue, setQueue] = useState(null)
-  const [phase, setPhase] = useState("intro") // intro | basics | systems | additions | done
+  const [phase, setPhase] = useState(focusMode ? "loading" : "intro") // intro | basics | systems | additions | done
   const [queueIndex, setQueueIndex] = useState(0)
   const [checkedAdditions, setCheckedAdditions] = useState([])
   const [confirmedCount, setConfirmedCount] = useState(0)
 
   useEffect(() => {
     if (!loading && queue === null) {
-      setQueue(items.map((i) => i.id))
+      if (focusMode) {
+        const unverified = items.filter((i) => !i.verified).map((i) => i.id)
+        setQueue(unverified)
+        setPhase(unverified.length ? "systems" : "done")
+      } else {
+        setQueue(items.map((i) => i.id))
+      }
     }
-  }, [loading, items, queue])
+  }, [loading, items, queue, focusMode])
 
   if (loading || queue === null) {
     return <p className="text-ink-2">Loading walkthrough…</p>
@@ -165,7 +178,9 @@ export default function Walkthrough() {
     // Skip ids deleted outside this step
     while (next < queue.length && !items.some((i) => i.id === queue[next])) next++
     if (next >= queue.length) {
-      setPhase("additions")
+      // Focus mode is just "confirm these" — end on the summary, skip the
+      // add-more step that belongs to the full walkthrough.
+      setPhase(focusMode ? "done" : "additions")
     } else {
       setQueueIndex(next)
     }
@@ -177,10 +192,13 @@ export default function Walkthrough() {
   return (
     <div className="max-w-2xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-ink">Property Walkthrough</h1>
+        <h1 className="text-2xl font-semibold text-ink">
+          {focusMode ? "Confirm unverified systems" : "Property Walkthrough"}
+        </h1>
         <p className="text-ink-2 mt-1">
-          A guided survey to verify the property record — for the homeowner or a
-          visiting technician. Everything saves as you go.
+          {focusMode
+            ? "Straight to the systems still needing an in-person check — confirm each and it's verified on the record."
+            : "A guided survey to verify the property record — for the homeowner or a visiting technician. Everything saves as you go."}
         </p>
       </div>
 
@@ -316,18 +334,30 @@ export default function Walkthrough() {
       {phase === "done" && (
         <Card>
           <h2 className="text-lg font-semibold text-ink mb-2">
-            Walkthrough complete <ConditionBadge condition="good" />
+            {focusMode && confirmedCount === 0
+              ? "Every system is verified"
+              : "Walkthrough complete"}{" "}
+            <ConditionBadge condition="good" />
           </h2>
-          <p className="text-sm text-ink-2 mb-1">
-            {confirmedCount} system{confirmedCount === 1 ? "" : "s"} confirmed
-            {checkedAdditions.length > 0 &&
-              `, ${checkedAdditions.length} added`}
-            . Verified systems now carry a badge on the Health Report.
-          </p>
-          <p className="text-sm text-ink-2 mb-4">
-            Skipped systems stay unverified — run the walkthrough again anytime
-            to pick them up.
-          </p>
+          {focusMode && confirmedCount === 0 ? (
+            <p className="text-sm text-ink-2 mb-4">
+              Nothing left to confirm — every system on the Health Report has been
+              verified in person.
+            </p>
+          ) : (
+            <>
+              <p className="text-sm text-ink-2 mb-1">
+                {confirmedCount} system{confirmedCount === 1 ? "" : "s"} confirmed
+                {checkedAdditions.length > 0 &&
+                  `, ${checkedAdditions.length} added`}
+                . Verified systems now carry a badge on the Health Report.
+              </p>
+              <p className="text-sm text-ink-2 mb-4">
+                Skipped systems stay unverified — run the walkthrough again anytime
+                to pick them up.
+              </p>
+            </>
+          )}
           <div className="flex gap-3">
             <Link to="/health-report">
               <Button>View Health Report</Button>

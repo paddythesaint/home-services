@@ -145,10 +145,11 @@ export default function HealthReport() {
         <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4 text-sm text-amber-900">
           {unverifiedCount} system{unverifiedCount === 1 ? "" : "s"} not yet
           verified in person.{" "}
-          <Link to="/walkthrough" className="font-medium underline">
-            Run the walkthrough
+          <Link to="/walkthrough?focus=unverified" className="font-medium underline">
+            Confirm {unverifiedCount === 1 ? "it" : "them"} now
           </Link>{" "}
-          to confirm them — or snap nameplate photos right here on each card.
+          — jumps straight to what's unverified, or snap nameplate photos right
+          here on each card.
         </div>
       )}
 
