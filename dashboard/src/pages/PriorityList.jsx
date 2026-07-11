@@ -5,7 +5,7 @@ import { useItems } from "../useItems"
 import { addItem } from "../firestoreApi"
 import { todayLabel } from "../dates"
 import { viewFor } from "../roles"
-import { workOrderFromPriority } from "../workOrders"
+import { workOrderFromPriority, workOrderFromBundle } from "../workOrders"
 import { suggestRequirements } from "../requirementSuggestions"
 import { groupByTrade, tradeForItem } from "../trades"
 import IssueInsights from "../IssueInsights"
@@ -484,6 +484,14 @@ export default function PriorityList() {
     await update(item.id, { workOrderId: ref.id })
   }
 
+  // Phase-2 bundle: one work order that closes a whole issue cluster. Links
+  // every priority in the cluster back to the same order so the board (and
+  // completion) treat them as one coordinated action.
+  async function raiseBundle(issue, clusterItems) {
+    const ref = await addItem(uid, "workOrders", workOrderFromBundle(issue, clusterItems))
+    await Promise.all(clusterItems.map((p) => update(p.id, { workOrderId: ref.id })))
+  }
+
   return (
     <div>
       <PlanTabs />
@@ -507,7 +515,9 @@ export default function PriorityList() {
         />
       </div>
 
-      {viewFor(user?.email).staff && <IssueInsights priorities={items} />}
+      {viewFor(user?.email).staff && (
+        <IssueInsights priorities={items} onBundle={founder ? raiseBundle : undefined} />
+      )}
 
       {manifest.items.length > 0 && (
         <div className="mb-4">

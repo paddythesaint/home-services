@@ -21,6 +21,7 @@ import {
   nextLane,
   isOpenWorkOrder,
   jobFromWorkOrder,
+  linkedPriorityIds,
   ageSummary,
 } from "../workOrders"
 import { briefingSystemPrompt, briefingMessages } from "../workOrderBriefing"
@@ -370,12 +371,13 @@ export default function WorkOrders() {
     await updateItem(w.propertyId, "workOrders", w.id, { lane })
   }
 
-  // Completion: the handshake with the rest of the record.
+  // Completion: the handshake with the rest of the record. A bundled order
+  // resolves every priority it was raised to close, not just one.
   async function complete() {
     const w = completing
     await addItem(w.propertyId, "jobHistory", jobFromWorkOrder(w))
-    if (w.priorityId) {
-      await updateItem(w.propertyId, "priorityList", w.priorityId, {
+    for (const pid of linkedPriorityIds(w)) {
+      await updateItem(w.propertyId, "priorityList", pid, {
         status: "resolved",
         resolvedOn: todayLabel(),
         resolutionNote: `Closed by work order${w.contractorName ? ` — ${w.contractorName}` : ""}`,
@@ -562,7 +564,15 @@ export default function WorkOrders() {
           <p className="text-sm text-ink-2 mb-4">
             "{completing.title}" at {completing.propertyLabel} gets written to Job History
             {completing.quoteAmount ? ` at ${completing.quoteAmount}` : ""}
-            {completing.priorityId ? ", and its linked priority is resolved" : ""}.
+            {(() => {
+              const n = linkedPriorityIds(completing).length
+              return n === 1
+                ? ", and its linked priority is resolved"
+                : n > 1
+                  ? `, and its ${n} linked priorities are resolved`
+                  : ""
+            })()}
+            .
           </p>
           <div className="flex justify-end gap-2">
             <Button variant="subtle" onClick={() => setCompleting(null)}>

@@ -90,6 +90,42 @@ export function workOrderFromPriority(priority) {
   }
 }
 
+// Raise ONE work order that resolves a whole issue cluster — the Phase-2
+// "bundle" path off the Related-items panel. It carries every priority id it
+// closes (priorityIds), so completion resolves them together and leaves a
+// single Job History entry instead of one ticket per symptom.
+export function workOrderFromBundle(issue, items) {
+  const list = items.map((p) => `• ${p.title}`).join("\n")
+  return {
+    title: issue.bundle.title,
+    category: issue.tradeLabel || issue.title || "",
+    priorityId: "",
+    priorityIds: items.map((p) => p.id),
+    bundleKey: issue.key,
+    lane: "triage",
+    assigneeType: "",
+    contractorId: "",
+    contractorName: "",
+    // Bundles are coordinated projects — they almost always want one quote.
+    quoteStatus: "needed",
+    quoteAmount: "",
+    scheduledFor: "",
+    notes: `${issue.bundle.resolution}\n\nCloses ${items.length} priorit${
+      items.length === 1 ? "y" : "ies"
+    }:\n${list}`,
+    createdOn: todayLabel(),
+  }
+}
+
+// Every priority a work order closes: the bundle's list plus the legacy
+// single link, de-duped. One code path whether the order came from a single
+// priority or a bundled cluster.
+export function linkedPriorityIds(w) {
+  const ids = new Set(w.priorityIds || [])
+  if (w.priorityId) ids.add(w.priorityId)
+  return [...ids]
+}
+
 // The Job History entry a completed work order leaves behind.
 export function jobFromWorkOrder(w) {
   return {
