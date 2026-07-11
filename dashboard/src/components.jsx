@@ -237,7 +237,13 @@ export function DynamicForm({ fields, initialValues = {}, onSubmit, submitLabel 
             />
           ) : (
             <input
-              type={field.type === "number" ? "number" : "text"}
+              type={
+                field.type === "number"
+                  ? "number"
+                  : field.type === "date"
+                    ? "date"
+                    : "text"
+              }
               className={inputClass}
               value={values[field.name]}
               onChange={(e) =>

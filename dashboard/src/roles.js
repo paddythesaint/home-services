@@ -44,10 +44,10 @@ const NAV = {
 // Tabs inside the two hubs, per role — the old page-level trims live on
 // here (technicians see no vendors, staff see no money).
 const RECORD_TABS = {
-  founder: ["health", "history", "contractors"],
-  relationship: ["health", "history", "contractors"],
-  technician: ["health", "history"],
-  homeowner: ["health", "history", "contractors"],
+  founder: ["health", "history", "coverage", "contractors"],
+  relationship: ["health", "history", "coverage", "contractors"],
+  technician: ["health", "history", "coverage"],
+  homeowner: ["health", "history", "coverage", "contractors"],
 }
 const PLAN_TABS = {
   founder: ["next", "calendar", "priorities", "forecast"],

@@ -48,6 +48,30 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 55 — coverage & warranty ledger with expiry alerts (7/11/26)
+Review-identified intelligence gap: the home carries warranties, extended
+plans, a home warranty, and service contracts, but nothing tracked their
+expiry — so coverage only surfaced when it was already too late (the plan
+lapsed the month before the compressor died). New Record-hub layer.
+- **`warranties.js` domain module.** `coverageStatus` (active / expiring
+  within a 60-day window / expired / unknown), `daysUntil` (calendar-day
+  math so "today" reads 0), `coverageAlerts` (expiring + expired, soonest
+  first), `byExpiry` (ledger order: expired → expiring → active → undated),
+  `expiryLine` (human countdown). Home-agnostic; records live per-property
+  in the new `warranties` collection.
+- **Coverage page** (new "Coverage" tab in the Property Record hub, all
+  roles). CRUD over coverage with a native date picker (DynamicForm gained a
+  `date` field type), status pills, start→expiry line, and an attention
+  banner listing everything expiring/lapsed with its countdown.
+- **Command Center rollup.** Each property's expiring/lapsed coverage now
+  rides the "Needs attention now" feed (expired = high, expiring = medium),
+  so the operator sees coverage risk across the portfolio, not just per home.
+- Seeded 895 with four realistic policies (Trane HVAC, Old Republic home
+  warranty, GAF roof, Generac generator) spanning active/expiring/expired.
+- Tests: pure domain coverage (injected clock) + a page render asserting the
+  ledger and banner. Suite 212 green; builds clean; browser-verified the tab,
+  banner ("2 coverage items need attention"), ordering, and status pills.
+
 ## Slice 54 — issue intelligence, Phase 2: bundle → work order (7/11/26)
 The Phase-1 "Related items & escalation risk" panel named the coordinated
 fix for each cluster but stopped at analysis — closing it still meant

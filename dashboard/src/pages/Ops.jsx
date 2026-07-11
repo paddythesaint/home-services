@@ -10,6 +10,7 @@ import {
 import { todayISO, isoToLabel, todayLabel } from "../dates"
 import { isReadyToAction } from "../resolution"
 import { detectIssues, escalationCeiling } from "../issuePlaybook"
+import { coverageAlerts, coverageStatus, expiryLine } from "../warranties"
 import { viewFor } from "../roles"
 import SystemStatus from "../SystemStatus"
 import {
@@ -45,6 +46,7 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
   const priorityApi = useItems(propertyId, "priorityList")
   const { items: systems } = useItems(propertyId, "healthReport")
   const { items: jobs } = useItems(propertyId, "jobHistory")
+  const { items: warranties } = useItems(propertyId, "warranties")
 
   // Relationship health, not just property health: when did we last talk
   // to this household? (Founder-only clients store; errors stay quiet.)
@@ -120,13 +122,23 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
         urgency: "high",
         property: profile.address,
       })),
+      // Coverage about to lapse (or already lapsed) is exactly the kind of
+      // thing that only surfaces when it's too late — so it rides the same
+      // cross-portfolio attention feed.
+      ...coverageAlerts(warranties).map((w) => ({
+        key: `w-${w.id}`,
+        kind: "coverage",
+        title: `${w.item} — ${expiryLine(w).toLowerCase()}`,
+        urgency: coverageStatus(w) === "expired" ? "high" : "medium",
+        property: profile.address,
+      })),
     ]
     onAttention(propertyId, items)
     // Depend on the stable subscription arrays, not the derived filters —
     // fresh .filter() identities every render would re-fire this effect
     // (and re-set parent state) on every single render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [propertyId, priorityApi.items, systems, profile.address])
+  }, [propertyId, priorityApi.items, systems, warranties, profile.address])
 
   useEffect(() => {
     const names = [

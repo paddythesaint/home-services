@@ -15,6 +15,7 @@ const CareCalendar = lazy(() => import("./pages/CareCalendar"))
 const PriorityList = lazy(() => import("./pages/PriorityList"))
 const Forecast = lazy(() => import("./pages/Forecast"))
 const JobHistory = lazy(() => import("./pages/JobHistory"))
+const Warranties = lazy(() => import("./pages/Warranties"))
 const Contractors = lazy(() => import("./pages/Contractors"))
 const BusinessContractors = lazy(() => import("./pages/BusinessContractors"))
 const WorkOrders = lazy(() => import("./pages/WorkOrders"))
@@ -40,6 +41,7 @@ export default function App() {
               <Route path="priority-list" element={<PriorityList />} />
               <Route path="forecast" element={<Forecast />} />
               <Route path="job-history" element={<JobHistory />} />
+              <Route path="coverage" element={<Warranties />} />
               <Route path="contractors" element={<Contractors />} />
               <Route path="import" element={<ImportBundle />} />
               <Route path="ops" element={<Ops />} />
