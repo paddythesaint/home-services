@@ -150,6 +150,20 @@ describe("doors and lenses", () => {
     expect(await screen.findByText("Group by system")).toBeInTheDocument()
   })
 
+  it("Priority List filters by urgency", async () => {
+    localStorage.removeItem("priorityUrgency")
+    renderPage(<PriorityList />)
+    // The low-urgency caulk item lives only in the main list (not the visit
+    // manifest or a quote bundle), so it's an unambiguous probe.
+    expect(await screen.findByText("Re-caulk master bath shower")).toBeInTheDocument()
+    fireEvent.click(screen.getByRole("button", { name: /^High/ }))
+    await waitFor(() =>
+      expect(screen.queryByText("Re-caulk master bath shower")).not.toBeInTheDocument()
+    )
+    fireEvent.click(screen.getByRole("button", { name: /^Low/ }))
+    expect(await screen.findByText("Re-caulk master bath shower")).toBeInTheDocument()
+  })
+
   it("Job History groups by system on demand", async () => {
     renderPage(<JobHistory />)
     fireEvent.click(await screen.findByText("Group by system"))

@@ -48,6 +48,14 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 51 — priority urgency filter ribbon (7/7/26)
+Owner: "a selector to just view all our low/high priority etc." — homeowner-
+usable, alongside the existing ranked / by-system lenses.
+- Segmented All/High/Medium/Low ribbon on the 90-Day Priorities page (each
+  with a live count), applied across both the ranked and by-system lenses,
+  sticky per device. Reorder arrows hide while a filter is active (ranking
+  only makes sense on the full list). Homeowner-visible.
+
 ## Slice 49 — issue intelligence, Phase 1 (7/7/26)
 Owner: the 90-day plan had duplicative/overlapping tasks — wants the
 system to understand issues, root causes, escalation/consequences, and

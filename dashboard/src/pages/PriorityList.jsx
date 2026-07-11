@@ -434,7 +434,29 @@ export default function PriorityList() {
   const [resolveMode, setResolveMode] = useState("resolved")
   const [resolveNote, setResolveNote] = useState("")
 
+  // Urgency filter: everyone (incl. homeowners) can narrow to just the
+  // high / medium / low items. Sticky per device.
+  const [urgency, setUrgency] = useState(() => {
+    try {
+      return localStorage.getItem("priorityUrgency") || "all"
+    } catch {
+      return "all"
+    }
+  })
+  function pickUrgency(u) {
+    setUrgency(u)
+    try {
+      localStorage.setItem("priorityUrgency", u)
+    } catch {
+      /* fine */
+    }
+  }
+
   const openItems = items.filter(isOpenPriority)
+  const shownOpen =
+    urgency === "all"
+      ? openItems
+      : openItems.filter((i) => (i.urgency || "medium") === urgency)
   const closedItems = items.filter((i) => !isOpenPriority(i))
   const counts = resolutionCounts(items)
   const manifest = visitManifest(items)
@@ -558,7 +580,35 @@ export default function PriorityList() {
       )}
 
       {openItems.length > 0 && (
-        <div className="flex justify-end mb-2">
+        <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+          <div className="inline-flex rounded-lg border border-line bg-plane p-0.5 text-xs">
+            {[
+              ["all", "All"],
+              ["high", "High"],
+              ["medium", "Medium"],
+              ["low", "Low"],
+            ].map(([key, label]) => {
+              const n =
+                key === "all"
+                  ? openItems.length
+                  : openItems.filter((i) => (i.urgency || "medium") === key).length
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => pickUrgency(key)}
+                  className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
+                    urgency === key
+                      ? "bg-surface text-ink shadow-(--shadow-card)"
+                      : "text-ink-3 hover:text-ink-2"
+                  }`}
+                >
+                  {label}
+                  <span className="text-ink-3 font-normal"> {n}</span>
+                </button>
+              )
+            })}
+          </div>
           <Button variant="ghost" className="!px-0" onClick={toggleGrouped}>
             {grouped ? "View ranked" : "Group by system"}
           </Button>
@@ -651,7 +701,7 @@ export default function PriorityList() {
                 <div className="text-right shrink-0 flex flex-col items-end gap-2">
                   <UrgencyBadge urgency={item.urgency} />
                   <p className="text-sm text-ink-2">{item.estCost}</p>
-                  {index !== null && (
+                  {index !== null && urgency === "all" && (
                   <div className="flex gap-1">
                     <button
                       type="button"
@@ -663,7 +713,7 @@ export default function PriorityList() {
                     </button>
                     <button
                       type="button"
-                      disabled={index === openItems.length - 1}
+                      disabled={index === shownOpen.length - 1}
                       onClick={() => moveDown(items.indexOf(item))}
                       className="text-ink-3 hover:text-ink-2 disabled:opacity-30 text-xs px-1.5 py-0.5 border border-line rounded"
                     >
@@ -676,9 +726,18 @@ export default function PriorityList() {
               <ResolutionSection item={item} update={update} />
             </Card>
           )
+          if (shownOpen.length === 0) {
+            return (
+              <Card>
+                <p className="text-sm text-ink-2">
+                  No {urgency}-urgency items open right now.
+                </p>
+              </Card>
+            )
+          }
           return grouped ? (
             <div className="flex flex-col gap-5">
-              {groupByTrade(openItems).map(({ trade, items: groupItems }) => (
+              {groupByTrade(shownOpen).map(({ trade, items: groupItems }) => (
                 <div key={trade.key}>
                   <h2 className="text-sm font-semibold text-ink-2 mb-2">
                     {trade.label} ({groupItems.length})
@@ -691,7 +750,7 @@ export default function PriorityList() {
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {openItems.map((item, index) => priorityCard(item, index))}
+              {shownOpen.map((item, index) => priorityCard(item, index))}
             </div>
           )
         })()
