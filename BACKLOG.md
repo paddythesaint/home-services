@@ -48,6 +48,22 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 53 — Job History: real-date timeline + by-system rollup (7/7/26)
+Owner: group-by-date looked scrambled; asked whether it sorts by the log
+date or the activity date, and wanted a month timeline + the by-system
+rollup like other views.
+- Diagnosed: the old "by date" view was `items.reverse()` — sorted by the
+  `order` (DB insert) field, so imported/backfilled jobs landed out of
+  sequence. Now sorts by the real activity `date`.
+- **jobHistoryView.js**: jobTime (best-effort parse of loose labels —
+  "Early April 2026", "Fall 2025", "2025–2026"), byDateDesc, byMonth,
+  tradeJobRollup.
+- **Month timeline** (default view): jobs bucketed by the month the work
+  happened, newest month first, undated last, on a timeline rail.
+- **By-system rollup**: each trade section now shows count · total logged
+  cost · latest date (parity with the Health Report's rollups). Toggle
+  label is now "View timeline" / "Group by system".
+
 ## Slice 52 — walkthrough resume-where-incomplete (7/7/26)
 Owner frustration: "Run the walkthrough to confirm them" restarted from
 the top instead of jumping to what needs closing out.
