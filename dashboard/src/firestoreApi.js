@@ -265,6 +265,42 @@ export function removeContractor(id) {
   return deleteDoc(doc(db, "contractors", id))
 }
 
+// Merge one contractor profile into another: reassign every job and work
+// order that pointed at the loser to the survivor (across all properties
+// the founder can see), backfill blank survivor contact fields from the
+// loser, then delete the loser. Returns how many jobs were reassigned.
+export async function mergeContractors(email, survivorId, loserId) {
+  const [sSnap, lSnap] = await Promise.all([
+    getDoc(doc(db, "contractors", survivorId)),
+    getDoc(doc(db, "contractors", loserId)),
+  ])
+  const survivor = sSnap.data() || {}
+  const loser = lSnap.data() || {}
+  const properties = await fetchMemberProperties(email)
+  let reassigned = 0
+  for (const p of properties) {
+    for (const name of ["jobHistory", "workOrders"]) {
+      const snap = await getDocs(collectionRef(p.id, name))
+      for (const d of snap.docs) {
+        if (d.data().contractorId === loserId) {
+          await updateDoc(d.ref, {
+            contractorId: survivorId,
+            contractorName: survivor.name || "",
+          })
+          if (name === "jobHistory") reassigned += 1
+        }
+      }
+    }
+  }
+  const patch = {}
+  for (const f of ["trades", "phone", "email", "cadence", "website", "notes", "sourcing"]) {
+    if (!survivor[f] && loser[f]) patch[f] = loser[f]
+  }
+  if (Object.keys(patch).length) await updateDoc(doc(db, "contractors", survivorId), patch)
+  await deleteDoc(doc(db, "contractors", loserId))
+  return reassigned
+}
+
 // The founders' shared idea board (top-level, founder-only via rules).
 export function subscribeIdeas(callback, onError) {
   return onSnapshot(

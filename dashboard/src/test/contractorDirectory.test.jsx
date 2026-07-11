@@ -3,6 +3,7 @@ import { screen, fireEvent, waitFor } from "@testing-library/react"
 import { renderPage } from "./renderPage"
 import BusinessContractors from "../pages/BusinessContractors"
 import { DIRECTORY, DIRECTORY_COUNT, directoryCandidates } from "../contractorDirectory"
+import { addContractor, __getItems } from "../mocks/firestoreApi"
 
 describe("contractorDirectory data", () => {
   it("carries the full researched set with usable fields", () => {
@@ -49,5 +50,35 @@ describe("directory panel on the Contractor Network", () => {
       .map((el) => el.closest("a"))
       .find(Boolean)
     expect(link.getAttribute("href")).toMatch(/^\/contractor-network\//)
+  })
+})
+
+describe("duplicate audit + merge on the Contractor Network", () => {
+  it("surfaces a look-alike profile and merges it, reassigning jobs", async () => {
+    // A fragmented duplicate of the fixture's Monticello Air profile.
+    await addContractor({
+      name: "Monticello Air LLC — (434) 246-7111",
+      trades: "HVAC",
+      phone: "(434) 246-7111",
+    })
+    renderPage(<BusinessContractors />)
+
+    // The audit panel flags the pair.
+    expect(await screen.findByText(/Possible duplicates/)).toBeInTheDocument()
+    // Keep the canonical profile (default first = "Monticello Air"), merge.
+    fireEvent.click(await screen.findByText(/Merge 1 into/))
+
+    await waitFor(() => {
+      // The duplicate is gone — only one Monticello profile remains in the table.
+      const links = screen
+        .getAllByText(/Monticello Air/)
+        .map((el) => el.closest("a"))
+        .filter(Boolean)
+      expect(links.length).toBe(1)
+    })
+    // The panel disappears once there's nothing left to merge.
+    await waitFor(() =>
+      expect(screen.queryByText(/Possible duplicates/)).not.toBeInTheDocument()
+    )
   })
 })

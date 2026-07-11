@@ -3,15 +3,57 @@ import {
   jobMatchesContractor,
   unlinkedMatches,
   groupJobsByProperty,
+  canonicalName,
+  looksSameContractor,
+  findContractorMatch,
+  findDuplicateContractors,
 } from "../contractorMatching"
 
 const monticello = { id: "net-1", name: "Monticello Air" }
+
+describe("canonicalName", () => {
+  it("strips contact clauses, phone, and legal/filler tokens", () => {
+    expect(canonicalName("Monticello Air — (434) 246-7111")).toBe("monticello air")
+    expect(canonicalName("Blue Ridge Gutter Co")).toBe("blue ridge gutter")
+    expect(canonicalName("Dodson Pest Control, LLC")).toBe("dodson pest control")
+    expect(canonicalName("Insured Roofs (Franco)")).toBe("insured roofs")
+  })
+})
+
+describe("looksSameContractor", () => {
+  it("matches spelling/format variants of the same vendor", () => {
+    expect(looksSameContractor("Monticello Air", "Monticello Air — (434) 246-7111")).toBe(true)
+    expect(looksSameContractor("Dodson Pest Control", "Dodson Pest Control, LLC")).toBe(true)
+    expect(looksSameContractor("Monticello Air", "Monticello Air Conditioning")).toBe(true)
+  })
+  it("keeps genuinely different vendors distinct", () => {
+    expect(looksSameContractor("Blue Ridge Gutter", "Blue Ridge Electric")).toBe(false)
+    expect(looksSameContractor("Monticello Air", "Charlottesville Generators")).toBe(false)
+  })
+})
+
+describe("findContractorMatch / findDuplicateContractors", () => {
+  const net = [
+    { id: "a", name: "Monticello Air" },
+    { id: "b", name: "Monticello Air LLC — (434) 246-7111" },
+    { id: "c", name: "Blue Ridge Gutter Co" },
+  ]
+  it("resolves a free-text vendor to an existing profile", () => {
+    expect(findContractorMatch("Monticello Air, annual service", net).id).toBe("a")
+    expect(findContractorMatch("Someone New Plumbing", net)).toBeNull()
+  })
+  it("groups the look-alike profiles", () => {
+    const groups = findDuplicateContractors(net)
+    expect(groups).toHaveLength(1)
+    expect(groups[0].map((c) => c.id).sort()).toEqual(["a", "b"])
+  })
+})
 
 describe("jobMatchesContractor", () => {
   it("matches on contractorId regardless of sub text", () => {
     expect(jobMatchesContractor({ contractorId: "net-1", sub: "someone else" }, monticello)).toBe(true)
   })
-  it("falls back to case-insensitive name containment for unlinked jobs", () => {
+  it("fuzzy-matches format variants of the name for unlinked jobs", () => {
     expect(jobMatchesContractor({ sub: "MONTICELLO AIR — (434) 246-7111" }, monticello)).toBe(true)
     expect(jobMatchesContractor({ sub: "Blue Ridge Gutter Co" }, monticello)).toBe(false)
   })

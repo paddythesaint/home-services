@@ -276,6 +276,33 @@ export function removeContractor(id) {
   return Promise.resolve()
 }
 
+export async function mergeContractors(email, survivorId, loserId) {
+  const survivor = store.contractors.find((c) => c.id === survivorId) || {}
+  const loser = store.contractors.find((c) => c.id === loserId) || {}
+  const properties = await fetchMemberProperties(email)
+  let reassigned = 0
+  for (const p of properties) {
+    for (const name of ["jobHistory", "workOrders"]) {
+      let touched = false
+      for (const item of coll(p.id, name)) {
+        if (item.contractorId === loserId) {
+          item.contractorId = survivorId
+          item.contractorName = survivor.name || ""
+          touched = true
+          if (name === "jobHistory") reassigned += 1
+        }
+      }
+      if (touched) emitItems(p.id, name)
+    }
+  }
+  for (const f of ["trades", "phone", "email", "cadence", "website", "notes", "sourcing"]) {
+    if (!survivor[f] && loser[f]) survivor[f] = loser[f]
+  }
+  store.contractors = store.contractors.filter((c) => c.id !== loserId)
+  emitContractors()
+  return reassigned
+}
+
 export async function fetchPropertyContractors(pid) {
   return structuredClone(coll(pid, "contractors"))
 }
