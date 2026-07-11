@@ -50,10 +50,10 @@ const RECORD_TABS = {
   homeowner: ["health", "history", "coverage", "contractors"],
 }
 const PLAN_TABS = {
-  founder: ["next", "calendar", "priorities", "forecast"],
-  relationship: ["next", "calendar", "priorities"],
+  founder: ["next", "calendar", "priorities", "forecast", "report"],
+  relationship: ["next", "calendar", "priorities", "report"],
   technician: ["next", "calendar", "priorities"],
-  homeowner: ["next", "calendar", "priorities", "forecast"],
+  homeowner: ["next", "calendar", "priorities", "forecast", "report"],
 }
 
 // --- "View as" preview (founders only) ---
