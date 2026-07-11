@@ -10,6 +10,7 @@ import { viewFor } from "./roles"
 const RECORD = [
   { key: "health", to: "/health-report", label: "Systems & Health" },
   { key: "history", to: "/job-history", label: "Job History" },
+  { key: "coverage", to: "/coverage", label: "Coverage" },
   { key: "contractors", to: "/contractors", label: "Contractors" },
 ]
 
