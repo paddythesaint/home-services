@@ -48,6 +48,24 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 50 — contractor intelligence: dedup + fuzzy matching (7/7/26)
+Owner: manual adds/receipts spawn new contractor records unless the name
+matches exactly. Two asks: (1) confirm no duplicates exist, (2) smart
+match-before-add.
+- **Fuzzy matcher** (contractorMatching.js): canonicalName strips contact
+  clauses, phone numbers, and legal/filler tokens (LLC/Inc/Co/Services);
+  looksSameContractor uses canonical equality + token-subset + Jaccard,
+  conservative enough to keep "Blue Ridge Gutter" and "Blue Ridge
+  Electric" distinct. findContractorMatch + findDuplicateContractors.
+- **Dedup audit** (network page "Possible duplicates" panel): groups
+  look-alike profiles; keep one, merge the rest. mergeContractors
+  reassigns every job + work order (across all properties) from loser →
+  survivor, backfills blank survivor contact fields, deletes the loser.
+- **Match-before-add**: job→contractor linking (the "Link N jobs" / "Link
+  all" flows) is now canonical-aware, so "Monticello Air — (434)…" links
+  to the "Monticello Air" profile; roster import dedupes by canonical name
+  so variants don't create fresh profiles.
+
 ## Slice 51 — priority urgency filter ribbon (7/7/26)
 Owner: "a selector to just view all our low/high priority etc." — homeowner-
 usable, alongside the existing ranked / by-system lenses.

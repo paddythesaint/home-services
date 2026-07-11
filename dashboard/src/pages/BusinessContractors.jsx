@@ -7,9 +7,15 @@ import {
   fetchMemberProperties,
   updateItem,
   unifyRosters,
+  mergeContractors,
 } from "../firestoreApi"
 import { viewFor } from "../roles"
-import { norm, jobMatchesContractor, unlinkedMatches } from "../contractorMatching"
+import {
+  canonicalName,
+  jobMatchesContractor,
+  unlinkedMatches,
+  findDuplicateContractors,
+} from "../contractorMatching"
 import { contractorFields } from "../contractorShared"
 import { PropertyJobFeed } from "../PortfolioJobs"
 import { DIRECTORY_COUNT, directoryCandidates } from "../contractorDirectory"
@@ -160,18 +166,83 @@ function UnifyPanel({ email }) {
   )
 }
 
+// One group of look-alike profiles: keep one, merge the rest into it —
+// their jobs and work orders are reassigned, blank contact fields backfilled.
+function DuplicateGroup({ group, email }) {
+  const [survivor, setSurvivor] = useState(group[0].id)
+  const [merging, setMerging] = useState(false)
+  const keep = group.find((c) => c.id === survivor) || group[0]
+
+  async function merge() {
+    setMerging(true)
+    for (const c of group) {
+      if (c.id !== survivor) await mergeContractors(email, survivor, c.id)
+    }
+    // The contractor subscription re-emits; the group disappears on its own.
+  }
+
+  return (
+    <div className="border border-amber-200 bg-amber-50/60 rounded-xl p-3">
+      <p className="text-xs text-amber-900 mb-2">
+        These look like the same contractor. Keep one — the rest merge into it, and their
+        jobs and work orders come along.
+      </p>
+      <ul className="flex flex-col gap-1.5 mb-2.5">
+        {group.map((c) => (
+          <li key={c.id} className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name={`dup-${group[0].id}`}
+              className="accent-brand-700"
+              checked={survivor === c.id}
+              onChange={() => setSurvivor(c.id)}
+            />
+            <span className="font-medium text-ink">{c.name}</span>
+            <span className="text-xs text-ink-3">
+              {[c.trades, c.phone].filter(Boolean).join(" · ")}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <Button variant="subtle" onClick={merge} disabled={merging}>
+        {merging ? "Merging…" : `Merge ${group.length - 1} into “${keep.name}”`}
+      </Button>
+    </div>
+  )
+}
+
+function DuplicatesPanel({ contractors, email }) {
+  const groups = findDuplicateContractors(contractors)
+  if (groups.length === 0) return null
+  return (
+    <Card title={`Possible duplicates (${groups.length})`}>
+      <p className="text-xs text-ink-3 mb-3">
+        Profiles that look like the same vendor under slightly different names. Merge to keep
+        one clean record per contractor.
+      </p>
+      <div className="flex flex-col gap-3">
+        {groups.map((g) => (
+          <DuplicateGroup key={g[0].id} group={g} email={email} />
+        ))}
+      </div>
+    </Card>
+  )
+}
+
 function ImportPanel({ properties, existingNames, onImported }) {
   const [candidates, setCandidates] = useState(null) // null = not loaded
   const [selected, setSelected] = useState(new Set())
   const [importing, setImporting] = useState(false)
 
   async function load() {
+    // Dedupe by canonical name so vendors already in the network (under a
+    // slightly different spelling) aren't offered as fresh imports.
     const seen = new Set(existingNames)
     const found = []
     for (const p of properties) {
       const roster = await fetchPropertyContractors(p.id)
       for (const c of roster) {
-        const key = norm(c.name)
+        const key = canonicalName(c.name)
         if (!key || seen.has(key)) continue
         seen.add(key)
         found.push({ ...c, sourceProperty: p.address })
@@ -364,11 +435,12 @@ export default function BusinessContractors() {
       )}
 
       <div className="mb-4 flex flex-col gap-3">
+        <DuplicatesPanel contractors={contractors} email={user?.email} />
         <UnifyPanel email={user?.email} />
         <DirectoryPanel existingNames={contractors.map((c) => c.name)} />
         <ImportPanel
           properties={properties}
-          existingNames={contractors.map((c) => norm(c.name))}
+          existingNames={contractors.map((c) => canonicalName(c.name))}
           // Freshly imported roster vendors immediately link back to their
           // new network profiles.
           onImported={() => unifyRosters(user?.email).catch(() => {})}
