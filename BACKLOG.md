@@ -48,6 +48,15 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 59 — link the system schematic from the Command Center (7/11/26)
+Founder asked to reach the architecture schematic (the interactive
+boxes-and-wires map of data stores → intelligence engines → surfaces,
+published as a shareable page) from inside the app. Added a founder-only
+"System schematic" card on the Command Center (Ops) with an "Open the
+schematic ↗" link (new tab, rel=noopener). URL held in a `SCHEMATIC_URL`
+constant for easy updates. Suite 230 green; builds clean; browser-verified
+the card, link href, and target.
+
 ## Slice 58 — climate-tuned seasonal playbook from the ZIP (7/11/26)
 Follow-up to Slice 57: the seasonal checklist assumed a Charlottesville
 (Mid-Atlantic) climate. Founder asked to derive it from the ZIP that comes
