@@ -6,6 +6,7 @@ import { viewFor } from "../roles"
 import VisitNoteCard from "../VisitNoteCard"
 import { RecordTabs } from "../HubTabs"
 import { groupByTrade, tradeForItem } from "../trades"
+import { byDateDesc, byMonth, tradeJobRollup } from "../jobHistoryView"
 import { Card, PageHeader, StatusBadge, Button, Modal, DynamicForm } from "../components"
 
 const baseFields = [
@@ -31,7 +32,6 @@ export default function JobHistory() {
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [contractors, setContractors] = useState([])
   const founder = viewFor(user?.email).business
-  const orderedItems = [...items].reverse()
   const [grouped, setGrouped] = useState(() => {
     try {
       return localStorage.getItem("groupJobs") === "1"
@@ -103,15 +103,15 @@ export default function JobHistory() {
 
       {founder && <VisitNoteCard uid={uid} profile={profile} jobs={items} />}
 
-      {orderedItems.length > 0 && (
+      {items.length > 0 && (
         <div className="flex justify-end mb-2">
           <Button variant="ghost" className="!px-0" onClick={toggleGrouped}>
-            {grouped ? "View by date" : "Group by system"}
+            {grouped ? "View timeline" : "Group by system"}
           </Button>
         </div>
       )}
 
-      {orderedItems.length === 0 ? (
+      {items.length === 0 ? (
         <Card>
           <p className="text-sm text-ink-2">No jobs logged yet.</p>
         </Card>
@@ -169,17 +169,36 @@ export default function JobHistory() {
           )
           return grouped ? (
             <div className="flex flex-col gap-5">
-              {groupByTrade(orderedItems).map(({ trade, items: groupItems }) => (
+              {groupByTrade(byDateDesc(items)).map(({ trade, items: groupItems }) => (
                 <div key={trade.key}>
-                  <h2 className="text-sm font-semibold text-ink-2 mb-2">
-                    {trade.label} ({groupItems.length})
-                  </h2>
+                  <div className="flex items-baseline justify-between gap-3 mb-2">
+                    <h2 className="text-sm font-semibold text-ink-2">
+                      {trade.label} ({groupItems.length})
+                    </h2>
+                    <span className="text-xs text-ink-3">{tradeJobRollup(groupItems)}</span>
+                  </div>
                   <div className="flex flex-col gap-3">{groupItems.map(jobCard)}</div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="flex flex-col gap-3">{orderedItems.map(jobCard)}</div>
+            // Timeline: newest activity first, bucketed by the month the work
+            // actually happened (not when it was logged).
+            <div className="flex flex-col gap-6">
+              {byMonth(items).map(({ key, label, jobs }) => (
+                <section key={key}>
+                  <div className="flex items-baseline gap-2 mb-2">
+                    <h2 className="text-sm font-semibold text-ink-2">{label}</h2>
+                    <span className="text-xs text-ink-3">
+                      {jobs.length} job{jobs.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-3 border-l-2 border-line pl-4">
+                    {jobs.map(jobCard)}
+                  </div>
+                </section>
+              ))}
+            </div>
           )
         })()
       )}
