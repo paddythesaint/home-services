@@ -151,6 +151,14 @@ export function addItem(uid, name, data) {
   return addDoc(collectionRef(uid, name), { ...data, order: Date.now() })
 }
 
+// One-shot read of a property subcollection (no live subscription) — used
+// when a founder briefly needs one property's record from a portfolio-wide
+// page, e.g. assembling a work-order briefing.
+export async function fetchItems(uid, name) {
+  const snap = await getDocs(query(collectionRef(uid, name), orderBy("order")))
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+}
+
 export function updateItem(uid, name, id, data) {
   return updateDoc(doc(db, "properties", uid, name, id), data)
 }

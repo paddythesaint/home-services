@@ -44,6 +44,28 @@ export const nextLane = (lane) => {
   return i >= 0 && i < LANES.length - 1 ? LANES[i + 1] : null
 }
 
+// How long an order has been (or was) open — parsed from the createdOn /
+// completedOn labels. Null when the date can't be read.
+export function daysOpen(w, now = new Date()) {
+  const start = Date.parse(w.createdOn || "")
+  if (Number.isNaN(start)) return null
+  const end = w.completedOn ? Date.parse(w.completedOn) : now.getTime()
+  return Math.max(0, Math.round((end - start) / 86_400_000))
+}
+
+// One-line timeline for the detail view: when it opened and how long it's
+// been live (or how long it took to close).
+export function ageSummary(w, now = new Date()) {
+  const d = daysOpen(w, now)
+  if (w.lane === "done") {
+    const took = d === null ? "" : ` · ${d} day${d === 1 ? "" : "s"} to close`
+    return `Completed${w.completedOn ? ` ${w.completedOn}` : ""}${took}`
+  }
+  if (!w.createdOn) return "Opened date not recorded"
+  const live = d === null ? "" : ` · ${d === 0 ? "opened today" : `open ${d} day${d === 1 ? "" : "s"}`}`
+  return `Opened ${w.createdOn}${live}`
+}
+
 // Active = the homeowner-visible sense of "something is happening."
 // Triage and quote are internal machinery; homeowners see work once it's
 // real (scheduled or underway).
