@@ -14,6 +14,7 @@
 import { tradeForItem } from "./trades"
 import { jobTime } from "./jobHistoryView"
 import { parseCost } from "./spendInsights"
+import { CLIMATE_REGIONS, climateFor } from "./climate"
 
 // --- Seasonal playbook ---------------------------------------------------
 
@@ -56,19 +57,36 @@ export const SEASONAL_PLAYBOOK = {
   ],
 }
 
-// Which season a date falls in (Northern-hemisphere meteorological seasons).
-export function seasonFor(date = new Date()) {
-  const m = date.getMonth() // 0-11
-  if (m >= 2 && m <= 4) return "spring"
-  if (m >= 5 && m <= 7) return "summer"
-  if (m >= 8 && m <= 10) return "fall"
-  return "winter"
+// Which season a date falls in, per a climate region's boundaries (default
+// temperate / Mid-Atlantic). Warmer regions run a longer summer, colder ones
+// a longer winter.
+export function seasonFor(date = new Date(), region = CLIMATE_REGIONS.temperate) {
+  return region.seasonByMonth[date.getMonth()]
 }
 
-// The seasonal plan for a given date: the season and its checklist.
-export function seasonalPlan(date = new Date()) {
-  const season = seasonFor(date)
-  return { season, label: SEASON_LABEL[season], tasks: SEASONAL_PLAYBOOK[season] }
+// A region's effective checklist for a season: the universal base minus the
+// tasks that don't apply in that climate, plus the region's own additions.
+export function playbookFor(region, season) {
+  const drop = new Set(region.drop || [])
+  const base = (SEASONAL_PLAYBOOK[season] || []).filter((t) => !drop.has(t.id))
+  const add = (region.add && region.add[season]) || []
+  return [...base, ...add]
+}
+
+// The seasonal plan for a home: its climate region (inferred from the ZIP on
+// its record), the current season under that region's calendar, and the
+// tailored checklist. Falls back to temperate when there's no usable ZIP.
+export function seasonalPlan(date = new Date(), profile = null) {
+  const region = climateFor(profile)
+  const season = seasonFor(date, region)
+  return {
+    season,
+    label: SEASON_LABEL[season],
+    region: region.label,
+    regionId: region.id,
+    tailored: region.id !== "temperate",
+    tasks: playbookFor(region, season),
+  }
 }
 
 // --- Recurrence & aging --------------------------------------------------

@@ -18,12 +18,42 @@ describe("seasonal playbook (pure)", () => {
     expect(seasonFor(new Date("2026-01-05"))).toBe("winter")
   })
 
-  it("returns the checklist for the current season", () => {
+  it("returns the checklist for the current season (temperate default)", () => {
     const plan = seasonalPlan(new Date("2026-10-01"))
     expect(plan.season).toBe("fall")
     expect(plan.label).toBe("Fall")
-    expect(plan.tasks).toBe(SEASONAL_PLAYBOOK.fall)
-    expect(plan.tasks.length).toBeGreaterThan(0)
+    expect(plan.regionId).toBe("temperate")
+    expect(plan.tailored).toBe(false)
+    // No climate drops/adds for temperate → the base fall checklist verbatim.
+    expect(plan.tasks).toEqual(SEASONAL_PLAYBOOK.fall)
+  })
+})
+
+describe("climate-tuned seasonal plan (from the ZIP)", () => {
+  it("infers region from the property's ZIP and shifts the season calendar", () => {
+    // A November date is fall in Florida's minimal-winter calendar…
+    const fl = seasonalPlan(new Date("2026-11-15"), { areaLabel: "Miami, FL 33101" })
+    expect(fl.regionId).toBe("subtropical")
+    expect(fl.tailored).toBe(true)
+    // …and the winter freeze/ice tasks are dropped, hurricane prep added in summer.
+    const flSummer = seasonalPlan(new Date("2026-07-01"), { areaLabel: "Miami, FL 33101" })
+    expect(flSummer.tasks.some((t) => t.id === "st-su-hurricane")).toBe(true)
+  })
+
+  it("drops ice-dam watch and adds defensible-space in the hot-dry Southwest", () => {
+    // Spring is short in the Southwest calendar (Feb–Mar), then a long summer.
+    const az = seasonalPlan(new Date("2026-03-01"), { areaLabel: "Phoenix, AZ 85001" })
+    expect(az.regionId).toBe("hot-dry")
+    expect(az.season).toBe("spring")
+    expect(az.tasks.some((t) => t.id === "hd-sp-defensible")).toBe(true)
+    // Winter has no ice-dam task in this climate.
+    const azWinter = seasonalPlan(new Date("2026-01-01"), { areaLabel: "Phoenix, AZ 85001" })
+    expect(azWinter.tasks.some((t) => t.id === "wi-roof")).toBe(false)
+  })
+
+  it("falls back to temperate when no ZIP is on the record", () => {
+    expect(seasonalPlan(new Date("2026-07-01"), {}).regionId).toBe("temperate")
+    expect(seasonalPlan(new Date("2026-07-01"), null).regionId).toBe("temperate")
   })
 })
 
