@@ -8,6 +8,7 @@ import { viewFor } from "../roles"
 import { workOrderFromPriority } from "../workOrders"
 import { suggestRequirements } from "../requirementSuggestions"
 import { groupByTrade, tradeForItem } from "../trades"
+import IssueInsights from "../IssueInsights"
 import {
   RESOLUTION_PATHS,
   PATH_META,
@@ -483,6 +484,8 @@ export default function PriorityList() {
           sub="Batched on the subscription"
         />
       </div>
+
+      {viewFor(user?.email).staff && <IssueInsights priorities={items} />}
 
       {manifest.items.length > 0 && (
         <div className="mb-4">

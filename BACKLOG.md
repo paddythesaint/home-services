@@ -48,6 +48,32 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 49 — issue intelligence, Phase 1 (7/7/26)
+Owner: the 90-day plan had duplicative/overlapping tasks — wants the
+system to understand issues, root causes, escalation/consequences, and
+bundle related actions. "Build domain experience on the home, 895 as the
+example, structural backend." Phase 1 = deterministic foundation.
+- **issuePlaybook.js**: the domain-knowledge library, same "expertise as
+  data" pattern as benchmarks.js/trades.js. ~7 common home issues, each
+  with symptom signatures, root cause, an escalation ladder (what it
+  calcifies into if deferred, with cost + timeframe per stage), and the
+  coordinated resolution bundle. Home-agnostic; seeded from 895.
+- **detectIssues()**: clusters open priorities by issue (2+ to count),
+  flags near-duplicate titles (Jaccard), ranks by escalation-risk ceiling.
+- **"Related items & escalation risk" panel** on the 90-Day Priorities
+  page (staff-only — homeowners keep the calm list): each cluster shows
+  root cause, the linked priorities, a duplicate warning, the "if
+  deferred" consequence ladder, and the recommended bundle. On 895's
+  real audit data it surfaces the ventilation cluster (window mold + dead
+  bath fans — the owner's exact example) and the combustion-safety
+  cluster (water heater + basement stove).
+- Tightened the ventilation signature so drainage "moisture" doesn't
+  mis-cluster; added the dead-bath-fans priority to the energy-audit wave
+  so the ventilation cluster is a true pair.
+- Phase 2 (bundle a cluster into one Command Center work order) and
+  Phase 3 (AI-written consequence/bundle plans from the home's record)
+  are the follow-ons.
+
 ## Slice 48 — collapsible trade sections on Health Report (7/7/26)
 Owner: "collapse each of the systems down and expand to see the tiles."
 - Each trade section header is now a toggle (▸/▾), hiding/showing its
