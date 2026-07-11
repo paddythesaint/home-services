@@ -48,6 +48,14 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 48 — collapsible trade sections on Health Report (7/7/26)
+Owner: "collapse each of the systems down and expand to see the tiles."
+- Each trade section header is now a toggle (▸/▾), hiding/showing its
+  system tiles. Collapsed state is sticky per device (localStorage
+  `healthCollapsed`); default all-expanded so nobody loses systems.
+- Anchor links from Systems-at-a-glance auto-expand a collapsed trade
+  before scrolling to it.
+
 ## Slice 47 — work-order detail drawer + AI briefing (7/7/26)
 Owner: the board handled workflow but there was no way to read a ticket —
 "I am unable to see any more details other than the headline."
