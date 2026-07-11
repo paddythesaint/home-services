@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { screen, fireEvent } from "@testing-library/react"
+import { screen, fireEvent, waitFor } from "@testing-library/react"
 import { renderPage } from "./renderPage"
 import SystemProfile from "../pages/SystemProfile"
 import HealthReport from "../pages/HealthReport"
@@ -70,6 +70,22 @@ describe("doors and lenses", () => {
       (el) => el.closest("a")?.getAttribute("href") === "/system/sys-hvac"
     )
     expect(title).toBeTruthy()
+  })
+
+  it("collapses and expands a trade section", async () => {
+    localStorage.removeItem("healthCollapsed")
+    renderPage(<HealthReport />)
+    // Plumbing holds the water heater; it's visible until collapsed.
+    expect(await screen.findByText("Water Heater")).toBeInTheDocument()
+    // The trade header (uppercase label) is the toggle. Plumbing appears in
+    // the glance summary too, so click the section heading specifically.
+    const headings = screen.getAllByRole("button", { name: /Plumbing/ })
+    fireEvent.click(headings[headings.length - 1])
+    await waitFor(() =>
+      expect(screen.queryByText("Water Heater")).not.toBeInTheDocument()
+    )
+    fireEvent.click(screen.getAllByRole("button", { name: /Plumbing/ }).slice(-1)[0])
+    expect(await screen.findByText("Water Heater")).toBeInTheDocument()
   })
 
   it("Health Report consolidates systems under trade sections with rollups", async () => {

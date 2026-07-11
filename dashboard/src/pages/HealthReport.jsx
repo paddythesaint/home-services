@@ -68,12 +68,41 @@ export default function HealthReport() {
   const [confirmDelete, setConfirmDelete] = useState(null)
   const location = useLocation()
 
+  // Which trade sections are collapsed (keys), sticky per device. Default is
+  // all expanded — collapsing is opt-in, so nobody loses their systems.
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return new Set(JSON.parse(localStorage.getItem("healthCollapsed") || "[]"))
+    } catch {
+      return new Set()
+    }
+  })
+  function toggleTrade(key) {
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      next.has(key) ? next.delete(key) : next.add(key)
+      try {
+        localStorage.setItem("healthCollapsed", JSON.stringify([...next]))
+      } catch {
+        /* private mode — collapse just won't persist */
+      }
+      return next
+    })
+  }
+
   const unverifiedCount = items.filter((i) => !i.verified).length
 
-  // Arriving with a #trade-… hash (from a Systems-at-a-glance row anywhere
-  // in the app), land on that trade's section once the data has rendered.
+  // Arriving with a #trade-… hash (from a Systems-at-a-glance row anywhere in
+  // the app), expand that trade if it was collapsed, then land on it.
   useEffect(() => {
     if (!location.hash) return
+    const key = location.hash.slice(1).replace(/^trade-/, "")
+    setCollapsed((prev) => {
+      if (!prev.has(key)) return prev
+      const next = new Set(prev)
+      next.delete(key)
+      return next
+    })
     const el = document.getElementById(location.hash.slice(1))
     el?.scrollIntoView?.({ block: "start", behavior: "smooth" })
   }, [location.hash, items.length])
@@ -248,21 +277,38 @@ export default function HealthReport() {
               </Card>
 
               <div className="flex flex-col gap-6">
-                {groups.map(({ trade, items: groupItems }) => (
-                  <section key={trade.key} id={`trade-${trade.key}`}>
-                    <div className="flex items-baseline justify-between gap-3 mb-2">
-                      <h2 className="text-sm font-semibold text-ink-2 uppercase tracking-wide">
-                        {trade.label}
-                      </h2>
-                      <span className="text-xs text-ink-3">
-                        {tradeRollup(groupItems)}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {groupItems.map(systemCard)}
-                    </div>
-                  </section>
-                ))}
+                {groups.map(({ trade, items: groupItems }) => {
+                  const isCollapsed = collapsed.has(trade.key)
+                  return (
+                    <section key={trade.key} id={`trade-${trade.key}`}>
+                      <button
+                        type="button"
+                        onClick={() => toggleTrade(trade.key)}
+                        aria-expanded={!isCollapsed}
+                        className="w-full flex items-baseline justify-between gap-3 mb-2 group"
+                      >
+                        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-ink-2 uppercase tracking-wide group-hover:text-ink">
+                          <span
+                            className={`text-ink-3 transition-transform ${isCollapsed ? "" : "rotate-90"}`}
+                            aria-hidden="true"
+                          >
+                            ▸
+                          </span>
+                          {trade.label}
+                        </h2>
+                        <span className="text-xs text-ink-3">
+                          {tradeRollup(groupItems)}
+                          {isCollapsed && " · show"}
+                        </span>
+                      </button>
+                      {!isCollapsed && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {groupItems.map(systemCard)}
+                        </div>
+                      )}
+                    </section>
+                  )
+                })}
               </div>
             </>
           )
