@@ -4,11 +4,12 @@
 // names the coordinated fix — the intelligence that turns scattered tickets
 // into one action. Homeowners keep the calm list; this is an operator tool.
 
+import { Link } from "react-router-dom"
 import { UrgencyBadge, Card } from "./components"
 import { fmtMoneyRange } from "./benchmarks"
 import { detectIssues, escalationCeiling, consequenceLine } from "./issuePlaybook"
 
-export default function IssueInsights({ priorities }) {
+export default function IssueInsights({ priorities, onBundle }) {
   const clusters = detectIssues(priorities)
   if (clusters.length === 0) return null
 
@@ -22,6 +23,10 @@ export default function IssueInsights({ priorities }) {
       <div className="flex flex-col gap-4">
         {clusters.map(({ issue, items, duplicates }) => {
           const dupIds = new Set(duplicates.flat())
+          // Items not already carried on a work order — the ones a bundle
+          // would newly pull in.
+          const unlinked = items.filter((p) => !p.workOrderId)
+          const allRaised = unlinked.length === 0
           return (
             <div key={issue.key} className="border border-line rounded-xl p-3.5">
               <div className="flex items-start justify-between gap-3">
@@ -67,6 +72,23 @@ export default function IssueInsights({ priorities }) {
                   <span className="font-medium">Bundle → {issue.bundle.title}.</span>{" "}
                   {issue.bundle.resolution}
                 </p>
+                {onBundle &&
+                  (allRaised ? (
+                    <Link
+                      to="/work-orders"
+                      className="inline-block mt-2.5 text-xs font-medium text-brand-600 hover:text-brand-800"
+                    >
+                      Work order raised — track it on the board ›
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onBundle(issue, unlinked)}
+                      className="mt-2.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-lg px-3 py-1.5"
+                    >
+                      Bundle {unlinked.length} into one work order →
+                    </button>
+                  ))}
               </div>
             </div>
           )

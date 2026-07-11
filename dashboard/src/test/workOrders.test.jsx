@@ -4,7 +4,15 @@ import { renderPage } from "./renderPage"
 import WorkOrders from "../pages/WorkOrders"
 import PriorityList from "../pages/PriorityList"
 import Overview from "../pages/Overview"
-import { workOrderFromPriority, jobFromWorkOrder, nextLane, daysOpen, ageSummary } from "../workOrders"
+import {
+  workOrderFromPriority,
+  workOrderFromBundle,
+  linkedPriorityIds,
+  jobFromWorkOrder,
+  nextLane,
+  daysOpen,
+  ageSummary,
+} from "../workOrders"
 import { __getItems } from "../mocks/firestoreApi"
 
 describe("workOrders domain", () => {
@@ -47,6 +55,38 @@ describe("workOrders domain", () => {
     })
     expect(nextLane("in-progress")).toBe("done")
     expect(nextLane("done")).toBeNull()
+  })
+
+  it("bundles an issue cluster into one order carrying every priority id", () => {
+    const issue = {
+      key: "ventilation",
+      tradeLabel: "HVAC / ventilation",
+      bundle: { title: "Whole-home moisture ventilation project", resolution: "One coordinated pass." },
+    }
+    const w = workOrderFromBundle(issue, [
+      { id: "p1", title: "Replace master bath fan" },
+      { id: "p2", title: "Clean window mold" },
+    ])
+    expect(w).toMatchObject({
+      title: "Whole-home moisture ventilation project",
+      category: "HVAC / ventilation",
+      bundleKey: "ventilation",
+      priorityIds: ["p1", "p2"],
+      lane: "triage",
+      quoteStatus: "needed",
+    })
+    // The notes itemize what the one order closes.
+    expect(w.notes).toContain("Closes 2 priorities")
+    expect(w.notes).toContain("Replace master bath fan")
+    expect(w.notes).toContain("Clean window mold")
+  })
+
+  it("linkedPriorityIds merges the bundle list with the legacy single link", () => {
+    expect(linkedPriorityIds({ priorityIds: ["a", "b"] })).toEqual(["a", "b"])
+    expect(linkedPriorityIds({ priorityId: "solo" })).toEqual(["solo"])
+    // De-duped when both are present and overlap.
+    expect(linkedPriorityIds({ priorityIds: ["a", "b"], priorityId: "a" })).toEqual(["a", "b"])
+    expect(linkedPriorityIds({})).toEqual([])
   })
 })
 

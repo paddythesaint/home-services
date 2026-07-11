@@ -48,6 +48,33 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 54 — issue intelligence, Phase 2: bundle → work order (7/11/26)
+The Phase-1 "Related items & escalation risk" panel named the coordinated
+fix for each cluster but stopped at analysis — closing it still meant
+raising tickets one symptom at a time. Phase 2 makes the bundle actionable
+and rolls escalation exposure up to the Command Center.
+- **One-click bundle.** Each cluster on the Priorities panel now carries a
+  "Bundle N into one work order →" button (founder-only). It raises a single
+  work order off the issue's playbook bundle (title + resolution + trade),
+  carrying every priority id in the cluster on a new `priorityIds` array, and
+  stamps each priority's `workOrderId` so it reads as raised. Once every item
+  in a cluster is on an order the button becomes a "Work order raised — track
+  it on the board" link.
+- **Completion resolves the whole bundle.** `linkedPriorityIds(w)` unions the
+  new `priorityIds` with the legacy single `priorityId` (de-duped), so one
+  code path drives both. Marking a bundled order done writes one Job History
+  entry and resolves *all* its linked priorities; the confirm dialog counts
+  them ("its 3 linked priorities are resolved").
+- **Escalation rollup on the Command Center.** Each property reports its
+  detected-cluster count and summed escalation ceiling; Ops shows an "At risk
+  if deferred" tile ($ across the portfolio · N issue clusters) beside open
+  work — the deferred-cost exposure made visible where the operator triages.
+- New helpers: `workOrderFromBundle`, `linkedPriorityIds` (workOrders.js).
+  Tests: unit coverage for both plus an integration test that clicks the
+  bundle button and asserts a work order with `priorityIds` and the raised
+  state. Suite 206 green; builds clean; browser-verified the panel button,
+  raised state, and rollup tile.
+
 ## Slice 53 — Job History: real-date timeline + by-system rollup (7/7/26)
 Owner: group-by-date looked scrambled; asked whether it sorts by the log
 date or the activity date, and wanted a month timeline + the by-system

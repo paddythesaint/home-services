@@ -9,6 +9,7 @@ import {
 } from "../firestoreApi"
 import { todayISO, isoToLabel, todayLabel } from "../dates"
 import { isReadyToAction } from "../resolution"
+import { detectIssues, escalationCeiling } from "../issuePlaybook"
 import { viewFor } from "../roles"
 import SystemStatus from "../SystemStatus"
 import {
@@ -69,6 +70,11 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
   const scheduledJobs = jobs.filter((j) => j.status === "scheduled")
   const completedJobs = jobs.filter((j) => j.status === "completed")
 
+  // Escalation exposure: what the open priorities calcify into if deferred,
+  // summed across this home's detected issue clusters (Phase-2 intelligence).
+  const clusters = detectIssues(priorityApi.items)
+  const riskCeiling = clusters.reduce((s, c) => s + escalationCeiling(c.issue), 0)
+
   useEffect(() => {
     onMetrics(propertyId, {
       open: openPriorities.length,
@@ -79,6 +85,8 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
       urgent: urgentSystems.length,
       scheduled: scheduledJobs.length,
       completed: completedJobs.length,
+      clusters: clusters.length,
+      riskCeiling,
     })
   }, [
     propertyId,
@@ -90,6 +98,8 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
     urgentSystems.length,
     scheduledJobs.length,
     completedJobs.length,
+    clusters.length,
+    riskCeiling,
   ])
 
   // High-urgency open priorities + overdue checks feed the cross-portfolio
@@ -324,8 +334,21 @@ export default function Ops() {
       urgent: a.urgent + m.urgent,
       scheduled: a.scheduled + m.scheduled,
       completed: a.completed + m.completed,
+      clusters: a.clusters + (m.clusters || 0),
+      riskCeiling: a.riskCeiling + (m.riskCeiling || 0),
     }),
-    { open: 0, high: 0, ready: 0, nextVisit: 0, overdue: 0, urgent: 0, scheduled: 0, completed: 0 }
+    {
+      open: 0,
+      high: 0,
+      ready: 0,
+      nextVisit: 0,
+      overdue: 0,
+      urgent: 0,
+      scheduled: 0,
+      completed: 0,
+      clusters: 0,
+      riskCeiling: 0,
+    }
   )
 
   const attentionFeed = Object.values(attention).flat().sort((a, b) => rank(b.urgency) - rank(a.urgency))
@@ -353,12 +376,17 @@ export default function Ops() {
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 mb-4">
             <StatTile label="Properties" value={state.list.length} sub="Under management" />
             <StatTile
               label="Open work"
               value={totals.open}
               sub={`${totals.high} high · ${totals.ready} ready · ${totals.nextVisit} next visit`}
+            />
+            <StatTile
+              label="At risk if deferred"
+              value={totals.riskCeiling > 0 ? `$${totals.riskCeiling.toLocaleString("en-US")}` : "—"}
+              sub={`${totals.clusters} issue cluster${totals.clusters === 1 ? "" : "s"}`}
             />
             <StatTile label="Overdue checks" value={totals.overdue} sub="SLA risk" />
             <StatTile label="Urgent systems" value={totals.urgent} sub="Needs attention" />

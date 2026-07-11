@@ -9,7 +9,8 @@ import {
   escalationCeiling,
   consequenceLine,
 } from "../issuePlaybook"
-import { addItem } from "../mocks/firestoreApi"
+import { addItem, __getItems } from "../mocks/firestoreApi"
+import { waitFor } from "@testing-library/react"
 
 describe("issue playbook (pure)", () => {
   it("maps priorities onto issues by their signatures", () => {
@@ -84,6 +85,33 @@ describe("issue insights on the Priorities page", () => {
     expect(screen.getByText("Moisture ventilation")).toBeInTheDocument()
     expect(screen.getByText(/If deferred:/)).toBeInTheDocument()
     expect(screen.getByText(/Whole-home moisture ventilation project/)).toBeInTheDocument()
+  })
+
+  it("bundles a cluster into one work order that carries every priority id", async () => {
+    await addItem("prop-ballard", "priorityList", {
+      title: "Clean window mold + fix ventilation cause",
+      category: "Health",
+      reason: "Bath fans at 0 CFM per the audit.",
+      urgency: "medium",
+    })
+    await addItem("prop-ballard", "priorityList", {
+      title: "Replace master-bath exhaust fan",
+      category: "Ventilation",
+      reason: "Reads 0 CFM — not clearing moisture.",
+      urgency: "medium",
+    })
+    renderPage(<PriorityList />)
+    fireEvent.click(await screen.findByText(/Bundle 2 into one work order/))
+    await waitFor(() => {
+      const raised = __getItems("prop-ballard", "workOrders").find(
+        (w) => w.bundleKey === "ventilation"
+      )
+      expect(raised).toBeTruthy()
+      expect(raised.priorityIds).toHaveLength(2)
+      expect(raised.lane).toBe("triage")
+    })
+    // The panel now shows the raised state instead of the button.
+    expect(await screen.findByText(/Work order raised — track it on the board/)).toBeInTheDocument()
   })
 
   it("stays hidden from homeowners", async () => {
