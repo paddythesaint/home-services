@@ -29,9 +29,10 @@ export default function WhatsNext() {
   const { items: jobs } = useItems(uid, "jobHistory")
   const { items: workOrders } = useItems(uid, "workOrders")
 
-  // Proactive layer: this season's checklist, and systems that keep coming
-  // back. Seasonal tasks already put on the 90-day plan are marked done.
-  const season = seasonalPlan()
+  // Proactive layer: this season's checklist (tuned to the home's climate,
+  // inferred from its ZIP), and systems that keep coming back. Seasonal tasks
+  // already put on the 90-day plan are marked done.
+  const season = seasonalPlan(new Date(), profile)
   const onPlan = new Set(priorities.map((p) => p.seasonalId).filter(Boolean))
   const recurring = recurrenceInsights(jobs)
 
@@ -209,8 +210,9 @@ export default function WhatsNext() {
 
       <Card title={`This season at your home · ${season.label}`} className="mb-4">
         <p className="text-xs text-ink-3 mb-2">
-          A head start on {season.label.toLowerCase()} — the care a home in this climate wants
-          this time of year. Add any to your 90-day plan.
+          A head start on {season.label.toLowerCase()} — the care a home in your area wants this
+          time of year{season.tailored ? `, tuned to your ${season.region} climate` : ""}. Add any
+          to your 90-day plan.
         </p>
         <ul className="divide-y divide-line">
           {season.tasks.map((t) => {

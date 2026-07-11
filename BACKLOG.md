@@ -48,6 +48,33 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 58 — climate-tuned seasonal playbook from the ZIP (7/11/26)
+Follow-up to Slice 57: the seasonal checklist assumed a Charlottesville
+(Mid-Atlantic) climate. Founder asked to derive it from the ZIP that comes
+in with each new home. (Also confirmed the hero-photo ask was already
+satisfied — the 895 image is gated behind `isSeedProperty`, so every other
+home already gets a clean, photo-less header.)
+- **`climate.js` (new).** `zipFromProfile` pulls a 5-digit ZIP from the
+  record (zip / areaLabel / address). `regionForZip` maps ZIP prefixes to six
+  coarse US climate regions (temperate, cold, hot-humid, hot-dry, marine,
+  subtropical), defaulting to temperate. Each region carries its own season
+  boundaries (a month→season array — warm regions run a long summer, cold a
+  long winter) plus playbook deltas: `drop` (tasks that don't apply — no ice
+  dams in Phoenix) and `add` (region-specific — hurricane prep on the Gulf,
+  defensible-space clearing in the wildland West, moss treatment in the PNW).
+- **`maintenanceIntelligence.js` is now climate-aware.** `seasonFor(date,
+  region)` uses the region's calendar; `playbookFor(region, season)` composes
+  the universal base minus drops plus adds; `seasonalPlan(date, profile)`
+  infers the region from the home's ZIP and returns the tailored checklist
+  plus a `region`/`tailored` flag. Temperate is a pure passthrough, so
+  existing homes are unchanged.
+- **What's Next** passes the property through and notes "tuned to your {region}
+  climate" for non-temperate homes.
+- Tests: `climate.test.jsx` (ZIP parse + region mapping across six metros) and
+  new `maintenanceIntelligence` cases (FL drops freeze/adds hurricane, AZ
+  drops ice-dam/adds defensible space, temperate + no-ZIP fallbacks). Suite
+  230 green; builds clean; browser-verified 895 stays temperate (no tune note).
+
 ## Slice 57 — recurrence/aging detection + seasonal maintenance (7/11/26)
 Last of the review-identified intelligence gaps: the plan was reactive.
 Nothing noticed when the *same* system kept coming back, and nothing got
