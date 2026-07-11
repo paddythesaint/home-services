@@ -48,6 +48,29 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 56 — spend intelligence: "Your Home, in Review" (7/11/26)
+Review-identified gap: Job History recorded what was done and what it cost,
+but nothing read that back as a story. New backward-looking companion to the
+Cost Forecast — a homeowner-facing annual report drawn straight from the
+record.
+- **`spendInsights.js` domain module.** `parseCost` (first money value out
+  of free-text — "$1,450", "$150 – $350" → 150), `totalSpend`, `jobsInYear`
+  (completed jobs scoped by real activity date), `spendByTrade` (largest
+  first, with % share, reusing the trade taxonomy), `spendByMonth` (reusing
+  the Job History month buckets), `spendByContractor` (grouped by
+  `canonicalName` so "Monticello Air" and "Monticello Air — (434)…" count
+  once), and `annualReport` tying it together with systems tracked/verified.
+- **"Year in Review" page** (new Plan-hub tab, homeowner + founder +
+  relationship). Year picker; stat row (invested this year · biggest area ·
+  systems tracked/verified · coverage in force); "Where your investment
+  went" trade bars with shares; a month-by-month bar timeline; and "Who did
+  the work" by vendor spend.
+- Ties three layers together: spend (Job History), care (verified systems),
+  and coverage (Slice 55 warranties, shown as "in force / expiring soon").
+- Tests: pure domain (parse, year-scope, trade/month/vendor grouping incl.
+  the canonical merge, full report) + a page render. Suite 218 green; builds
+  clean; browser-verified the tab, stat row, bars, and vendor rollup.
+
 ## Slice 55 — coverage & warranty ledger with expiry alerts (7/11/26)
 Review-identified intelligence gap: the home carries warranties, extended
 plans, a home warranty, and service contracts, but nothing tracked their
