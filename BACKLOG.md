@@ -48,6 +48,16 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 52 — walkthrough resume-where-incomplete (7/7/26)
+Owner frustration: "Run the walkthrough to confirm them" restarted from
+the top instead of jumping to what needs closing out.
+- Walkthrough gains a `?focus=unverified` mode: skips the intro + property
+  basics + already-verified systems and drops straight onto the systems
+  still needing an in-person check, ending on the summary (no add-more
+  step). Empty case shows "Every system is verified."
+- The Health Report unverified banner now links there ("Confirm them now —
+  jumps straight to what's unverified").
+
 ## Slice 50 — contractor intelligence: dedup + fuzzy matching (7/7/26)
 Owner: manual adds/receipts spawn new contractor records unless the name
 matches exactly. Two asks: (1) confirm no duplicates exist, (2) smart
