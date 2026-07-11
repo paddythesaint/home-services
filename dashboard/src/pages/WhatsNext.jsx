@@ -9,7 +9,8 @@ import { useItems } from "../useItems"
 import { isUnderway } from "../workOrders"
 import { todayISO, isoToLabel } from "../dates"
 import { PlanTabs } from "../HubTabs"
-import { Card, PageHeader, UrgencyBadge, StatusBadge } from "../components"
+import { seasonalPlan, recurrenceInsights } from "../maintenanceIntelligence"
+import { Card, PageHeader, UrgencyBadge, StatusBadge, Button } from "../components"
 
 function Row({ children, right }) {
   return (
@@ -24,9 +25,25 @@ export default function WhatsNext() {
   const { uid, profile } = useOutletContext()
   const { items: systems } = useItems(uid, "healthReport")
   const { items: calendar } = useItems(uid, "careCalendar")
-  const { items: priorities } = useItems(uid, "priorityList")
+  const { items: priorities, add: addPriority } = useItems(uid, "priorityList")
   const { items: jobs } = useItems(uid, "jobHistory")
   const { items: workOrders } = useItems(uid, "workOrders")
+
+  // Proactive layer: this season's checklist, and systems that keep coming
+  // back. Seasonal tasks already put on the 90-day plan are marked done.
+  const season = seasonalPlan()
+  const onPlan = new Set(priorities.map((p) => p.seasonalId).filter(Boolean))
+  const recurring = recurrenceInsights(jobs)
+
+  function addSeasonal(task) {
+    addPriority({
+      title: task.label,
+      category: task.trade,
+      reason: `Seasonal (${season.label}): ${task.note}`,
+      urgency: "low",
+      seasonalId: task.id,
+    })
+  }
 
   const inFlight = workOrders.filter(isUnderway)
   const month = new Date().toLocaleDateString("en-US", { month: "long" })
@@ -160,6 +177,70 @@ export default function WhatsNext() {
           )}
         </Card>
       )}
+
+      {recurring.length > 0 && (
+        <Card title="Worth a closer look" className="mb-4">
+          <p className="text-xs text-ink-3 mb-2">
+            Systems that keep coming back — a recurring issue often has a root cause worth
+            addressing once, rather than paying for it again.
+          </p>
+          <ul className="divide-y divide-line">
+            {recurring.map((r) => (
+              <Row
+                key={r.key}
+                right={
+                  <span className="text-xs text-ink-3 whitespace-nowrap">
+                    {r.count}× · {r.rising ? "costs rising" : "recurring"}
+                  </span>
+                }
+              >
+                <Link
+                  to="/job-history"
+                  className="text-sm font-medium text-ink hover:text-brand-700"
+                >
+                  {r.label}
+                </Link>
+                <p className="text-xs text-ink-3 mt-0.5">{r.note}</p>
+              </Row>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      <Card title={`This season at your home · ${season.label}`} className="mb-4">
+        <p className="text-xs text-ink-3 mb-2">
+          A head start on {season.label.toLowerCase()} — the care a home in this climate wants
+          this time of year. Add any to your 90-day plan.
+        </p>
+        <ul className="divide-y divide-line">
+          {season.tasks.map((t) => {
+            const added = onPlan.has(t.id)
+            return (
+              <Row
+                key={t.id}
+                right={
+                  added ? (
+                    <span className="text-xs text-ink-3 whitespace-nowrap">On the plan ✓</span>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      className="!px-0 !text-xs whitespace-nowrap"
+                      onClick={() => addSeasonal(t)}
+                    >
+                      + Add to plan
+                    </Button>
+                  )
+                }
+              >
+                <p className="text-sm font-medium text-ink">{t.label}</p>
+                <p className="text-xs text-ink-3 mt-0.5">
+                  {t.trade} · {t.note}
+                </p>
+              </Row>
+            )
+          })}
+        </ul>
+      </Card>
     </div>
   )
 }

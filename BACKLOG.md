@@ -48,6 +48,28 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 57 — recurrence/aging detection + seasonal maintenance (7/11/26)
+Last of the review-identified intelligence gaps: the plan was reactive.
+Nothing noticed when the *same* system kept coming back, and nothing got
+ahead of the season. Both now live on "What's Next."
+- **`maintenanceIntelligence.js` domain module.** (1) `recurrenceInsights`
+  reads Job History: completed jobs grouped by trade over a trailing 12
+  months; any trade with 2+ jobs is "recurring," and a latest-cost-above-
+  earliest is an "aging" signal — with a root-cause note ("a recurring
+  pattern usually points to a root cause worth addressing, not re-patching").
+  (2) A `SEASONAL_PLAYBOOK` (spring/summer/fall/winter, Mid-Atlantic climate,
+  each task tagged with its trade + why), `seasonFor`, `seasonalPlan`.
+- **"What's Next" gains two cards.** "Worth a closer look" surfaces the
+  recurrence/aging insights (895's HVAC reads "2× · costs rising"). "This
+  season at your home" shows the current season's checklist with one-click
+  "+ Add to plan" that writes a low-urgency priority stamped `seasonalId`
+  (so it flips to "On the plan ✓" and never double-adds).
+- Reuses the trade taxonomy, `jobTime`, and `parseCost` — no new date/cost
+  parsing. Tests: pure domain (season mapping, recurrence incl. window +
+  rising-cost + scheduled exclusion) + a render test that adds a seasonal
+  task and asserts the recurring-HVAC insight. Suite 224 green; builds clean;
+  browser-verified both cards.
+
 ## Slice 56 — spend intelligence: "Your Home, in Review" (7/11/26)
 Review-identified gap: Job History recorded what was done and what it cost,
 but nothing read that back as a story. New backward-looking companion to the
