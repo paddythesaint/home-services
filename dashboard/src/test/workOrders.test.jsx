@@ -180,12 +180,37 @@ describe("Work order detail drawer", () => {
     renderPage(<WorkOrders />)
     // The gutter order is Exterior; Blue Ridge Gutter is the matching trade.
     fireEvent.click(await screen.findByText("Gutter guards on rear roofline"))
-    expect(await screen.findByText("Request a quote")).toBeInTheDocument()
+    expect(await screen.findByText(/^Request a quote/)).toBeInTheDocument()
     const draft = (await screen.findAllByText(/Draft/))
       .map((el) => el.closest("a"))
       .find(Boolean)
     expect(draft.getAttribute("href")).toMatch(/^mailto:/)
     expect(draft.getAttribute("href")).toContain("subject=Quote%20request")
+  })
+
+  it("combines a sibling order and a same-trade priority into one quote", async () => {
+    const { addItem } = await import("../mocks/firestoreApi")
+    // Two more HVAC work orders + an open HVAC priority on the same property.
+    await addItem("prop-ballard", "workOrders", {
+      title: "Replace hall bath fan motor",
+      category: "HVAC",
+      lane: "triage",
+      createdOn: "July 5, 2026",
+    })
+    await addItem("prop-ballard", "priorityList", {
+      title: "Service the return-air filter",
+      category: "HVAC",
+      urgency: "low",
+    })
+    renderPage(<WorkOrders />)
+    fireEvent.click(await screen.findByText("Replace hall bath fan motor"))
+
+    // The combine selector offers the same-trade priority as a suggestion.
+    expect(await screen.findByText("Service the return-air filter")).toBeInTheDocument()
+    fireEvent.click(screen.getByText("Service the return-air filter"))
+
+    // Folding it in makes the request a 2-item pack.
+    expect(await screen.findByText(/Request a quote · 2 items/)).toBeInTheDocument()
   })
 
   it("generates and caches an AI briefing from the home's record", async () => {

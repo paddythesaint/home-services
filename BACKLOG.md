@@ -48,6 +48,24 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 62 — combine work into one quote request (7/11/26)
+Founder ask: from a work order, fold other open work into a single quote —
+and, beyond open orders, flag same-trade open 90-day items (any urgency) the
+same contractor could knock out in one visit.
+- **`quoteRequest.js`** gains `combinableOrders` (other open, same-trade,
+  same-property work orders), `combinablePriorities` (open, same-trade 90-day
+  items not already on a work order, incl. med/low, excluding the anchor's
+  own), and `combinedQuoteEmail` (one numbered request across the anchor +
+  folded-in items — falls back to the single-item email when nothing extra).
+- **Work Order drawer** gains a "Combine into one quote — same trade, one
+  visit" selector: checkboxes for other open work orders and, under "Also
+  suggested — 90-day items", the same-trade priorities with their urgency
+  badge. Ticking any updates the header ("Request a quote · N items") and the
+  email preview / draft links live. Still email-only — no data mutation.
+- Tests: pure `combinableOrders` / `combinablePriorities` / `combinedQuoteEmail`
+  plus a drawer test that seeds a sibling order + priority and folds one in.
+  Suite 247 green; builds clean; browser-verified.
+
 ## Slice 61 — quote-request pack + trade-suggested contractors (7/11/26)
 Founder gap on the business side: once a work order is in triage, there was
 no way to actually reach out for a quote, and the assign dropdown listed the
