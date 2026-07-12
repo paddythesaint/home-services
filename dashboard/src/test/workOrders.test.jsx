@@ -176,6 +176,18 @@ describe("Work order detail drawer", () => {
     expect(linked).toHaveAttribute("href", "/contractor-network/net-blueridge")
   })
 
+  it("offers a quote-request pack with the trade-matched contractor pre-filled", async () => {
+    renderPage(<WorkOrders />)
+    // The gutter order is Exterior; Blue Ridge Gutter is the matching trade.
+    fireEvent.click(await screen.findByText("Gutter guards on rear roofline"))
+    expect(await screen.findByText("Request a quote")).toBeInTheDocument()
+    const draft = (await screen.findAllByText(/Draft/))
+      .map((el) => el.closest("a"))
+      .find(Boolean)
+    expect(draft.getAttribute("href")).toMatch(/^mailto:/)
+    expect(draft.getAttribute("href")).toContain("subject=Quote%20request")
+  })
+
   it("generates and caches an AI briefing from the home's record", async () => {
     renderPage(<WorkOrders />)
     fireEvent.click(await screen.findByText("Disposal is jammed"))

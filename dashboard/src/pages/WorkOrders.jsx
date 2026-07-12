@@ -25,6 +25,7 @@ import {
   ageSummary,
 } from "../workOrders"
 import { briefingSystemPrompt, briefingMessages } from "../workOrderBriefing"
+import { suggestedContractors, quoteRequestEmail, mailtoHref } from "../quoteRequest"
 import { todayLabel } from "../dates"
 import { Card, PageHeader, Button, Modal, DynamicForm, StatTile } from "../components"
 
@@ -36,9 +37,24 @@ import { Card, PageHeader, Button, Modal, DynamicForm, StatTile } from "../compo
 // card headline into the whole story — the client's own words, the
 // timeline, the workflow state, and a briefing the ops lead can read off
 // the home's record before dispatching anyone.
-function WorkOrderDrawer({ w, properties, onClose, onEdit, onDelete, onAdvance }) {
+function WorkOrderDrawer({ w, properties, contractors = [], onClose, onEdit, onDelete, onAdvance }) {
   const [briefing, setBriefing] = useState("idle") // idle | loading | error
+  const [copied, setCopied] = useState(false)
   const next = nextLane(w.lane)
+
+  const property = properties.find((p) => p.id === w.propertyId) || {}
+  const { trade, matched } = suggestedContractors(w, contractors)
+  const { subject, body } = quoteRequestEmail(w, property)
+
+  async function copyRequest() {
+    try {
+      await navigator.clipboard.writeText(`Subject: ${subject}\n\n${body}`)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+    }
+  }
 
   async function generate() {
     setBriefing("loading")
@@ -49,7 +65,6 @@ function WorkOrderDrawer({ w, properties, onClose, onEdit, onDelete, onAdvance }
         fetchItems(w.propertyId, "jobHistory"),
         fetchItems(w.propertyId, "facts"),
       ])
-      const property = properties.find((p) => p.id === w.propertyId) || {}
       const system = briefingSystemPrompt({
         profile: property,
         systems,
@@ -166,6 +181,62 @@ function WorkOrderDrawer({ w, properties, onClose, onEdit, onDelete, onAdvance }
                 )}
               </div>
             )}
+          </section>
+
+          <section>
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-3">
+                Request a quote
+              </h3>
+              <button
+                type="button"
+                onClick={copyRequest}
+                className="text-xs font-medium text-brand-600 hover:text-brand-800"
+              >
+                {copied ? "Copied ✓" : "Copy email"}
+              </button>
+            </div>
+
+            {matched.length > 0 ? (
+              <>
+                <p className="text-xs text-ink-3 mb-1.5">
+                  {trade.label} contractors in your network — draft opens your email pre-filled.
+                </p>
+                <ul className="flex flex-col gap-1.5 mb-3">
+                  {matched.map((c) => (
+                    <li key={c.id} className="flex items-center justify-between gap-3 text-sm">
+                      <span className="min-w-0">
+                        <span className="font-medium text-ink">{c.name}</span>
+                        {c.phone && <span className="text-ink-3"> · {c.phone}</span>}
+                      </span>
+                      <a
+                        href={mailtoHref({ to: c.email, subject, body })}
+                        className="shrink-0 text-xs font-medium text-brand-600 hover:text-brand-800"
+                      >
+                        {c.email ? "Draft email ↗" : "Draft (no email) ↗"}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p className="text-xs text-ink-3 mb-2">
+                No {trade.label === "Other" ? "matching-trade" : trade.label} contractor in the
+                network yet — copy the request below and send it to whomever you choose.
+              </p>
+            )}
+
+            <details className="text-sm">
+              <summary className="cursor-pointer text-xs font-medium text-ink-2 hover:text-ink">
+                Preview the request
+              </summary>
+              <p className="text-xs text-ink-3 mt-2 mb-1">
+                <span className="font-medium">Subject:</span> {subject}
+              </p>
+              <pre className="text-xs text-ink-2 whitespace-pre-wrap bg-plane rounded-xl px-3.5 py-3 font-sans">
+                {body}
+              </pre>
+            </details>
           </section>
 
           <section>
@@ -305,37 +376,52 @@ export default function WorkOrders() {
     ? all.find((w) => w.propertyId === detailKey.propertyId && w.id === detailKey.id) || null
     : null
 
-  const fields = [
-    { name: "title", label: "What needs doing", type: "text" },
-    { name: "category", label: "Category", type: "text", placeholder: "e.g. Exterior, HVAC" },
-    {
-      name: "assigneeType",
-      label: "Who does it",
-      type: "select",
-      options: ["", ...ASSIGNEE_TYPES],
-      optionLabels: { "": "— undecided —", ...ASSIGNEE_LABEL },
-    },
-    {
-      name: "contractorId",
-      label: "Contractor (network)",
-      type: "select",
-      options: ["", ...contractors.map((c) => c.id)],
-      optionLabels: {
-        "": "— none yet —",
-        ...Object.fromEntries(contractors.map((c) => [c.id, c.name])),
+  // Contractor options with the trade-matched vendors surfaced first (★ +
+  // their trade), so assigning starts from who actually does this kind of
+  // work rather than the whole roster.
+  function fieldsFor(order) {
+    const { matched, others } = suggestedContractors(order, contractors)
+    const ordered = [...matched, ...others]
+    const matchedIds = new Set(matched.map((c) => c.id))
+    return [
+      { name: "title", label: "What needs doing", type: "text" },
+      { name: "category", label: "Category", type: "text", placeholder: "e.g. Exterior, HVAC" },
+      {
+        name: "assigneeType",
+        label: "Who does it",
+        type: "select",
+        options: ["", ...ASSIGNEE_TYPES],
+        optionLabels: { "": "— undecided —", ...ASSIGNEE_LABEL },
       },
-    },
-    {
-      name: "quoteStatus",
-      label: "Quote",
-      type: "select",
-      options: QUOTE_STATUSES,
-      optionLabels: QUOTE_LABEL,
-    },
-    { name: "quoteAmount", label: "Quote amount", type: "text", placeholder: "e.g. $1,450" },
-    { name: "scheduledFor", label: "Scheduled for", type: "text", placeholder: "e.g. July 12, 2026" },
-    { name: "notes", label: "Notes", type: "textarea" },
-  ]
+      {
+        name: "contractorId",
+        label: "Contractor (network)",
+        type: "select",
+        options: ["", ...ordered.map((c) => c.id)],
+        optionLabels: {
+          "": "— none yet —",
+          ...Object.fromEntries(
+            ordered.map((c) => [
+              c.id,
+              matchedIds.has(c.id)
+                ? `★ ${c.name}${c.trades ? ` — ${c.trades}` : ""}`
+                : c.name,
+            ])
+          ),
+        },
+      },
+      {
+        name: "quoteStatus",
+        label: "Quote",
+        type: "select",
+        options: QUOTE_STATUSES,
+        optionLabels: QUOTE_LABEL,
+      },
+      { name: "quoteAmount", label: "Quote amount", type: "text", placeholder: "e.g. $1,450" },
+      { name: "scheduledFor", label: "Scheduled for", type: "text", placeholder: "e.g. July 12, 2026" },
+      { name: "notes", label: "Notes", type: "textarea" },
+    ]
+  }
 
   function withContractorName(values) {
     const c = contractors.find((x) => x.id === values.contractorId)
@@ -516,6 +602,7 @@ export default function WorkOrders() {
         <WorkOrderDrawer
           w={detail}
           properties={properties}
+          contractors={contractors}
           onClose={() => setDetailKey(null)}
           onEdit={() => {
             setDetailKey(null)
@@ -548,14 +635,14 @@ export default function WorkOrders() {
               ))}
             </select>
           </label>
-          <DynamicForm fields={fields} initialValues={{ quoteStatus: "none" }} onSubmit={saveNew} />
+          <DynamicForm fields={fieldsFor({})} initialValues={{ quoteStatus: "none" }} onSubmit={saveNew} />
         </Modal>
       )}
 
       {editing && (
         <Modal title="Edit work order" onClose={() => setEditing(null)}>
           <p className="text-xs text-ink-3 mb-3">{editing.propertyLabel}</p>
-          <DynamicForm fields={fields} initialValues={editing} onSubmit={saveEdit} />
+          <DynamicForm fields={fieldsFor(editing)} initialValues={editing} onSubmit={saveEdit} />
         </Modal>
       )}
 
