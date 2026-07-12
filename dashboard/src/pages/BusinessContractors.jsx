@@ -8,6 +8,7 @@ import {
   updateItem,
   unifyRosters,
   mergeContractors,
+  dismissDuplicates,
 } from "../firestoreApi"
 import { viewFor } from "../roles"
 import {
@@ -170,22 +171,28 @@ function UnifyPanel({ email }) {
 // their jobs and work orders are reassigned, blank contact fields backfilled.
 function DuplicateGroup({ group, email }) {
   const [survivor, setSurvivor] = useState(group[0].id)
-  const [merging, setMerging] = useState(false)
+  const [busy, setBusy] = useState("") // "" | "merging" | "dismissing"
   const keep = group.find((c) => c.id === survivor) || group[0]
 
   async function merge() {
-    setMerging(true)
+    setBusy("merging")
     for (const c of group) {
       if (c.id !== survivor) await mergeContractors(email, survivor, c.id)
     }
     // The contractor subscription re-emits; the group disappears on its own.
   }
 
+  async function notDuplicates() {
+    setBusy("dismissing")
+    // Pin every profile in the group apart so the matcher stops grouping them.
+    await dismissDuplicates(group.map((c) => c.id))
+  }
+
   return (
     <div className="border border-amber-200 bg-amber-50/60 rounded-xl p-3">
       <p className="text-xs text-amber-900 mb-2">
         These look like the same contractor. Keep one — the rest merge into it, and their
-        jobs and work orders come along.
+        jobs and work orders come along. Different vendors? Mark them separate.
       </p>
       <ul className="flex flex-col gap-1.5 mb-2.5">
         {group.map((c) => (
@@ -204,9 +211,19 @@ function DuplicateGroup({ group, email }) {
           </li>
         ))}
       </ul>
-      <Button variant="subtle" onClick={merge} disabled={merging}>
-        {merging ? "Merging…" : `Merge ${group.length - 1} into “${keep.name}”`}
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="subtle" onClick={merge} disabled={!!busy}>
+          {busy === "merging" ? "Merging…" : `Merge ${group.length - 1} into “${keep.name}”`}
+        </Button>
+        <button
+          type="button"
+          onClick={notDuplicates}
+          disabled={!!busy}
+          className="text-xs font-medium text-ink-3 hover:text-ink disabled:opacity-50"
+        >
+          {busy === "dismissing" ? "Marking…" : "Not duplicates — keep separate"}
+        </button>
+      </div>
     </div>
   )
 }

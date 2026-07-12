@@ -17,6 +17,7 @@ import {
 } from "firebase/firestore"
 import { db } from "./firebase"
 import { callBackend } from "./backendApi"
+import { combineTrades } from "./contractorMatching"
 
 // The `uid` parameter below is the property id. Historically it equalled the
 // owner's Firebase uid; membership decouples the two. Resolve it once at load.
@@ -293,12 +294,31 @@ export async function mergeContractors(email, survivorId, loserId) {
     }
   }
   const patch = {}
-  for (const f of ["trades", "phone", "email", "cadence", "website", "notes", "sourcing"]) {
+  for (const f of ["phone", "email", "cadence", "website", "notes", "sourcing"]) {
     if (!survivor[f] && loser[f]) patch[f] = loser[f]
   }
+  // Trades are unioned, not backfilled — a merged vendor keeps every line of
+  // work (Electrical + Plumbing + Septic), not just the survivor's.
+  const trades = combineTrades(survivor.trades, loser.trades)
+  if (trades !== (survivor.trades || "")) patch.trades = trades
   if (Object.keys(patch).length) await updateDoc(doc(db, "contractors", survivorId), patch)
   await deleteDoc(doc(db, "contractors", loserId))
   return reassigned
+}
+
+// Mark a set of contractor profiles as NOT the same vendor: each records the
+// others in its `notDuplicate` list, so the duplicate detector stops
+// re-flagging them as a group.
+export async function dismissDuplicates(ids) {
+  await Promise.all(
+    ids.map(async (id) => {
+      const others = ids.filter((x) => x !== id)
+      const snap = await getDoc(doc(db, "contractors", id))
+      const cur = snap.data()?.notDuplicate || []
+      const next = [...new Set([...cur, ...others])]
+      await updateDoc(doc(db, "contractors", id), { notDuplicate: next })
+    })
+  )
 }
 
 // The founders' shared idea board (top-level, founder-only via rules).

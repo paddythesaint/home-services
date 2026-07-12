@@ -5,6 +5,7 @@
 // against real Firestore snapshots.
 
 import { fixtureData } from "./fixtures"
+import { combineTrades } from "../contractorMatching"
 
 let store = structuredClone(fixtureData)
 const listeners = new Map() // topic -> Set<fn>
@@ -42,6 +43,10 @@ export function __getItems(uid, name) {
 
 export function __getProfile(uid) {
   return structuredClone(prop(uid).profile)
+}
+
+export function __getContractors() {
+  return structuredClone(store.contractors)
 }
 
 // --- real API surface ---
@@ -295,12 +300,26 @@ export async function mergeContractors(email, survivorId, loserId) {
       if (touched) emitItems(p.id, name)
     }
   }
-  for (const f of ["trades", "phone", "email", "cadence", "website", "notes", "sourcing"]) {
+  for (const f of ["phone", "email", "cadence", "website", "notes", "sourcing"]) {
     if (!survivor[f] && loser[f]) survivor[f] = loser[f]
   }
+  // Union trades so a multi-trade vendor keeps every line of work.
+  survivor.trades = combineTrades(survivor.trades, loser.trades)
   store.contractors = store.contractors.filter((c) => c.id !== loserId)
   emitContractors()
   return reassigned
+}
+
+// Mark a set of profiles as NOT the same vendor (mirrors the real fn).
+export function dismissDuplicates(ids) {
+  ids.forEach((id) => {
+    const c = store.contractors.find((x) => x.id === id)
+    if (!c) return
+    const others = ids.filter((x) => x !== id)
+    c.notDuplicate = [...new Set([...(c.notDuplicate || []), ...others])]
+  })
+  emitContractors()
+  return Promise.resolve()
 }
 
 export async function fetchPropertyContractors(pid) {

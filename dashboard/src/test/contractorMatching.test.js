@@ -7,6 +7,7 @@ import {
   looksSameContractor,
   findContractorMatch,
   findDuplicateContractors,
+  combineTrades,
 } from "../contractorMatching"
 
 const monticello = { id: "net-1", name: "Monticello Air" }
@@ -46,6 +47,38 @@ describe("findContractorMatch / findDuplicateContractors", () => {
     const groups = findDuplicateContractors(net)
     expect(groups).toHaveLength(1)
     expect(groups[0].map((c) => c.id).sort()).toEqual(["a", "b"])
+  })
+
+  it("stops grouping profiles the founder marked as distinct", () => {
+    // The three tree companies look alike but are genuinely different vendors.
+    const trees = [
+      { id: "t1", name: "Charlottesville Tree Service" },
+      { id: "t2", name: "Charlottesville Tree Works" },
+      { id: "t3", name: "Tree Service of Charlottesville" },
+    ]
+    expect(findDuplicateContractors(trees)).toHaveLength(1) // flagged by default
+    // Once pinned apart (each lists the others in notDuplicate), no group forms.
+    const pinned = trees.map((t) => ({
+      ...t,
+      notDuplicate: trees.filter((o) => o.id !== t.id).map((o) => o.id),
+    }))
+    expect(findDuplicateContractors(pinned)).toHaveLength(0)
+  })
+})
+
+describe("combineTrades", () => {
+  it("unions distinct trades so a merged vendor keeps every line of work", () => {
+    expect(combineTrades("Electrical", "Plumbing")).toBe("Electrical · Plumbing")
+    // Michael & Son: three trades, one of which contains an ampersand.
+    expect(combineTrades("Electrical · Plumbing", "Septic & Well")).toBe(
+      "Electrical · Plumbing · Septic & Well"
+    )
+  })
+  it("dedupes case-insensitively and tolerates blanks", () => {
+    expect(combineTrades("HVAC", "hvac, Plumbing")).toBe("HVAC · Plumbing")
+    expect(combineTrades("", "Roofing")).toBe("Roofing")
+    expect(combineTrades("Roofing", "")).toBe("Roofing")
+    expect(combineTrades(undefined, null)).toBe("")
   })
 })
 
