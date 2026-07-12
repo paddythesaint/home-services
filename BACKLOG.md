@@ -48,6 +48,29 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 61 — quote-request pack + trade-suggested contractors (7/11/26)
+Founder gap on the business side: once a work order is in triage, there was
+no way to actually reach out for a quote, and the assign dropdown listed the
+whole roster with no hint of who does this kind of work.
+- **`quoteRequest.js`** (new). `orderTrade` (category-first, so a
+  "bathroom" exhaust fan under category HVAC routes to HVAC, not Plumbing on
+  the word "bath"); `suggestedContractors` (splits the roster into
+  trade-matched vs. others); `quoteRequestEmail` (subject + a copy-paste body
+  with the address, the work, the client's note, trade, a photos-on-file
+  line, and the standard itemized-estimate / availability / timeline /
+  license checklist); `mailtoHref` (opens Outlook/Gmail pre-filled, spaces as
+  %20, blank recipient still drafts).
+- **Work Order drawer** gains a "Request a quote" section: the trade-matched
+  contractors each with a "Draft email ↗" mailto (recipient pre-filled when
+  an email is on file), a "Copy email" button, and a collapsible preview of
+  the full request. No email integration — the operator sends it themselves.
+- **Assign dropdown** now surfaces trade-matched vendors first, marked "★ …
+  — {trades}", ahead of the rest (via `fieldsFor(order)`), so assigning
+  starts from who actually does the work.
+- Tests: `quoteRequest` unit coverage (trade routing, email body, mailto
+  encoding) + a drawer test asserting the pack and pre-filled draft. Suite
+  242 green; builds clean; browser-verified.
+
 ## Slice 60 — contractor dedup: "not duplicates" + trade-preserving merge (7/11/26)
 Founder feedback from the live duplicate audit: (1) the Charlottesville tree
 companies are genuinely different vendors but keep getting flagged, with no
