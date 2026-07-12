@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest"
-import { suggestedContractors, quoteRequestEmail, mailtoHref } from "../quoteRequest"
+import {
+  suggestedContractors,
+  quoteRequestEmail,
+  mailtoHref,
+  combinableOrders,
+  combinablePriorities,
+  combinedQuoteEmail,
+} from "../quoteRequest"
 
 const net = [
   { id: "hvac", name: "Monticello Air", trades: "HVAC", email: "d@monticello.example" },
@@ -44,6 +51,59 @@ describe("quoteRequestEmail", () => {
     const { subject, body } = quoteRequestEmail({}, {})
     expect(subject).toContain("Quote request")
     expect(body).toContain("a property")
+  })
+})
+
+describe("combinableOrders", () => {
+  const anchor = { id: "a", propertyId: "P", category: "HVAC", lane: "triage" }
+  it("returns other open, same-trade, same-property orders only", () => {
+    const orders = [
+      anchor,
+      { id: "b", propertyId: "P", category: "HVAC", lane: "quote" }, // ✓
+      { id: "c", propertyId: "P", category: "HVAC", lane: "done" }, // closed
+      { id: "d", propertyId: "P", category: "Exterior", lane: "triage" }, // other trade
+      { id: "e", propertyId: "Q", category: "HVAC", lane: "triage" }, // other property
+    ]
+    expect(combinableOrders(anchor, orders).map((o) => o.id)).toEqual(["b"])
+  })
+})
+
+describe("combinablePriorities", () => {
+  const anchor = { id: "wo1", category: "HVAC", priorityId: "p-anchor" }
+  it("suggests open, same-trade priorities not already on a work order", () => {
+    const priorities = [
+      { id: "p1", category: "HVAC", title: "Replace filter", urgency: "low" }, // ✓ (any urgency)
+      { id: "p2", category: "HVAC", title: "Done thing", status: "resolved" }, // closed
+      { id: "p3", category: "HVAC", title: "Already ordered", workOrderId: "wo9" }, // has WO
+      { id: "p-anchor", category: "HVAC", title: "Spawned this order" }, // the anchor's own
+      { id: "p4", category: "Exterior", title: "Gutters" }, // other trade
+    ]
+    expect(combinablePriorities(anchor, priorities).map((p) => p.id)).toEqual(["p1"])
+  })
+})
+
+describe("combinedQuoteEmail", () => {
+  const anchor = { title: "Clean master-bath fan", category: "HVAC", notes: "no airflow" }
+  const property = { address: "895 Old Ballard Farm Ln" }
+  it("lists every item in one numbered request when there are extras", () => {
+    const { subject, body } = combinedQuoteEmail(
+      anchor,
+      [
+        { title: "Replace hall fan motor", notes: "seized" },
+        { title: "Replace closet fan motor" },
+      ],
+      property
+    )
+    expect(subject).toBe("Quote request: 3 items — 895 Old Ballard Farm Ln")
+    expect(body).toContain("WHAT WE NEED (3 items)")
+    expect(body).toContain("1. Clean master-bath fan")
+    expect(body).toContain("2. Replace hall fan motor")
+    expect(body).toContain("3. Replace closet fan motor")
+    expect(body).toContain("one visit")
+  })
+  it("falls back to the single-item email when nothing extra is folded in", () => {
+    const single = combinedQuoteEmail(anchor, [], property)
+    expect(single).toEqual(quoteRequestEmail(anchor, property))
   })
 })
 

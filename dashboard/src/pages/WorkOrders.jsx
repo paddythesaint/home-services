@@ -25,9 +25,15 @@ import {
   ageSummary,
 } from "../workOrders"
 import { briefingSystemPrompt, briefingMessages } from "../workOrderBriefing"
-import { suggestedContractors, quoteRequestEmail, mailtoHref } from "../quoteRequest"
+import {
+  suggestedContractors,
+  combinableOrders,
+  combinablePriorities,
+  combinedQuoteEmail,
+  mailtoHref,
+} from "../quoteRequest"
 import { todayLabel } from "../dates"
-import { Card, PageHeader, Button, Modal, DynamicForm, StatTile } from "../components"
+import { Card, PageHeader, Button, Modal, DynamicForm, StatTile, UrgencyBadge } from "../components"
 
 // The operational spine: every open piece of work across the portfolio on
 // one board — who's doing it, where the quote stands, when it happens.
@@ -37,14 +43,59 @@ import { Card, PageHeader, Button, Modal, DynamicForm, StatTile } from "../compo
 // card headline into the whole story — the client's own words, the
 // timeline, the workflow state, and a briefing the ops lead can read off
 // the home's record before dispatching anyone.
-function WorkOrderDrawer({ w, properties, contractors = [], onClose, onEdit, onDelete, onAdvance }) {
+function WorkOrderDrawer({
+  w,
+  properties,
+  contractors = [],
+  orders = [],
+  onClose,
+  onEdit,
+  onDelete,
+  onAdvance,
+}) {
   const [briefing, setBriefing] = useState("idle") // idle | loading | error
   const [copied, setCopied] = useState(false)
+  const [priorities, setPriorities] = useState([])
+  const [picked, setPicked] = useState(() => new Set()) // combined-quote line items
   const next = nextLane(w.lane)
 
   const property = properties.find((p) => p.id === w.propertyId) || {}
   const { trade, matched } = suggestedContractors(w, contractors)
-  const { subject, body } = quoteRequestEmail(w, property)
+
+  // Same-trade candidates to fold into one quote: other open work orders, and
+  // open 90-day priorities (any urgency) the same contractor could also do.
+  const otherOrders = combinableOrders(w, orders)
+  const priorityChoices = combinablePriorities(w, priorities)
+
+  // Load the property's priorities (for the "while you're here" suggestions)
+  // and reset the selection whenever the drawer switches to a new order.
+  useEffect(() => {
+    let active = true
+    setPicked(new Set())
+    fetchItems(w.propertyId, "priorityList")
+      .then((list) => active && setPriorities(list))
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [w.propertyId, w.id])
+
+  function togglePick(id) {
+    setPicked((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const extras = [
+    ...otherOrders.filter((o) => picked.has(o.id)).map((o) => ({ title: o.title, notes: o.notes })),
+    ...priorityChoices
+      .filter((p) => picked.has(p.id))
+      .map((p) => ({ title: p.title, notes: p.reason })),
+  ]
+  const { subject, body } = combinedQuoteEmail(w, extras, property)
+  const itemCount = extras.length + 1
 
   async function copyRequest() {
     try {
@@ -186,7 +237,7 @@ function WorkOrderDrawer({ w, properties, contractors = [], onClose, onEdit, onD
           <section>
             <div className="flex items-center justify-between gap-2 mb-1.5">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-3">
-                Request a quote
+                Request a quote{itemCount > 1 ? ` · ${itemCount} items` : ""}
               </h3>
               <button
                 type="button"
@@ -196,6 +247,52 @@ function WorkOrderDrawer({ w, properties, contractors = [], onClose, onEdit, onD
                 {copied ? "Copied ✓" : "Copy email"}
               </button>
             </div>
+
+            {(otherOrders.length > 0 || priorityChoices.length > 0) && (
+              <div className="mb-3 rounded-xl border border-line p-2.5">
+                <p className="text-xs font-medium text-ink-2 mb-1.5">
+                  Combine into one quote{" "}
+                  <span className="font-normal text-ink-3">— same trade, one visit</span>
+                </p>
+                {otherOrders.length > 0 && (
+                  <>
+                    <p className="text-[11px] uppercase tracking-wide text-ink-3 mt-1.5 mb-1">
+                      Other open work orders
+                    </p>
+                    {otherOrders.map((o) => (
+                      <label key={o.id} className="flex items-start gap-2 text-sm py-0.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="mt-0.5 accent-brand-700"
+                          checked={picked.has(o.id)}
+                          onChange={() => togglePick(o.id)}
+                        />
+                        <span className="text-ink">{o.title}</span>
+                      </label>
+                    ))}
+                  </>
+                )}
+                {priorityChoices.length > 0 && (
+                  <>
+                    <p className="text-[11px] uppercase tracking-wide text-ink-3 mt-2 mb-1">
+                      Also suggested — 90-day items
+                    </p>
+                    {priorityChoices.map((p) => (
+                      <label key={p.id} className="flex items-start gap-2 text-sm py-0.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="mt-0.5 accent-brand-700"
+                          checked={picked.has(p.id)}
+                          onChange={() => togglePick(p.id)}
+                        />
+                        <span className="text-ink flex-1">{p.title}</span>
+                        <UrgencyBadge urgency={p.urgency} />
+                      </label>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
 
             {matched.length > 0 ? (
               <>
@@ -603,6 +700,7 @@ export default function WorkOrders() {
           w={detail}
           properties={properties}
           contractors={contractors}
+          orders={all}
           onClose={() => setDetailKey(null)}
           onEdit={() => {
             setDetailKey(null)

@@ -6,6 +6,9 @@
 // No email integration — the operator sends it from Outlook/Gmail themselves.
 
 import { tradeForItem, tradeForText, OTHER_TRADE } from "./trades"
+import { isOpenWorkOrder } from "./workOrders"
+
+const priorityIsOpen = (p) => !p.status || p.status === "open" || p.status === "scheduled"
 
 // The trade a work order belongs to. The operator's explicit `category` wins
 // (so a "bathroom exhaust fan" under category HVAC routes to HVAC, not
@@ -72,6 +75,84 @@ export function quoteRequestEmail(order = {}, property = {}) {
     "Charlottesville Home & Property Services",
   ].join("\n")
 
+  return { subject, body }
+}
+
+// Other OPEN work orders at the same property whose trade matches the anchor
+// — the ones a single contractor could quote in one visit.
+export function combinableOrders(anchor = {}, orders = []) {
+  const trade = orderTrade(anchor)
+  if (trade.key === OTHER_TRADE.key) return []
+  return orders.filter(
+    (o) =>
+      o.id !== anchor.id &&
+      o.propertyId === anchor.propertyId &&
+      isOpenWorkOrder(o) &&
+      orderTrade(o).key === trade.key
+  )
+}
+
+// Open 90-day priorities of the same trade that aren't already on a work
+// order — the "while you're here" candidates (any urgency, incl. med/low)
+// worth flagging into the same quote. Excludes the priority that spawned the
+// anchor.
+export function combinablePriorities(anchor = {}, priorities = []) {
+  const trade = orderTrade(anchor)
+  if (trade.key === OTHER_TRADE.key) return []
+  const anchorPriorityIds = new Set([
+    ...(anchor.priorityIds || []),
+    ...(anchor.priorityId ? [anchor.priorityId] : []),
+  ])
+  return priorities.filter(
+    (p) =>
+      priorityIsOpen(p) &&
+      !p.workOrderId &&
+      !anchorPriorityIds.has(p.id) &&
+      orderTrade({ category: p.category, title: p.title }).key === trade.key
+  )
+}
+
+// One consolidated quote request: the anchor work order plus any extra line
+// items (other orders / priorities) the operator folded in. Falls back to the
+// single-item email when there's nothing extra.
+export function combinedQuoteEmail(anchor = {}, extras = [], property = {}) {
+  const lines = [{ title: anchor.title, notes: anchor.notes }, ...extras].filter((l) => l && l.title)
+  if (lines.length <= 1) return quoteRequestEmail(anchor, property)
+
+  const where = [property.address, property.areaLabel].filter(Boolean).join(", ")
+  const trade = orderTrade(anchor)
+  const need = lines.flatMap((l, i) => [
+    `${i + 1}. ${l.title}`,
+    ...(l.notes ? [`   ${l.notes.trim()}`] : []),
+  ])
+  const subject = `Quote request: ${lines.length} items${
+    property.address ? ` — ${property.address}` : ""
+  }`
+  const body = [
+    "Hello,",
+    "",
+    `Charlottesville Home & Property Services manages ${
+      where || "a property"
+    } and is requesting a quote for the ${lines.length} items below — ideally handled in one visit.`,
+    "",
+    `WHAT WE NEED (${lines.length} items)`,
+    ...need,
+    "",
+    `TRADE: ${trade.label}`,
+    ...(anchor.scheduledFor ? [`PREFERRED TIMING: ${anchor.scheduledFor}`] : []),
+    "",
+    "We have photos of the affected units on file and can send them over on request.",
+    "",
+    "Please include in your reply:",
+    "  • An itemized estimate per item (parts and labour)",
+    "  • Your earliest availability for a site visit and for the work",
+    "  • Estimated time to complete",
+    "  • Confirmation of license and insurance",
+    "",
+    "Reply to this email or call us with any questions. Thank you.",
+    "",
+    "Charlottesville Home & Property Services",
+  ].join("\n")
   return { subject, body }
 }
 
