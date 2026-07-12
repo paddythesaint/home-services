@@ -51,14 +51,25 @@ export function findContractorMatch(name, contractors) {
   return contractors.find((c) => looksSameContractor(name, c.name)) || null
 }
 
+// Has the founder already said these two are NOT the same vendor? Either
+// profile can carry the other's id in its `notDuplicate` list — that pins
+// them apart so the fuzzy matcher stops re-flagging them.
+function markedDistinct(a, b) {
+  return (a.notDuplicate || []).includes(b.id) || (b.notDuplicate || []).includes(a.id)
+}
+
 // Likely-duplicate profiles in the network: groups of 2+ that look like the
-// same contractor. Union-find over pairwise looksSame.
+// same contractor. Union-find over pairwise looksSame, skipping any pair the
+// founder has explicitly marked as distinct.
 export function findDuplicateContractors(contractors) {
   const parent = contractors.map((_, i) => i)
   const find = (i) => (parent[i] === i ? i : (parent[i] = find(parent[i])))
   for (let i = 0; i < contractors.length; i++) {
     for (let j = i + 1; j < contractors.length; j++) {
-      if (looksSameContractor(contractors[i].name, contractors[j].name)) {
+      if (
+        looksSameContractor(contractors[i].name, contractors[j].name) &&
+        !markedDistinct(contractors[i], contractors[j])
+      ) {
         parent[find(i)] = find(j)
       }
     }
@@ -70,6 +81,23 @@ export function findDuplicateContractors(contractors) {
     groups.get(root).push(c)
   })
   return [...groups.values()].filter((g) => g.length > 1)
+}
+
+// Union two vendors' trade lists into one deduped line, so merging a
+// multi-trade contractor (Michael & Son: Electrical + Plumbing + Septic)
+// keeps every line of work. Splits on list separators only — not "&", so
+// "Septic & Well" stays intact — and dedupes case-insensitively.
+export function combineTrades(a, b) {
+  const parts = []
+  const seen = new Set()
+  for (const raw of [a, b]) {
+    for (const t of String(raw || "").split(/\s*[,·;/\n]+\s*/)) {
+      const trimmed = t.trim()
+      const key = trimmed.toLowerCase()
+      if (trimmed && !seen.has(key)) { seen.add(key); parts.push(trimmed) }
+    }
+  }
+  return parts.join(" · ")
 }
 
 export const jobMatchesContractor = (job, contractor) =>

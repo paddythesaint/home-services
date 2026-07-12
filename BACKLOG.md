@@ -48,6 +48,26 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 60 — contractor dedup: "not duplicates" + trade-preserving merge (7/11/26)
+Founder feedback from the live duplicate audit: (1) the Charlottesville tree
+companies are genuinely different vendors but keep getting flagged, with no
+way to say so; (2) merging Michael & Son (Electrical / Plumbing / Septic)
+risked losing the per-trade info.
+- **"Not duplicates — keep separate."** New action on each duplicate group.
+  Records every profile's `notDuplicate` list (the other ids), and
+  `findDuplicateContractors` now skips any pair the founder pinned apart — so
+  a dismissed group never re-flags. `dismissDuplicates(ids)` added to both
+  data layers.
+- **Merge unions trades instead of dropping them.** New `combineTrades(a, b)`
+  dedupes and joins trade lists (splitting on list separators only, so
+  "Septic & Well" stays intact). `mergeContractors` now unions trades — a
+  merged Michael & Son reads "Electrical · Plumbing · Septic & Well" — while
+  still backfilling blank contact fields and carrying jobs/work orders along.
+  So yes: one contractor can hold multiple lines of work.
+- Tests: `combineTrades`, notDuplicate filtering, and two page-level cases
+  (dismiss clears the group + both survive; merge unions trades + backfills
+  phone). Suite 235 green; builds clean.
+
 ## Slice 59 — link the system schematic from the Command Center (7/11/26)
 Founder asked to reach the architecture schematic (the interactive
 boxes-and-wires map of data stores → intelligence engines → surfaces,

@@ -3,7 +3,7 @@ import { screen, fireEvent, waitFor } from "@testing-library/react"
 import { renderPage } from "./renderPage"
 import BusinessContractors from "../pages/BusinessContractors"
 import { DIRECTORY, DIRECTORY_COUNT, directoryCandidates } from "../contractorDirectory"
-import { addContractor, __getItems } from "../mocks/firestoreApi"
+import { addContractor, __getItems, __getContractors } from "../mocks/firestoreApi"
 
 describe("contractorDirectory data", () => {
   it("carries the full researched set with usable fields", () => {
@@ -80,5 +80,36 @@ describe("duplicate audit + merge on the Contractor Network", () => {
     await waitFor(() =>
       expect(screen.queryByText(/Possible duplicates/)).not.toBeInTheDocument()
     )
+  })
+
+  it("lets the founder mark a flagged group as NOT duplicates", async () => {
+    await addContractor({ name: "Monticello Air LLC — (434) 246-7111", trades: "HVAC" })
+    renderPage(<BusinessContractors />)
+    expect(await screen.findByText(/Possible duplicates/)).toBeInTheDocument()
+
+    fireEvent.click(await screen.findByText(/Not duplicates/))
+
+    // The group clears and both profiles survive — nothing was merged away.
+    await waitFor(() =>
+      expect(screen.queryByText(/Possible duplicates/)).not.toBeInTheDocument()
+    )
+    const names = __getContractors().map((c) => c.name)
+    expect(names.filter((n) => /Monticello/.test(n)).length).toBe(2)
+  })
+
+  it("unions trades on merge so a multi-trade vendor keeps every line of work", async () => {
+    // Michael & Son fragmented across three trades.
+    await addContractor({ name: "Michael & Son (Charlottesville)", trades: "Electrical" })
+    await addContractor({ name: "Michael & Son (Charlottesville) — Plumbing", trades: "Plumbing", phone: "434-260-8170" })
+    renderPage(<BusinessContractors />)
+
+    fireEvent.click(await screen.findByText(/Merge 1 into/))
+
+    await waitFor(() => {
+      const survivor = __getContractors().find((c) => /Michael & Son/.test(c.name))
+      expect(survivor.trades).toBe("Electrical · Plumbing")
+      // The loser's phone backfilled the blank survivor field, too.
+      expect(survivor.phone).toBe("434-260-8170")
+    })
   })
 })
