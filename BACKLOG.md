@@ -48,6 +48,23 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 63 — System Map as an in-app page (7/11/26)
+The external artifact link (Slice 59) required a claude.ai login and "didn't
+work" for the team. Ported the whole boxes-and-wires schematic into the app
+as a real route so Mike and Sally can just open it.
+- **`pages/Schematic.jsx`** (new): the four-band map (Data In → Stores →
+  Engines → Surfaces, ~44 boxes incl. the new Quote Request Builder engine),
+  React-native this time — `active`/`showAll` state, click-to-trace wires
+  drawn on an SVG overlay via refs, per-box "↑ pulls / ↓ feeds" note. Styling
+  fully scoped under `.smap` so it can't touch the rest of the app.
+- **Route** `/system-map`; **nav** "System Map" under Tools, granted to
+  founder + relationship (so both Mike and Sally see it; homeowners don't).
+- **Command Center** card now links to the internal page (`/system-map`)
+  instead of the external artifact URL; dropped the hardcoded artifact link.
+- Tests: page render + click-to-trace assertion; nav visibility covered by
+  the role wiring. Suite 249 green; builds clean; browser-verified the page,
+  the wires, and the nav link for both founder and relationship.
+
 ## Slice 62 — combine work into one quote request (7/11/26)
 Founder ask: from a work order, fold other open work into a single quote —
 and, beyond open orders, flag same-trade open 90-day items (any urgency) the

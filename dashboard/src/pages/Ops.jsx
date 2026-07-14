@@ -39,10 +39,6 @@ const newPropertyFields = [
 const isOpen = (p) => !p.status || p.status === "open" || p.status === "scheduled"
 const rank = (u) => (u === "high" ? 3 : u === "medium" ? 2 : 1)
 
-// Interactive schematic of the data + intelligence architecture — the
-// founder-facing "how it all fits together" map (Data In → Stores → Engines
-// → Surfaces). Hosted as a shareable page for walking through with the team.
-const SCHEMATIC_URL = "https://claude.ai/code/artifact/4b4c13f3-8749-44d0-9b1a-7761b127d2ba"
 
 // One property's live rollup. Reports metrics + attention items up so the
 // command center can aggregate across the portfolio, and renders its own
@@ -514,21 +510,19 @@ export default function Ops() {
 
       {founder && (
         <div className="mt-4">
-          <Card title="System schematic">
+          <Card title="System map">
             <p className="text-sm text-ink-2">
               An interactive map of how the platform fits together — every data store, the
               intelligence engines that read them, and the pages they feed. Handy for walking a
               teammate through what's built and how it works.
             </p>
-            <a
-              href={SCHEMATIC_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to="/system-map"
               className="inline-flex items-center gap-1.5 mt-3 text-sm font-medium text-brand-600 hover:text-brand-800"
             >
-              Open the schematic
-              <span aria-hidden="true">↗</span>
-            </a>
+              Open the system map
+              <span aria-hidden="true">→</span>
+            </Link>
           </Card>
         </div>
       )}
