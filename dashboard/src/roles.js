@@ -36,7 +36,7 @@ export const businessRole = (email) => STAFF_ROLES[(email || "").toLowerCase()] 
 // seats that use them.
 const NAV = {
   founder: ["overview", "assistant", "record", "plan", "walkthrough", "import", "systemMap", "conversations"],
-  relationship: ["overview", "assistant", "record", "plan", "walkthrough", "import", "systemMap", "conversations"],
+  relationship: ["overview", "assistant", "record", "plan", "walkthrough", "import", "systemMap"],
   technician: ["overview", "assistant", "record", "plan", "walkthrough"],
   homeowner: ["overview", "assistant", "record", "plan"],
 }

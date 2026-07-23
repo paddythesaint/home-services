@@ -83,6 +83,14 @@ export async function callClaude(propertyId, system, messages) {
       'Good to know — congratulations on the upgrade. Want me to add that to the home\'s record?\n<action>{"type":"save_fact","fact":"Water heater replaced in June 2026.","category":"Water Heater"}</action>'
     )
   }
+  if (text.includes("water pump") || text.includes("pump installed")) {
+    // A newly installed unit → add it to the tracked systems AND log the job.
+    return reply(
+      "Reading the nameplate — a Grundfos MQ3-45. I'll add it to your systems and log the install.\n" +
+        '<action>{"type":"log_system","title":"Water pump (basement)","detail":"Grundfos MQ3-45","category":"Plumbing","installYear":"2026"}</action>\n' +
+        '<action>{"type":"log_job","title":"Water pump install — Grundfos MQ3-45","date":"July 12, 2026","category":"Plumbing","sub":"","task":""}</action>'
+    )
+  }
   if (text.includes("jammed") || text.includes("broken") || text.includes("leak")) {
     return reply(
       'That sounds annoying — I can have the team take care of it. Shall I file the request?\n<action>{"type":"service_request","title":"Disposal jammed","details":"Kitchen disposal hums but will not spin."}</action>'

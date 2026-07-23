@@ -8,6 +8,7 @@ export const ACTION_META = {
   save_fact: { label: "Fact saved", tone: "brand" },
   service_request: { label: "Request raised", tone: "amber" },
   log_job: { label: "Job logged", tone: "brand" },
+  log_system: { label: "System added", tone: "brand" },
 }
 
 // A readable label for one committed action.

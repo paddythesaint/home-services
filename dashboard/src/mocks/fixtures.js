@@ -196,22 +196,29 @@ export const fixtureData = {
             id: "conv-1",
             startedBy: "paddythesaint@gmail.com",
             startedOn: "July 12, 2026",
-            summary: "New water softener + logged the generator service",
+            summary: "New water pump installed — added system + logged install",
             order: 1,
             messages: [
-              { role: "user", text: "We had a new water softener installed last week — a Culligan, in the basement." },
+              { role: "user", text: "We had a new water pump installed in the basement — here's the nameplate.", hadPhoto: true },
               {
                 role: "assistant",
-                text: "Got it — I'll add the Culligan water softener to your systems.",
-                actions: [{ type: "save_fact", fact: "Culligan water softener installed (basement), July 2026", status: "applied" }],
-              },
-              { role: "user", text: "Also the generator was serviced by Blue Ridge on the 3rd, $285.", hadPhoto: true },
-              {
-                role: "assistant",
-                text: "Logged the generator service to your job history.",
-                actions: [{ type: "log_job", title: "Generator annual service — Blue Ridge, $285", status: "applied" }],
+                text: "Reading the nameplate: a Grundfos MQ3-45. I'll add it to your systems and log the install.",
+                actions: [
+                  { type: "log_system", title: "Water pump (basement)", status: "applied" },
+                  { type: "log_job", title: "Water pump install — Grundfos MQ3-45", status: "applied" },
+                ],
               },
             ],
+          },
+        ],
+        documents: [
+          {
+            id: "doc-pump",
+            name: "water-pump-nameplate.jpg",
+            url: "mock://water-pump-nameplate.jpg",
+            uploadedOn: "July 12, 2026",
+            uploadedBy: "paddythesaint@gmail.com",
+            order: 1,
           },
         ],
         warranties: [

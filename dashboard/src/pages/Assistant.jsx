@@ -23,12 +23,19 @@ const CHIP_DONE = {
   save_fact: "Saved to the record",
   service_request: "Request filed — see Happening now",
   log_job: "Logged — job history + care calendar updated",
+  log_system: "Added to your Property Health Report",
 }
-const CHIP_BUTTON = { save_fact: "Save", service_request: "Send request", log_job: "Log job" }
+const CHIP_BUTTON = {
+  save_fact: "Save",
+  service_request: "Send request",
+  log_job: "Log job",
+  log_system: "Add system",
+}
 
 function chipPrompt(action) {
   if (action.type === "save_fact") return `Record: "${action.fact}"`
   if (action.type === "log_job") return `Log job: "${action.title}"${action.task ? " — checks off its care task" : ""}`
+  if (action.type === "log_system") return `Add to systems: "${action.title}"`
   return `File request: "${action.title}"`
 }
 
@@ -206,6 +213,17 @@ export default function Assistant() {
           })
         }
       }
+    } else if (action.type === "log_system") {
+      // A newly installed unit becomes a tracked system on the Health Report —
+      // unverified until someone confirms it in person.
+      await addItem(uid, "healthReport", {
+        category: action.title,
+        detail: action.detail || "",
+        installYear: action.installYear || "",
+        condition: "good",
+        verified: false,
+        source: "assistant",
+      })
     } else if (action.type === "service_request") {
       await addItem(uid, "workOrders", {
         title: action.title,

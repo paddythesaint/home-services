@@ -48,6 +48,26 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 65 — assistant can add systems; log includes docs; founder-only (7/11/26)
+Follow-ups on the Assistant Log, and the root cause of "I uploaded water-pump
+photos but it never showed in the Health Report."
+- **Root cause + fix: the assistant had no way to add a system.** ACTION_TYPES
+  were save_fact / service_request / log_job only — nothing wrote to
+  healthReport, so a newly installed unit could be logged as a *job* or *fact*
+  but never became a *tracked system*. Added a **`log_system`** action: the
+  assistant now proposes adding an installed unit (water pump, softener, HVAC…)
+  to the Property Health Report (unverified until inspected), and is prompted
+  to pair it with a log_job for the install and to read brand/model/year off a
+  nameplate photo. New confirm chip "Add system".
+- **Assistant Log now includes documents.** Added an "Uploads & documents"
+  section + a Documents stat, so inbound files show alongside conversations —
+  the log is now a complete "what came in" view.
+- **Founder-only.** Dropped the Assistant Log from the relationship (Sally)
+  nav per request; founders only. (System Map stays on both.)
+- Seeded the water-pump scenario (nameplate doc + log_system/log_job convo) in
+  the mock. Tests: log_system confirm → healthReport, docs in the log, updated
+  two seed-count assertions. Suite 255 green; builds clean; browser-verified.
+
 ## Slice 64 — Assistant Log: review conversations & what they recorded (7/11/26)
 Founder wanted to review the assistant interactions on 895 and the records
 they created — but transcripts were persisted (delete-locked) with no way to

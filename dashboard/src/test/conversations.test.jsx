@@ -42,13 +42,17 @@ describe("Assistant Log page", () => {
   it("lists the seeded conversation and expands to the transcript + records", async () => {
     renderPage(<Conversations />)
     expect(await screen.findByText("Assistant Log")).toBeInTheDocument()
-    const header = await screen.findByText(/New water softener/)
+    const header = await screen.findByText(/New water pump/)
     fireEvent.click(header)
     // Expanded: the user's words and the committed records show.
-    expect(
-      await screen.findByText(/a Culligan, in the basement/)
-    ).toBeInTheDocument()
-    expect(screen.getAllByText(/Fact saved:/).length).toBeGreaterThan(0)
+    expect(await screen.findByText(/here's the nameplate/)).toBeInTheDocument()
+    expect(screen.getAllByText(/System added:/).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/Job logged:/).length).toBeGreaterThan(0)
+  })
+
+  it("shows uploaded documents that came in", async () => {
+    renderPage(<Conversations />)
+    expect(await screen.findByText("Uploads & documents")).toBeInTheDocument()
+    expect(screen.getByText(/water-pump-nameplate.jpg/)).toBeInTheDocument()
   })
 })
