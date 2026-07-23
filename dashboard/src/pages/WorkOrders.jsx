@@ -23,6 +23,9 @@ import {
   jobFromWorkOrder,
   linkedPriorityIds,
   ageSummary,
+  withQuote,
+  chooseQuotePatch,
+  lowestQuoteId,
 } from "../workOrders"
 import { briefingSystemPrompt, briefingMessages } from "../workOrderBriefing"
 import {
@@ -57,7 +60,26 @@ function WorkOrderDrawer({
   const [copied, setCopied] = useState(false)
   const [priorities, setPriorities] = useState([])
   const [picked, setPicked] = useState(() => new Set()) // combined-quote line items
+  const [qName, setQName] = useState("")
+  const [qAmount, setQAmount] = useState("")
+  const [qNote, setQNote] = useState("")
   const next = nextLane(w.lane)
+
+  const quotes = w.quotes || []
+  const lowestId = lowestQuoteId(quotes)
+
+  async function addQuoteRow() {
+    if (!qName.trim() && !qAmount.trim()) return
+    await updateItem(w.propertyId, "workOrders", w.id, {
+      quotes: withQuote(w, { contractor: qName.trim(), amount: qAmount.trim(), note: qNote.trim() }),
+    })
+    setQName("")
+    setQAmount("")
+    setQNote("")
+  }
+  async function chooseQuoteRow(id) {
+    await updateItem(w.propertyId, "workOrders", w.id, chooseQuotePatch(w, id))
+  }
 
   const property = properties.find((p) => p.id === w.propertyId) || {}
   const { trade, matched } = suggestedContractors(w, contractors)
@@ -334,6 +356,78 @@ function WorkOrderDrawer({
                 {body}
               </pre>
             </details>
+          </section>
+
+          <section>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-3 mb-1.5">
+              Quotes received{quotes.length > 0 ? ` · ${quotes.length}` : ""}
+            </h3>
+            {quotes.length === 0 ? (
+              <p className="text-xs text-ink-3 mb-2">
+                Log quotes as they come back to compare them side by side and pick a winner.
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-1.5 mb-2.5">
+                {quotes.map((q) => (
+                  <li
+                    key={q.id}
+                    className={`flex items-start justify-between gap-3 text-sm rounded-lg px-2.5 py-2 border ${
+                      q.chosen ? "border-brand-400 bg-brand-50" : "border-line"
+                    }`}
+                  >
+                    <span className="min-w-0">
+                      <span className="font-medium text-ink">{q.contractor || "Contractor"}</span>
+                      {q.amount && <span className="text-ink-2"> · {q.amount}</span>}
+                      {q.id === lowestId && (
+                        <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-brand-700 bg-brand-100 rounded-full px-1.5 py-0.5">
+                          lowest
+                        </span>
+                      )}
+                      {q.note && <span className="block text-xs text-ink-3 mt-0.5">{q.note}</span>}
+                    </span>
+                    {q.chosen ? (
+                      <span className="shrink-0 text-xs font-semibold text-brand-700">Chosen ✓</span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => chooseQuoteRow(q.id)}
+                        className="shrink-0 text-xs font-medium text-brand-600 hover:text-brand-800"
+                      >
+                        Choose
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <input
+                className="border border-line rounded-lg px-2 py-1 bg-surface text-ink text-xs flex-1 min-w-[7rem]"
+                placeholder="Contractor"
+                value={qName}
+                onChange={(e) => setQName(e.target.value)}
+              />
+              <input
+                className="border border-line rounded-lg px-2 py-1 bg-surface text-ink text-xs w-24"
+                placeholder="$ amount"
+                value={qAmount}
+                onChange={(e) => setQAmount(e.target.value)}
+              />
+              <input
+                className="border border-line rounded-lg px-2 py-1 bg-surface text-ink text-xs flex-1 min-w-[7rem]"
+                placeholder="Note (optional)"
+                value={qNote}
+                onChange={(e) => setQNote(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addQuoteRow()}
+              />
+              <button
+                type="button"
+                onClick={addQuoteRow}
+                className="text-xs font-medium text-brand-600 hover:text-brand-800"
+              >
+                Add
+              </button>
+            </div>
           </section>
 
           <section>

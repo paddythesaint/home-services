@@ -26,6 +26,17 @@ export function compressImage(file, maxDim = 1200, quality = 0.7) {
   })
 }
 
+// Rebuild an uploadable File from a data URL, so a compressed photo can be
+// filed to storage (which wants a File/Blob, not a base64 string).
+export function dataUrlToFile(dataUrl, name) {
+  const [head, b64] = String(dataUrl || "").split(",")
+  const mime = head?.match(/data:(.*?);/)?.[1] || "image/jpeg"
+  const bin = atob(b64 || "")
+  const bytes = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+  return new File([bytes], name || `photo-${Date.now()}.jpg`, { type: mime })
+}
+
 export async function runOcr(dataUrl) {
   // Dynamic import keeps ~2MB of OCR code out of the main bundle.
   const Tesseract = await import("tesseract.js")
