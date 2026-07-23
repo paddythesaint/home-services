@@ -72,6 +72,7 @@ const PROPERTY_NAV = [
 const TOOLS_NAV = [
   { key: "walkthrough", to: "/walkthrough", label: "Walkthrough", icon: "walkthrough" },
   { key: "import", to: "/import", label: "Import Records", icon: "import" },
+  { key: "conversations", to: "/conversations", label: "Assistant Log", icon: "assistant" },
   { key: "systemMap", to: "/system-map", label: "System Map", icon: "map" },
 ]
 

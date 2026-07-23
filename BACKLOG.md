@@ -48,6 +48,24 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 64 — Assistant Log: review conversations & what they recorded (7/11/26)
+Founder wanted to review the assistant interactions on 895 and the records
+they created — but transcripts were persisted (delete-locked) with no way to
+view them. New review surface.
+- **`conversations.js`**: `conversationActions` (flatten each chat's committed
+  actions — facts/jobs/requests — with per-type counts), `conversationsSummary`
+  (home rollup), `byRecency`, `messageCount`. Pure over the stored
+  `conversations` docs.
+- **Assistant Log page** (`/conversations`, nav under Tools for founder +
+  relationship): stat row (conversations · records created), and a card per
+  conversation — summary, who/when, message count, and the committed-record
+  chips. Expand to the full transcript (user/assistant bubbles, photo/doc
+  markers) with each message's actions inline. Read-only.
+- Seeded a sample 895 conversation in the mock so it renders in demo/tests.
+- Tests: pure shaping + a page render that expands a conversation and asserts
+  the transcript and the fact/job chips; updated the assistant persist test to
+  tolerate the seed. Suite 253 green; builds clean; browser-verified.
+
 ## Slice 63 — System Map as an in-app page (7/11/26)
 The external artifact link (Slice 59) required a claude.ai login and "didn't
 work" for the team. Ported the whole boxes-and-wires schematic into the app

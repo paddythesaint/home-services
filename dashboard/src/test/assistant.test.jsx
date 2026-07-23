@@ -277,10 +277,15 @@ describe("assistant page", () => {
     await ask("What filter size do I need?")
     await screen.findByText(/16x25x1 MERV 11/)
     await waitFor(() => {
+      // A seeded conversation exists in the fixture, so find the one this chat
+      // just created rather than assuming an empty collection.
       const convs = __getItems("prop-ballard", "conversations")
-      expect(convs).toHaveLength(1)
-      expect(convs[0].messages).toHaveLength(2)
-      expect(convs[0].startedBy).toBe("paddythesaint@gmail.com")
+      const mine = convs.find((c) =>
+        (c.messages || []).some((m) => m.text?.includes("filter size"))
+      )
+      expect(mine).toBeTruthy()
+      expect(mine.messages).toHaveLength(2)
+      expect(mine.startedBy).toBe("paddythesaint@gmail.com")
     })
   })
 })
