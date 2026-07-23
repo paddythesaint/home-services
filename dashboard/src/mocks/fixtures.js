@@ -202,10 +202,18 @@ export const fixtureData = {
               { role: "user", text: "We had a new water pump installed in the basement — here's the nameplate.", hadPhoto: true },
               {
                 role: "assistant",
-                text: "Reading the nameplate: a Grundfos MQ3-45. I'll add it to your systems and log the install.",
+                text: "Reading the nameplate: a Grundfos MQ3-45. I'll add it to your systems and log the install. Worth registering the warranty too.",
                 actions: [
                   { type: "log_system", title: "Water pump (basement)", status: "applied" },
                   { type: "log_job", title: "Water pump install — Grundfos MQ3-45", status: "applied" },
+                  // Never confirmed before the chat closed — the safety net's
+                  // awaiting-confirmation queue picks this up.
+                  {
+                    type: "save_fact",
+                    fact: "Water pump warranty registered with Grundfos, July 2026",
+                    category: "Plumbing",
+                    status: "pending",
+                  },
                 ],
               },
             ],

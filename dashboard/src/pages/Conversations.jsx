@@ -3,18 +3,31 @@ import { useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import {
   ACTION_META,
+  actionLabel,
   conversationActions,
   conversationsSummary,
   messageCount,
   byRecency,
   filterConversations,
   inDateRange,
+  pendingActions,
+  withActionStatus,
 } from "../conversations"
-import { Card, PageHeader, StatTile } from "../components"
+import { applyAssistantAction } from "../assistantActions"
+import { Card, PageHeader, StatTile, Button } from "../components"
 
 // The assistant log: every conversation on this home and the records each one
 // created, so the team can review what was said and what got committed.
 // Read-only — the transcripts themselves stay delete-locked.
+
+// What confirming a pending action will do (present tense — ACTION_META's
+// labels are past tense for already-committed records).
+const PENDING_LABEL = {
+  save_fact: "Save fact",
+  log_job: "Log job",
+  log_system: "Add system",
+  service_request: "File request",
+}
 
 function ActionChip({ type, label, status }) {
   const meta = ACTION_META[type] || { label: type, tone: "brand" }
@@ -102,10 +115,30 @@ function ConversationCard({ conv }) {
 }
 
 export default function Conversations() {
-  const { uid } = useOutletContext()
-  const { items, loading } = useItems(uid, "conversations")
+  const { uid, user } = useOutletContext()
+  const { items, loading, update } = useItems(uid, "conversations")
   const { items: documents } = useItems(uid, "documents")
   const summary = conversationsSummary(items)
+
+  // The safety net: proposed actions nobody confirmed before closing the
+  // chat. Confirm applies the record here; dismiss retires the suggestion.
+  const pending = pendingActions(items)
+  const [busyKey, setBusyKey] = useState("")
+
+  async function resolvePending(p, status) {
+    setBusyKey(`${p.conversationId}-${p.msgIndex}-${p.actionIndex}`)
+    try {
+      if (status === "done") await applyAssistantAction(uid, p.action, user?.email)
+      const conv = items.find((c) => c.id === p.conversationId)
+      if (conv) {
+        await update(p.conversationId, {
+          messages: withActionStatus(conv, p.msgIndex, p.actionIndex, status),
+        })
+      }
+    } finally {
+      setBusyKey("")
+    }
+  }
 
   const [query, setQuery] = useState("")
   const [from, setFrom] = useState("")
@@ -145,6 +178,53 @@ export default function Conversations() {
         />
         <StatTile label="Documents" value={documents.length} sub="Uploaded files" />
       </div>
+
+      {pending.length > 0 && (
+        <Card
+          title={`Awaiting confirmation (${pending.length})`}
+          className="mb-4 border-amber-200 bg-amber-50/40"
+        >
+          <p className="text-xs text-ink-3 mb-2">
+            The assistant proposed these, but nobody confirmed them before the chat closed.
+            Confirm to write the record now, or dismiss.
+          </p>
+          <ul className="flex flex-col gap-2">
+            {pending.map((p) => {
+              const key = `${p.conversationId}-${p.msgIndex}-${p.actionIndex}`
+              const busy = busyKey === key
+              return (
+                <li key={key} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="min-w-0">
+                    <span className="font-medium text-ink">
+                      {PENDING_LABEL[p.action.type] || p.action.type}:
+                    </span>{" "}
+                    <span className="text-ink-2">{actionLabel(p.action)}</span>
+                    {p.startedOn && <span className="text-ink-3"> · {p.startedOn}</span>}
+                  </span>
+                  <span className="shrink-0 flex items-center gap-2">
+                    <Button
+                      variant="subtle"
+                      className="!py-1 !px-3 !text-xs"
+                      disabled={busy}
+                      onClick={() => resolvePending(p, "done")}
+                    >
+                      {busy ? "…" : "Confirm"}
+                    </Button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => resolvePending(p, "dismissed")}
+                      className="text-xs text-ink-3 hover:text-ink disabled:opacity-50"
+                    >
+                      Dismiss
+                    </button>
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </Card>
+      )}
 
       {(items.length > 0 || documents.length > 0) && (
         <div className="flex flex-wrap items-end gap-3 mb-4">

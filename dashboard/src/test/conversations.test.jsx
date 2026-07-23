@@ -10,7 +10,11 @@ import {
   conversationMatches,
   inDateRange,
   filterConversations,
+  pendingActions,
+  withActionStatus,
 } from "../conversations"
+import { waitFor } from "@testing-library/react"
+import { __getItems } from "../mocks/firestoreApi"
 
 const conv = {
   id: "c1",
@@ -82,6 +86,36 @@ describe("search + date filtering (pure)", () => {
   })
 })
 
+describe("pending-action safety net (pure)", () => {
+  const conv = {
+    id: "c9",
+    startedOn: "July 12, 2026",
+    messages: [
+      { role: "user", text: "hi" },
+      {
+        role: "assistant",
+        text: "ok",
+        actions: [
+          { type: "log_job", title: "done thing", status: "done" },
+          { type: "save_fact", fact: "warranty registered", status: "pending" },
+        ],
+      },
+    ],
+  }
+  it("finds only the still-pending actions with their addresses", () => {
+    const p = pendingActions([conv])
+    expect(p).toHaveLength(1)
+    expect(p[0]).toMatchObject({ conversationId: "c9", msgIndex: 1, actionIndex: 1 })
+    expect(p[0].action.fact).toBe("warranty registered")
+  })
+  it("rewrites one action's status immutably", () => {
+    const msgs = withActionStatus(conv, 1, 1, "done")
+    expect(msgs[1].actions[1].status).toBe("done")
+    expect(msgs[1].actions[0].status).toBe("done") // untouched sibling
+    expect(conv.messages[1].actions[1].status).toBe("pending") // original intact
+  })
+})
+
 describe("Assistant Log page", () => {
   it("lists the seeded conversation and expands to the transcript + records", async () => {
     renderPage(<Conversations />)
@@ -98,6 +132,23 @@ describe("Assistant Log page", () => {
     renderPage(<Conversations />)
     expect(await screen.findByText("Uploads & documents")).toBeInTheDocument()
     expect(screen.getByText(/water-pump-nameplate.jpg/)).toBeInTheDocument()
+  })
+
+  it("confirms a pending action from the queue: record lands, status flips", async () => {
+    renderPage(<Conversations />)
+    expect(await screen.findByText(/Awaiting confirmation \(1\)/)).toBeInTheDocument()
+    // Appears in the queue AND as a chip on the conversation card below.
+    expect(screen.getAllByText(/Water pump warranty registered/).length).toBeGreaterThan(0)
+    fireEvent.click(screen.getByText("Confirm"))
+    await waitFor(() => {
+      // The fact was written to the record…
+      const facts = __getItems("prop-ballard", "facts")
+      expect(facts.find((f) => f.text.includes("warranty registered"))).toBeTruthy()
+      // …and the transcript's action flipped to done, so the queue clears.
+      const conv = __getItems("prop-ballard", "conversations").find((c) => c.id === "conv-1")
+      const flat = conv.messages.flatMap((m) => m.actions || [])
+      expect(flat.filter((a) => a.status === "pending")).toHaveLength(0)
+    })
   })
 
   it("filters the log by the search box", async () => {
