@@ -102,24 +102,58 @@ function ConversationCard({ conv }) {
 export default function Conversations() {
   const { uid } = useOutletContext()
   const { items, loading } = useItems(uid, "conversations")
+  const { items: documents } = useItems(uid, "documents")
   const ordered = byRecency(items)
   const summary = conversationsSummary(items)
+  const docs = [...documents].sort((a, b) => (b.order || 0) - (a.order || 0))
 
   return (
     <div>
       <PageHeader
         title="Assistant Log"
-        subtitle="Every conversation with the assistant on this home, and the records each one created. Read-only — the transcripts stay on the record."
+        subtitle="Everything that came in through the assistant on this home — conversations, the records each one created, and uploaded documents. Read-only; the transcripts stay on the record."
       />
 
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-3 gap-3 mb-4">
         <StatTile label="Conversations" value={summary.conversations} sub="On this home" />
         <StatTile
           label="Records created"
           value={summary.records}
-          sub="Facts, jobs, and requests"
+          sub="Facts, systems, jobs, requests"
         />
+        <StatTile label="Documents" value={docs.length} sub="Uploaded files" />
       </div>
+
+      {docs.length > 0 && (
+        <Card title="Uploads & documents" className="mb-4">
+          <ul className="divide-y divide-line">
+            {docs.map((d) => (
+              <li key={d.id} className="py-2 flex items-center justify-between gap-3 text-sm">
+                <span className="min-w-0 truncate text-ink">
+                  📎 {d.name || "Document"}
+                </span>
+                <span className="shrink-0 text-xs text-ink-3">
+                  {d.uploadedOn || d.date || ""}
+                  {d.uploadedBy && ` · ${d.uploadedBy}`}
+                  {d.url && !d.url.startsWith("mock://") && (
+                    <>
+                      {" · "}
+                      <a
+                        href={d.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-brand-600 hover:text-brand-800 underline"
+                      >
+                        open
+                      </a>
+                    </>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       {loading ? (
         <Card>

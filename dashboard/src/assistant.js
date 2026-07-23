@@ -15,7 +15,7 @@
 
 import { replacementHorizon, fmtMoneyRange } from "./benchmarks"
 
-export const ACTION_TYPES = ["save_fact", "service_request", "log_job"]
+export const ACTION_TYPES = ["save_fact", "service_request", "log_job", "log_system"]
 
 const line = (label, value) => (value ? `${label}: ${value}` : null)
 
@@ -209,7 +209,10 @@ ACTIONS — when appropriate, append action tags on their own lines after your r
 3. When the member reports work that is already DONE (by them or by a pro they hired), offer to log it:
 <action>{"type":"log_job","title":"<short job title>","date":"<when it was done, e.g. July 5, 2026>","category":"<matching system category if any, else empty>","sub":"<who did it, e.g. Owner (DIY) or the company name, else empty>","task":"<the EXACT task text from CARE CALENDAR that this completes, if any, else empty>"}</action>
 Confirming a log_job writes the job history entry AND checks the matching care-calendar task off for the year — so copy the task text exactly as it appears above.
-Use at most one action of each type per reply — EXCEPT when a document is attached: then summarize it in 2-3 sentences and propose up to five save_fact actions for durable facts worth keeping (equipment and models, install/service dates, warranties, costs, contractor names). If a photo is attached, describe what you see briefly and use it to sharpen the fact or request.`
+4. When a NEW piece of equipment or a system is installed or replaced (a water pump, water heater, softener, HVAC unit, generator, sump pump…), offer to add it to the home's tracked systems:
+<action>{"type":"log_system","title":"<system name, e.g. Water pump (basement)>","detail":"<brand / model / specs if known, e.g. Grundfos MQ3-45>","category":"<trade/system category, e.g. Plumbing>","installYear":"<4-digit year installed if known, else empty>"}</action>
+Confirming a log_system adds it to the Property Health Report as a tracked system (unverified until inspected). A newly installed unit almost always deserves BOTH a log_system (so it's tracked and forecast) AND a log_job (the install itself). If a nameplate photo is attached, read the brand, model, and install year off it into the detail and installYear.
+Use at most one action of each type per reply — EXCEPT when a document is attached: then summarize it in 2-3 sentences and propose up to five save_fact actions for durable facts worth keeping (equipment and models, install/service dates, warranties, costs, contractor names). If a photo is attached, describe what you see briefly and use it to sharpen the fact, request, or system entry.`
 }
 
 // Split a model reply into display text + proposed actions.

@@ -208,6 +208,24 @@ describe("assistant page", () => {
     })
   })
 
+  it("adds a newly installed unit to the Health Report via log_system", async () => {
+    renderPage(<Assistant />)
+    await screen.findByText(/I'm the HPS assistant/)
+    await ask("We had a new water pump installed in the basement")
+    expect(await screen.findByText(/Add to systems: "Water pump/)).toBeInTheDocument()
+    const before = __getItems("prop-ballard", "healthReport").length
+    fireEvent.click(screen.getByText("Add system"))
+    expect(await screen.findByText(/Added to your Property Health Report/)).toBeInTheDocument()
+    const systems = __getItems("prop-ballard", "healthReport")
+    expect(systems).toHaveLength(before + 1)
+    expect(systems.find((s) => s.category === "Water pump (basement)")).toMatchObject({
+      detail: "Grundfos MQ3-45",
+      installYear: "2026",
+      verified: false,
+      source: "assistant",
+    })
+  })
+
   it("declines off-topic asks and steers back to the home", async () => {
     renderPage(<Assistant />)
     await screen.findByText(/I'm the HPS assistant/)
@@ -263,11 +281,10 @@ describe("assistant page", () => {
       __getItems("prop-ballard", "facts").find((f) => f.text.includes("run capacitor"))
     ).toBeTruthy()
 
-    // The file itself landed in the property's documents.
+    // The file itself landed in the property's documents (alongside any seed).
     await waitFor(() => {
       const docs = __getItems("prop-ballard", "documents")
-      expect(docs).toHaveLength(1)
-      expect(docs[0].name).toBe("hvac-invoice.pdf")
+      expect(docs.find((d) => d.name === "hvac-invoice.pdf")).toBeTruthy()
     })
   })
 
