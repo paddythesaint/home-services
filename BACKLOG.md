@@ -48,6 +48,23 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 67 — persist assistant photos + multi-quote comparison (7/11/26)
+Two greenlit follow-ups.
+- **Assistant photo uploads are now filed.** Images were only shown to the
+  model in the moment and then lost (only PDFs were persisted). Now a sent
+  photo is rebuilt into a File (`dataUrlToFile` in photoUtils.js) and uploaded
+  to the property's documents just like a PDF — so a nameplate/unit shot lands
+  under Documents (and the Assistant Log) instead of vanishing.
+- **Multi-quote comparison on a work order.** Work orders gained a `quotes`
+  array; the drawer's new "Quotes received" section logs each bid (contractor
+  · amount · note), flags the **lowest**, and a **Choose** button marks the
+  winner — rolling its amount to the order's quote fields (quoteStatus →
+  approved, quoteAmount, contractorName). Helpers `withQuote` /
+  `chooseQuotePatch` / `lowestQuoteId` in workOrders.js.
+- Tests: `dataUrlToFile` unit; quote helpers + a drawer test that logs two
+  quotes and picks the winner. Suite 263 green; builds clean; browser-verified
+  the photo filing and the quote compare/choose flow.
+
 ## Slice 66 — Assistant Log: search + date filter (7/11/26)
 - **`conversations.js`**: `conversationMatches` (free-text across summary,
   dates, who, message text, and committed-record labels), `inDateRange`

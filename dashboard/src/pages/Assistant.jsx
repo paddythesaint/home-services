@@ -3,7 +3,7 @@ import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import { addItem } from "../firestoreApi"
 import { callClaude } from "../backendApi"
-import { compressImage } from "../photoUtils"
+import { compressImage, dataUrlToFile } from "../photoUtils"
 import { uploadDocument, MAX_DOC_BYTES } from "../storageApi"
 import { todayLabel } from "../dates"
 import {
@@ -74,6 +74,7 @@ export default function Assistant() {
   const [messages, setMessages] = useState([]) // {role, text, hadPhoto?, actions?}
   const [input, setInput] = useState("")
   const [photo, setPhoto] = useState(null) // dataUrl pending attach
+  const [photoName, setPhotoName] = useState("") // original filename, for filing
   const [doc, setDoc] = useState(null) // {file, base64} pending attach
   const [sending, setSending] = useState(false)
   const [error, setError] = useState("")
@@ -138,7 +139,10 @@ export default function Assistant() {
       ]
     }
     apiHistoryRef.current = [...apiHistoryRef.current, { role: "user", content }]
+    const pendingPhoto = photo
+    const pendingPhotoName = photoName
     setPhoto(null)
+    setPhotoName("")
     const pendingDoc = doc
     setDoc(null)
     if (pendingDoc) {
@@ -148,6 +152,17 @@ export default function Assistant() {
       } catch {
         setError(
           "The document was read but couldn't be filed to storage — if this persists, the Storage rules may need publishing (see System status)."
+        )
+      }
+    }
+    if (pendingPhoto) {
+      // Photos are filed too, so a nameplate or unit shot lands under the
+      // home's documents instead of vanishing after the reply.
+      try {
+        await uploadDocument(uid, dataUrlToFile(pendingPhoto, pendingPhotoName), user?.email)
+      } catch {
+        setError(
+          "The photo was read but couldn't be filed to storage — if this persists, the Storage rules may need publishing (see System status)."
         )
       }
     }
@@ -259,6 +274,7 @@ export default function Assistant() {
     if (!file) return
     setDoc(null)
     setPhoto(await compressImage(file))
+    setPhotoName(file.name || `photo-${Date.now()}.jpg`)
     e.target.value = ""
   }
 

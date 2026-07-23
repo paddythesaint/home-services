@@ -12,6 +12,9 @@ import {
   nextLane,
   daysOpen,
   ageSummary,
+  withQuote,
+  chooseQuotePatch,
+  lowestQuoteId,
 } from "../workOrders"
 import { __getItems } from "../mocks/firestoreApi"
 
@@ -79,6 +82,22 @@ describe("workOrders domain", () => {
     expect(w.notes).toContain("Closes 2 priorities")
     expect(w.notes).toContain("Replace master bath fan")
     expect(w.notes).toContain("Clean window mold")
+  })
+
+  it("logs and compares multiple quotes, picking a winner", () => {
+    let order = { quoteStatus: "requested" }
+    order = { ...order, quotes: withQuote(order, { contractor: "Blue Ridge", amount: "$1,800" }) }
+    order = { ...order, quotes: withQuote(order, { contractor: "Monticello", amount: "$1,450" }) }
+    expect(order.quotes).toHaveLength(2)
+    // The lowest bid is flagged.
+    const lowId = lowestQuoteId(order.quotes)
+    expect(order.quotes.find((q) => q.id === lowId).contractor).toBe("Monticello")
+    // Choosing rolls the amount up to the order and marks the winner.
+    const patch = chooseQuotePatch(order, lowId)
+    expect(patch.quoteStatus).toBe("approved")
+    expect(patch.quoteAmount).toBe("$1,450")
+    expect(patch.contractorName).toBe("Monticello")
+    expect(patch.quotes.filter((q) => q.chosen)).toHaveLength(1)
   })
 
   it("linkedPriorityIds merges the bundle list with the legacy single link", () => {
@@ -186,6 +205,26 @@ describe("Work order detail drawer", () => {
       .find(Boolean)
     expect(draft.getAttribute("href")).toMatch(/^mailto:/)
     expect(draft.getAttribute("href")).toContain("subject=Quote%20request")
+  })
+
+  it("logs received quotes on an order and picks a winner", async () => {
+    renderPage(<WorkOrders />)
+    fireEvent.click(await screen.findByText("Gutter guards on rear roofline"))
+    await screen.findByText(/Quotes received/)
+    fireEvent.change(screen.getByPlaceholderText("Contractor"), { target: { value: "Blue Ridge" } })
+    fireEvent.change(screen.getByPlaceholderText("$ amount"), { target: { value: "$1,800" } })
+    fireEvent.click(screen.getByText("Add"))
+    await waitFor(() => {
+      const w = __getItems("prop-ballard", "workOrders").find((x) => x.id === "wo-gutters")
+      expect(w.quotes).toHaveLength(1)
+    })
+    fireEvent.click(await screen.findByText("Choose"))
+    await waitFor(() => {
+      const w = __getItems("prop-ballard", "workOrders").find((x) => x.id === "wo-gutters")
+      expect(w.quoteStatus).toBe("approved")
+      expect(w.quoteAmount).toBe("$1,800")
+      expect(w.quotes[0].chosen).toBe(true)
+    })
   })
 
   it("combines a sibling order and a same-trade priority into one quote", async () => {

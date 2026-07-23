@@ -126,6 +126,41 @@ export function linkedPriorityIds(w) {
   return [...ids]
 }
 
+// Received quotes on a work order, so several bids can be logged and
+// compared side by side instead of overwriting a single quote field. Each is
+// { id, contractor, amount, note, chosen? }.
+export function withQuote(order, quote) {
+  const id = `q-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+  return [...(order.quotes || []), { id, ...quote }]
+}
+
+// Picking a winning quote: mark it chosen (clear the others), and roll its
+// amount up to the order's quote fields so the board and completion see it.
+export function chooseQuotePatch(order, quoteId) {
+  const quotes = (order.quotes || []).map((q) => ({ ...q, chosen: q.id === quoteId }))
+  const won = quotes.find((q) => q.id === quoteId)
+  return {
+    quotes,
+    quoteStatus: "approved",
+    ...(won?.amount ? { quoteAmount: won.amount } : {}),
+    ...(won?.contractor ? { contractorName: won.contractor, assigneeType: "contractor" } : {}),
+  }
+}
+
+// The id of the lowest-priced quote (for a "lowest" hint), or null.
+export function lowestQuoteId(quotes = []) {
+  let best = null
+  let bestN = Infinity
+  for (const q of quotes) {
+    const n = Number(String(q.amount || "").replace(/[^0-9.]/g, ""))
+    if (Number.isFinite(n) && n > 0 && n < bestN) {
+      bestN = n
+      best = q.id
+    }
+  }
+  return best
+}
+
 // The Job History entry a completed work order leaves behind.
 export function jobFromWorkOrder(w) {
   return {
