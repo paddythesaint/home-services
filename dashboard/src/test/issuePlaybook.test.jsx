@@ -114,6 +114,28 @@ describe("issue insights on the Priorities page", () => {
     expect(await screen.findByText(/Work order raised — track it on the board/)).toBeInTheDocument()
   })
 
+  it("flags duplicate open priorities and closes the newer copy on request", async () => {
+    await addItem("prop-ballard", "priorityList", {
+      title: "Confirm propane tank ownership & service contract",
+      category: "Plumbing",
+      urgency: "low",
+    })
+    await addItem("prop-ballard", "priorityList", {
+      title: "Confirm propane tank ownership and service contract",
+      category: "Plumbing",
+      urgency: "low",
+    })
+    renderPage(<PriorityList />)
+    expect(await screen.findByText(/Possible duplicate priorities/)).toBeInTheDocument()
+    fireEvent.click(screen.getByText("Close the duplicate"))
+    await waitFor(() => {
+      const all = __getItems("prop-ballard", "priorityList")
+      const copies = all.filter((p) => /propane tank ownership/i.test(p.title))
+      expect(copies.filter((p) => p.status === "resolved")).toHaveLength(1)
+      expect(copies.find((p) => p.status === "resolved").resolutionNote).toMatch(/Duplicate of/)
+    })
+  })
+
   it("stays hidden from homeowners", async () => {
     await addItem("prop-ridge", "priorityList", {
       title: "Clean window mold + fix ventilation cause",

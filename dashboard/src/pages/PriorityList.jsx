@@ -8,6 +8,7 @@ import { viewFor } from "../roles"
 import { workOrderFromPriority, workOrderFromBundle } from "../workOrders"
 import { suggestRequirements } from "../requirementSuggestions"
 import { groupByTrade, tradeForItem } from "../trades"
+import { findDuplicates } from "../issuePlaybook"
 import IssueInsights from "../IssueInsights"
 import {
   RESOLUTION_PATHS,
@@ -514,6 +515,54 @@ export default function PriorityList() {
           sub="Batched on the subscription"
         />
       </div>
+
+      {viewFor(user?.email).staff &&
+        (() => {
+          // Same item twice (e.g. re-added by an insights wave after one copy
+          // was resolved) — same fuzzy matching as the contractor dedup,
+          // applied to open priorities. Closing the newer copy keeps the one
+          // with the most history.
+          const dupPairs = findDuplicates(openItems)
+          if (dupPairs.length === 0) return null
+          const byId = Object.fromEntries(openItems.map((p) => [p.id, p]))
+          return (
+            <Card className="mb-4 border-amber-200 bg-amber-50/40">
+              <p className="text-sm font-semibold text-ink mb-1.5">
+                Possible duplicate priorities ({dupPairs.length})
+              </p>
+              <ul className="flex flex-col gap-2">
+                {dupPairs.map(([aId, bId]) => {
+                  const a = byId[aId]
+                  const b = byId[bId]
+                  if (!a || !b) return null
+                  // The later insert is the likely re-add — offer to close it.
+                  const newer = (b.order || 0) >= (a.order || 0) ? b : a
+                  const keeper = newer === a ? b : a
+                  return (
+                    <li key={`${aId}-${bId}`} className="text-sm text-ink-2 flex items-start justify-between gap-3">
+                      <span>
+                        “{a.title}” and “{b.title}” look like the same item twice.
+                      </span>
+                      <button
+                        type="button"
+                        className="shrink-0 text-xs font-medium text-brand-600 hover:text-brand-800"
+                        onClick={() =>
+                          update(newer.id, {
+                            status: "resolved",
+                            resolvedOn: todayLabel(),
+                            resolutionNote: `Duplicate of "${keeper.title}"`,
+                          })
+                        }
+                      >
+                        Close the duplicate
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </Card>
+          )
+        })()}
 
       {viewFor(user?.email).staff && (
         <IssueInsights priorities={items} onBundle={founder ? raiseBundle : undefined} />

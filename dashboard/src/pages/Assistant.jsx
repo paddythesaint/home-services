@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
-import { addItem } from "../firestoreApi"
 import { callClaude } from "../backendApi"
 import { compressImage, dataUrlToFile } from "../photoUtils"
 import { uploadDocument, MAX_DOC_BYTES } from "../storageApi"
@@ -12,6 +11,7 @@ import {
   parseAssistantReply,
   transcriptMessage,
 } from "../assistant"
+import { applyAssistantAction, ACTION_DESTINATION } from "../assistantActions"
 import { Card, Button } from "../components"
 
 // The 24/7 concierge: knows this home's record (and nothing else), answers
@@ -41,9 +41,15 @@ function chipPrompt(action) {
 
 function ActionChip({ action, onConfirm }) {
   if (action.status === "done") {
+    const to = ACTION_DESTINATION[action.type]
     return (
       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-700 bg-brand-100 rounded-full px-3 py-1.5">
         ✓ {CHIP_DONE[action.type]}
+        {to && (
+          <Link to={to} className="underline hover:text-brand-900">
+            View →
+          </Link>
+        )}
       </span>
     )
   }
@@ -199,64 +205,10 @@ export default function Assistant() {
   async function confirmAction(msgIndex, actionIndex) {
     const msg = messages[msgIndex]
     const action = msg.actions[actionIndex]
-    if (action.type === "save_fact") {
-      await factsApi.add({
-        text: action.fact,
-        category: action.category || "",
-        source: "assistant",
-        confirmedBy: user?.email || "",
-        date: todayLabel(),
-      })
-    } else if (action.type === "log_job") {
-      // One confirmation, two writes: the job enters the history, and if
-      // the model matched a care-calendar task, this year's is checked off.
-      await jobsApi.add({
-        date: action.date || todayLabel(),
-        title: action.title,
-        category: action.category || "",
-        sub: action.sub || "",
-        status: "completed",
-        notes: "Reported via assistant.",
-        via: "assistant",
-      })
-      if (action.task) {
-        const t = calendar.find((x) => x.task === action.task)
-        if (t) {
-          await calendarApi.update(t.id, {
-            doneOn: todayLabel(),
-            doneYear: new Date().getFullYear(),
-          })
-        }
-      }
-    } else if (action.type === "log_system") {
-      // A newly installed unit becomes a tracked system on the Health Report —
-      // unverified until someone confirms it in person.
-      await addItem(uid, "healthReport", {
-        category: action.title,
-        detail: action.detail || "",
-        installYear: action.installYear || "",
-        condition: "good",
-        verified: false,
-        source: "assistant",
-      })
-    } else if (action.type === "service_request") {
-      await addItem(uid, "workOrders", {
-        title: action.title,
-        notes: action.details || "",
-        category: "",
-        lane: "triage",
-        source: "homeowner",
-        via: "assistant",
-        requestedBy: user?.email || "",
-        assigneeType: "",
-        contractorId: "",
-        contractorName: "",
-        quoteStatus: "none",
-        quoteAmount: "",
-        scheduledFor: "",
-        createdOn: todayLabel(),
-      })
-    }
+    // One shared write path with the Assistant Log's awaiting-confirmation
+    // queue (assistantActions.js) — confirm here or confirm there, same
+    // record lands.
+    await applyAssistantAction(uid, action, user?.email)
     const next = messages.map((m, i) =>
       i === msgIndex
         ? {

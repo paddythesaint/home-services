@@ -233,9 +233,11 @@ export function parseAssistantReply(raw) {
 }
 
 // Transcript-safe copy of a message (images/documents become placeholders
-// so the stored conversation stays small and readable). Fields an action
-// doesn't carry are OMITTED, never written as undefined — Firestore
-// rejects undefined values outright.
+// so the stored conversation stays small and readable). Actions keep EVERY
+// defined field — a pending action in the transcript is the safety net's
+// source of truth, so it must stay fully applicable later (date, category,
+// task, details…). Fields an action doesn't carry are OMITTED, never
+// written as undefined — Firestore rejects undefined values outright.
 export function transcriptMessage(m) {
   return {
     role: m.role,
@@ -244,12 +246,9 @@ export function transcriptMessage(m) {
     ...(m.hadDoc ? { hadDoc: m.hadDoc } : {}),
     ...(m.actions && m.actions.length
       ? {
-          actions: m.actions.map(({ type, fact, title, status }) => ({
-            type,
-            ...(fact !== undefined ? { fact } : {}),
-            ...(title !== undefined ? { title } : {}),
-            status,
-          })),
+          actions: m.actions.map((a) =>
+            Object.fromEntries(Object.entries(a).filter(([, v]) => v !== undefined))
+          ),
         }
       : {}),
   }

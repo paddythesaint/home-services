@@ -47,6 +47,43 @@ export function conversationsSummary(conversations) {
   return { conversations: conversations.length, records }
 }
 
+// The safety net: proposed actions that were never confirmed before the
+// chat was closed. They live on in the stored transcript (status stays
+// "pending"), so the Assistant Log can surface them for a later confirm or
+// dismiss instead of letting them silently evaporate.
+export function pendingActions(conversations) {
+  const items = []
+  for (const c of conversations) {
+    ;(c.messages || []).forEach((m, msgIndex) => {
+      ;(m.actions || []).forEach((a, actionIndex) => {
+        if (a.status === "pending") {
+          items.push({
+            conversationId: c.id,
+            msgIndex,
+            actionIndex,
+            action: a,
+            startedOn: c.startedOn || "",
+          })
+        }
+      })
+    })
+  }
+  return items
+}
+
+// A conversation's messages with ONE action's status rewritten — the update
+// the log writes back after a confirm ("done") or dismiss ("dismissed").
+export function withActionStatus(conv, msgIndex, actionIndex, status) {
+  return (conv.messages || []).map((m, mi) =>
+    mi === msgIndex
+      ? {
+          ...m,
+          actions: (m.actions || []).map((a, ai) => (ai === actionIndex ? { ...a, status } : a)),
+        }
+      : m
+  )
+}
+
 // Does a free-text date label fall within a [from, to] range (YYYY-MM-DD
 // strings from date inputs, either optional)? An unparseable/empty label is
 // excluded only when a bound is actually set.

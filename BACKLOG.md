@@ -48,6 +48,32 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 69 — assistant safety net: pending actions, record links, priority dedupe (7/13/26)
+Second greenlit enhancement — kills the "did it stick?" class of doubt.
+- **Never lose what was said.** `transcriptMessage` now keeps EVERY defined
+  action field (previously slimmed to type/fact/title/status — a stored
+  pending action couldn't be applied later). New `pendingActions()` /
+  `withActionStatus()` in conversations.js; the Assistant Log gains an
+  **"Awaiting confirmation (N)"** card listing actions nobody confirmed
+  before the chat closed, each with Confirm (applies the record now) or
+  Dismiss. Seeded a pending warranty fact in the mock.
+- **One write path.** The confirm logic moved out of Assistant.jsx into
+  `assistantActions.js` (`applyAssistantAction`) — the live chat chips and
+  the log's queue share it, so confirming in either place lands the same
+  record (incl. the log_job care-calendar checkoff via fetchItems).
+- **Record links.** Confirmed chips now carry "View →" to where the record
+  lives (`ACTION_DESTINATION`: job → Job History, system → Health Report,
+  request → Overview).
+- **Priority dedupe.** Staff see a "Possible duplicate priorities" banner on
+  the 90-day list (same fuzzy title matching as the contractor dedup, via
+  issuePlaybook's findDuplicates across open items) with one-click "Close
+  the duplicate" — resolves the newer copy with a "Duplicate of …" note
+  (the propane case).
+- Tests: transcript full-fidelity, pendingActions/withActionStatus, a page
+  test confirming from the queue (fact lands + status flips), and a
+  duplicate-priorities close flow. Suite 272 green; builds clean;
+  browser-verified queue render/clear and the View → link.
+
 ## Slice 68 — Attention Inbox on the Command Center (7/13/26)
 First of the founder's greenlit top-enhancements: run ops from a queue, not
 memory. The "Needs attention now" card becomes the **Attention inbox** — the
