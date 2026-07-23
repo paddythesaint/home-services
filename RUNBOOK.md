@@ -89,3 +89,62 @@ red log line names the next one. The full set that got run #5 green:
 Any PR that edits `dashboard/firestore.rules` must add a row to the table
 above (or state that no publish is needed). The System status panel is the
 source of truth for what's actually live — when in doubt, run it.
+
+## Email intake — Gmail connector setup (Slice 72, one-time, ~10 minutes)
+
+The scheduled `emailPoller` function reads the intake mailbox
+(**cvillehomeservicestest@gmail.com**) every 10 minutes and turns forwarded
+emails into proposed records in the Assistant Log's Awaiting-confirmation
+queue. It needs three secrets. Do these steps signed in as the right
+account at each stage.
+
+### A. Create the OAuth client (Google Cloud console, the FIREBASE project)
+1. Open https://console.cloud.google.com/apis/credentials and make sure the
+   project selector (top bar) shows the same project as Firebase.
+2. Enable the Gmail API: https://console.cloud.google.com/apis/library/gmail.googleapis.com → **Enable**.
+3. If asked to configure the "OAuth consent screen" first: choose
+   **External**, app name "HPS Email Intake", your email for the contacts,
+   **Save** through the steps (no scopes needed here), and under
+   **Test users** add `cvillehomeservicestest@gmail.com`. Leave the app in
+   *Testing* mode — that's fine for a single mailbox and skips verification.
+4. Back in **Credentials** → **+ Create credentials → OAuth client ID** →
+   Application type **Web application**, name "HPS Gmail poller".
+   Under **Authorized redirect URIs** add exactly:
+   `https://developers.google.com/oauthplayground`
+5. Create → copy the **Client ID** and **Client secret**.
+
+### B. Mint the refresh token (OAuth Playground, as the INTAKE account)
+1. In a browser where you're signed into **cvillehomeservicestest@gmail.com**
+   (a private window is easiest), open https://developers.google.com/oauthplayground
+2. Click the gear icon (top right) → tick **"Use your own OAuth credentials"**
+   → paste the Client ID and Client secret from step A.
+3. In the left panel's "Input your own scopes" box, enter:
+   `https://www.googleapis.com/auth/gmail.modify`
+   and click **Authorize APIs**. Approve as cvillehomeservicestest@gmail.com
+   (it will warn the app is unverified — Continue; it's your own app).
+4. Click **Exchange authorization code for tokens** → copy the
+   **Refresh token**.
+
+### C. Add the GitHub secrets and deploy
+1. GitHub repo → Settings → Secrets and variables → Actions → New repository
+   secret, three times:
+   - `GMAIL_CLIENT_ID` — from A5
+   - `GMAIL_CLIENT_SECRET` — from A5
+   - `GMAIL_REFRESH_TOKEN` — from B4
+2. Re-run the "Deploy backend functions" workflow (Actions tab →
+   Deploy backend functions → Run workflow), or merge any functions change.
+
+### D. Verify
+1. Command Center → System status: the backend ping now reports
+   `hasGmail: true`.
+2. Forward any contractor email to **cvillehomeservicestest@gmail.com** —
+   within ~10 minutes it appears under Tools → Assistant Log as an
+   "Email intake" conversation with proposals awaiting confirmation.
+
+Notes: scope is `gmail.modify` (read + mark-as-read only — the credential
+cannot send or delete). With one property in the portfolio, ALL mail routes
+to it; when home #2 arrives, tag forwards per home
+(`cvillehomeservicestest+<tag>@gmail.com`) and set the matching `emailTag`
+on each property. Google expires Testing-mode refresh tokens after ~6 months
+of non-use; if intake stops and ping shows hasGmail:true but the function
+logs "token refresh failed", repeat step B.

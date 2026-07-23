@@ -36,7 +36,14 @@ jobs:
       - name: Write runtime env
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: printf 'ANTHROPIC_API_KEY=%s\n' "$ANTHROPIC_API_KEY" > functions/.env
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+        run: |
+          printf 'ANTHROPIC_API_KEY=%s\n' "$ANTHROPIC_API_KEY" > functions/.env
+          printf 'GMAIL_CLIENT_ID=%s\n' "$GMAIL_CLIENT_ID" >> functions/.env
+          printf 'GMAIL_CLIENT_SECRET=%s\n' "$GMAIL_CLIENT_SECRET" >> functions/.env
+          printf 'GMAIL_REFRESH_TOKEN=%s\n' "$GMAIL_REFRESH_TOKEN" >> functions/.env
 
       - name: Write deploy credentials
         env:
