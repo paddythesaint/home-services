@@ -40,6 +40,12 @@ const propertyFields = [
   { name: "profileSessionDate", label: "Property Profile session date", type: "text" },
   { name: "conductedBy", label: "Conducted by", type: "text" },
   { name: "clientName", label: "Family / client name", type: "text" },
+  {
+    name: "emailTag",
+    label: "Email intake tag",
+    type: "text",
+    placeholder: "e.g. 895 — routes cvillehomeservicestest+895@gmail.com here",
+  },
   { name: "tier", label: "Membership tier", type: "text" },
   { name: "monthlyRate", label: "Monthly rate ($)", type: "number" },
   { name: "nextInvoiceDate", label: "Next invoice date", type: "text" },

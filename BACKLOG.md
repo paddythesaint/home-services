@@ -48,6 +48,33 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 72 — email intake, phase 2: Gmail poller connector (7/23/26)
+The transport landed: founder set up cvillehomeservicestest@gmail.com as the
+shared intake mailbox. A scheduled Cloud Function now feeds the exact
+machinery Slice 71 built — no new review UI, no new write path.
+- **`functions/gmail.js`**: pure helpers (unit-tested with node:test, no
+  Google/Firebase deps). extractTag pulls the +tag from To/Delivered-To/
+  X-Forwarded-To; routeMessage sends everything to a single-property
+  portfolio, else requires a tag ↔ property `emailTag` match; extractBody
+  walks MIME parts (text/plain preferred, stripped HTML fallback);
+  parseActions mirrors the dashboard grammar (incl. log_quote); intakePrompt
+  is the server copy of emailIntake.js.
+- **`emailPoller`** (onSchedule, every 10 min, plain REST — no googleapis
+  dep): refresh-token OAuth → list unread inbox → per message: idempotency
+  gate at `emailIngest/{messageId}` (processing/unrouted/parsed/error — an
+  error status blocks reprocessing loops), route to a property, build the
+  prompt from that property's live work orders + systems, parse with Claude,
+  write an email-intake conversation (source: "email-intake", pending
+  actions) → mark read. Skips silently when Gmail creds are absent;
+  `/ping` now reports `hasGmail` so setup is verifiable.
+- **`emailTag` field** on the property profile (Overview edit) for
+  multi-home routing via cvillehomeservicestest+tag@gmail.com.
+- **Deploy wiring**: deploy-functions.yml writes GMAIL_CLIENT_ID/
+  GMAIL_CLIENT_SECRET/GMAIL_REFRESH_TOKEN from GitHub secrets into
+  functions/.env. RUNBOOK gained the one-time founder setup (~10 min):
+  GCP OAuth client → OAuth Playground refresh token → three repo secrets →
+  re-run deploy → verify hasGmail + live forward.
+
 ## Slice 71 — email intake, phase 1: paste-to-parse + log_quote (7/13/26)
 Fourth greenlit enhancement, transport-independent core. The founder held
 the inbound-transport decision (Gmail alias vs custom domain + SendGrid/
