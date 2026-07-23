@@ -11,6 +11,7 @@ import { todayISO, isoToLabel, todayLabel } from "../dates"
 import { isReadyToAction } from "../resolution"
 import { detectIssues, escalationCeiling } from "../issuePlaybook"
 import { coverageAlerts, coverageStatus, expiryLine } from "../warranties"
+import { workOrderAttention } from "../attentionInbox"
 import { viewFor } from "../roles"
 import SystemStatus from "../SystemStatus"
 import {
@@ -48,6 +49,7 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
   const { items: systems } = useItems(propertyId, "healthReport")
   const { items: jobs } = useItems(propertyId, "jobHistory")
   const { items: warranties } = useItems(propertyId, "warranties")
+  const { items: workOrders } = useItems(propertyId, "workOrders")
 
   // Relationship health, not just property health: when did we last talk
   // to this household? (Founder-only clients store; errors stay quiet.)
@@ -105,16 +107,27 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
     riskCeiling,
   ])
 
-  // High-urgency open priorities + overdue checks feed the cross-portfolio
-  // "needs attention now" list.
+  // The attention inbox: workflow items (client requests, undecided quotes,
+  // stalled orders) plus the record-side alerts (high priorities, overdue
+  // checks, expiring coverage) — everything that needs a human now, with a
+  // destination to act on it.
   useEffect(() => {
     const items = [
+      ...workOrderAttention(workOrders).map((a) => ({
+        ...a,
+        property: profile.address,
+        propertyId,
+        to: "/work-orders",
+      })),
       ...highPriorities.map((p) => ({
         key: `p-${p.id}`,
         kind: "priority",
         title: p.title,
         urgency: p.urgency,
         property: profile.address,
+        propertyId,
+        to: "/priority-list",
+        propertyScoped: true,
       })),
       ...overdueChecks.map((s) => ({
         key: `c-${s.id}`,
@@ -122,6 +135,9 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
         title: `${s.category} check overdue (${isoToLabel(s.nextDue)})`,
         urgency: "high",
         property: profile.address,
+        propertyId,
+        to: "/health-report",
+        propertyScoped: true,
       })),
       // Coverage about to lapse (or already lapsed) is exactly the kind of
       // thing that only surfaces when it's too late — so it rides the same
@@ -132,6 +148,9 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
         title: `${w.item} — ${expiryLine(w).toLowerCase()}`,
         urgency: coverageStatus(w) === "expired" ? "high" : "medium",
         property: profile.address,
+        propertyId,
+        to: "/coverage",
+        propertyScoped: true,
       })),
     ]
     onAttention(propertyId, items)
@@ -139,7 +158,7 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
     // fresh .filter() identities every render would re-fire this effect
     // (and re-set parent state) on every single render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [propertyId, priorityApi.items, systems, warranties, profile.address])
+  }, [propertyId, priorityApi.items, systems, warranties, workOrders, profile.address])
 
   useEffect(() => {
     const names = [
@@ -272,6 +291,14 @@ export default function Ops() {
   function openProperty(id) {
     setActiveProperty?.(id)
     navigate("/")
+  }
+
+  // Inbox rows navigate to where you act. Property-scoped destinations
+  // (priorities, health, coverage) first switch the active property so the
+  // page opens on the right home; portfolio pages (work orders) go direct.
+  function openAttention(item) {
+    if (item.propertyScoped && item.propertyId) setActiveProperty?.(item.propertyId)
+    navigate(item.to || "/work-orders")
   }
 
   async function doDelete() {
@@ -408,27 +435,46 @@ export default function Ops() {
           </div>
 
           <div className="mb-4">
-            <Card title="Needs attention now">
+            <Card
+              title={`Attention inbox${attentionFeed.length > 0 ? ` (${attentionFeed.length})` : ""}`}
+            >
               {attentionFeed.length === 0 ? (
                 <p className="text-sm text-ink-3">
-                  Nothing urgent across the portfolio — high-urgency work and overdue
-                  checks would surface here.
+                  Inbox zero — new client requests, undecided quotes, stalled orders,
+                  high-urgency work, overdue checks, and lapsing coverage all surface here.
                 </p>
               ) : (
                 <ul className="divide-y divide-line">
                   {attentionFeed.map((item) => (
-                    <li key={item.key} className="py-2.5 flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-ink">{item.title}</p>
-                        <p className="text-xs text-ink-3">{item.property}</p>
-                      </div>
-                      <span className="shrink-0">
-                        {item.kind === "check" ? (
-                          <ConditionBadge condition="urgent" />
-                        ) : (
-                          <UrgencyBadge urgency={item.urgency} />
-                        )}
-                      </span>
+                    <li key={item.key}>
+                      <button
+                        type="button"
+                        onClick={() => openAttention(item)}
+                        className="w-full py-2.5 flex items-start justify-between gap-3 text-left group"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-ink group-hover:text-brand-700">
+                            {item.title}
+                          </p>
+                          <p className="text-xs text-ink-3">
+                            {item.property}
+                            {item.detail && ` · ${item.detail}`}
+                          </p>
+                        </div>
+                        <span className="shrink-0 flex items-center gap-2">
+                          {item.kind === "check" ? (
+                            <ConditionBadge condition="urgent" />
+                          ) : (
+                            <UrgencyBadge urgency={item.urgency} />
+                          )}
+                          <span
+                            className="text-ink-3 group-hover:text-brand-700"
+                            aria-hidden="true"
+                          >
+                            ›
+                          </span>
+                        </span>
+                      </button>
                     </li>
                   ))}
                 </ul>
