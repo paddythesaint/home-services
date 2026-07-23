@@ -191,6 +191,29 @@ export const fixtureData = {
             order: 3,
           },
         ],
+        conversations: [
+          {
+            id: "conv-1",
+            startedBy: "paddythesaint@gmail.com",
+            startedOn: "July 12, 2026",
+            summary: "New water softener + logged the generator service",
+            order: 1,
+            messages: [
+              { role: "user", text: "We had a new water softener installed last week — a Culligan, in the basement." },
+              {
+                role: "assistant",
+                text: "Got it — I'll add the Culligan water softener to your systems.",
+                actions: [{ type: "save_fact", fact: "Culligan water softener installed (basement), July 2026", status: "applied" }],
+              },
+              { role: "user", text: "Also the generator was serviced by Blue Ridge on the 3rd, $285.", hadPhoto: true },
+              {
+                role: "assistant",
+                text: "Logged the generator service to your job history.",
+                actions: [{ type: "log_job", title: "Generator annual service — Blue Ridge, $285", status: "applied" }],
+              },
+            ],
+          },
+        ],
         warranties: [
           {
             id: "war-hvac",

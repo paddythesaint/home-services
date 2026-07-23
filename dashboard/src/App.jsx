@@ -27,6 +27,7 @@ const Assistant = lazy(() => import("./pages/Assistant"))
 const SystemProfile = lazy(() => import("./pages/SystemProfile"))
 const WhatsNext = lazy(() => import("./pages/WhatsNext"))
 const Schematic = lazy(() => import("./pages/Schematic"))
+const Conversations = lazy(() => import("./pages/Conversations"))
 
 export default function App() {
   return (
@@ -53,6 +54,7 @@ export default function App() {
               <Route path="contractor-network/:contractorId" element={<ContractorProfile />} />
               <Route path="ideas" element={<Ideas />} />
               <Route path="system-map" element={<Schematic />} />
+              <Route path="conversations" element={<Conversations />} />
               <Route path="assistant" element={<Assistant />} />
               <Route path="system/:systemId" element={<SystemProfile />} />
             </Route>
