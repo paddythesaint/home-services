@@ -46,3 +46,40 @@ export function conversationsSummary(conversations) {
   for (const c of conversations) records += conversationActions(c).total
   return { conversations: conversations.length, records }
 }
+
+// Does a free-text date label fall within a [from, to] range (YYYY-MM-DD
+// strings from date inputs, either optional)? An unparseable/empty label is
+// excluded only when a bound is actually set.
+export function inDateRange(label, from = "", to = "") {
+  if (!from && !to) return true
+  const t = Date.parse(label || "")
+  if (Number.isNaN(t)) return false
+  if (from && t < Date.parse(from)) return false
+  if (to && t > Date.parse(to) + 86_399_999) return false // include the whole 'to' day
+  return true
+}
+
+// Free-text search across a conversation: summary, dates, who, message text,
+// and the labels of the records it committed.
+export function conversationMatches(conv, query = "") {
+  const q = query.trim().toLowerCase()
+  if (!q) return true
+  const hay = [
+    conv.summary,
+    conv.startedOn,
+    conv.startedBy,
+    ...(conv.messages || []).map((m) => m.text),
+    ...conversationActions(conv).items.map((i) => i.label),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+  return hay.includes(q)
+}
+
+// Apply the search box + date range to a conversation list.
+export function filterConversations(list, { query = "", from = "", to = "" } = {}) {
+  return list.filter(
+    (c) => conversationMatches(c, query) && inDateRange(c.startedOn, from, to)
+  )
+}

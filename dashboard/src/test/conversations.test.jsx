@@ -7,6 +7,9 @@ import {
   conversationsSummary,
   messageCount,
   byRecency,
+  conversationMatches,
+  inDateRange,
+  filterConversations,
 } from "../conversations"
 
 const conv = {
@@ -38,6 +41,47 @@ describe("conversations shaping (pure)", () => {
   })
 })
 
+describe("search + date filtering (pure)", () => {
+  const list = [
+    {
+      id: "a",
+      startedOn: "July 12, 2026",
+      summary: "Water pump install",
+      messages: [{ role: "assistant", text: "Grundfos MQ3-45", actions: [{ type: "log_system", title: "Water pump (basement)" }] }],
+    },
+    {
+      id: "b",
+      startedOn: "March 3, 2026",
+      summary: "Gutter question",
+      messages: [{ role: "user", text: "When were the gutters cleaned?" }],
+    },
+  ]
+
+  it("matches free text across summary, messages, and record labels", () => {
+    expect(conversationMatches(list[0], "grundfos")).toBe(true) // message text
+    expect(conversationMatches(list[0], "water pump (basement)")).toBe(true) // record label
+    expect(conversationMatches(list[1], "gutter")).toBe(true)
+    expect(conversationMatches(list[1], "grundfos")).toBe(false)
+    expect(conversationMatches(list[0], "")).toBe(true) // empty matches all
+  })
+
+  it("bounds a free-text date label by a from/to range", () => {
+    expect(inDateRange("July 12, 2026", "2026-07-01", "2026-07-31")).toBe(true)
+    expect(inDateRange("July 12, 2026", "2026-08-01", "")).toBe(false)
+    expect(inDateRange("July 12, 2026", "", "2026-06-30")).toBe(false)
+    expect(inDateRange("July 12, 2026", "", "")).toBe(true) // no bounds → all
+    expect(inDateRange("", "2026-07-01", "")).toBe(false) // undated excluded when bounded
+  })
+
+  it("combines search and date range", () => {
+    expect(filterConversations(list, { query: "pump" }).map((c) => c.id)).toEqual(["a"])
+    expect(
+      filterConversations(list, { from: "2026-07-01", to: "2026-07-31" }).map((c) => c.id)
+    ).toEqual(["a"])
+    expect(filterConversations(list, {}).map((c) => c.id)).toEqual(["a", "b"])
+  })
+})
+
 describe("Assistant Log page", () => {
   it("lists the seeded conversation and expands to the transcript + records", async () => {
     renderPage(<Conversations />)
@@ -54,5 +98,16 @@ describe("Assistant Log page", () => {
     renderPage(<Conversations />)
     expect(await screen.findByText("Uploads & documents")).toBeInTheDocument()
     expect(screen.getByText(/water-pump-nameplate.jpg/)).toBeInTheDocument()
+  })
+
+  it("filters the log by the search box", async () => {
+    renderPage(<Conversations />)
+    await screen.findByText(/New water pump installed/)
+    fireEvent.change(screen.getByPlaceholderText(/Text, record, contractor/), {
+      target: { value: "gutter" },
+    })
+    expect(await screen.findByText(/No conversations match/)).toBeInTheDocument()
+    // The document also drops out of the filtered view.
+    expect(screen.queryByText(/water-pump-nameplate.jpg/)).not.toBeInTheDocument()
   })
 })

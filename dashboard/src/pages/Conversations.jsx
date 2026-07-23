@@ -7,6 +7,8 @@ import {
   conversationsSummary,
   messageCount,
   byRecency,
+  filterConversations,
+  inDateRange,
 } from "../conversations"
 import { Card, PageHeader, StatTile } from "../components"
 
@@ -103,9 +105,29 @@ export default function Conversations() {
   const { uid } = useOutletContext()
   const { items, loading } = useItems(uid, "conversations")
   const { items: documents } = useItems(uid, "documents")
-  const ordered = byRecency(items)
   const summary = conversationsSummary(items)
-  const docs = [...documents].sort((a, b) => (b.order || 0) - (a.order || 0))
+
+  const [query, setQuery] = useState("")
+  const [from, setFrom] = useState("")
+  const [to, setTo] = useState("")
+  const filtering = Boolean(query || from || to)
+
+  const ordered = filterConversations(byRecency(items), { query, from, to })
+  const docs = [...documents]
+    .sort((a, b) => (b.order || 0) - (a.order || 0))
+    .filter(
+      (d) =>
+        (!query || (d.name || "").toLowerCase().includes(query.trim().toLowerCase())) &&
+        inDateRange(d.uploadedOn || d.date, from, to)
+    )
+
+  function clearFilters() {
+    setQuery("")
+    setFrom("")
+    setTo("")
+  }
+  const inputClass =
+    "border border-line rounded-lg px-3 py-2 bg-surface text-ink text-sm focus:outline-none focus:border-brand-400"
 
   return (
     <div>
@@ -121,8 +143,40 @@ export default function Conversations() {
           value={summary.records}
           sub="Facts, systems, jobs, requests"
         />
-        <StatTile label="Documents" value={docs.length} sub="Uploaded files" />
+        <StatTile label="Documents" value={documents.length} sub="Uploaded files" />
       </div>
+
+      {(items.length > 0 || documents.length > 0) && (
+        <div className="flex flex-wrap items-end gap-3 mb-4">
+          <label className="flex flex-col gap-1 text-xs text-ink-3 flex-1 min-w-[12rem]">
+            Search
+            <input
+              type="search"
+              className={inputClass}
+              placeholder="Text, record, contractor…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-ink-3">
+            From
+            <input type="date" className={inputClass} value={from} onChange={(e) => setFrom(e.target.value)} />
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-ink-3">
+            To
+            <input type="date" className={inputClass} value={to} onChange={(e) => setTo(e.target.value)} />
+          </label>
+          {filtering && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-sm font-medium text-ink-3 hover:text-ink pb-2"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      )}
 
       {docs.length > 0 && (
         <Card title="Uploads & documents" className="mb-4">
@@ -162,8 +216,9 @@ export default function Conversations() {
       ) : ordered.length === 0 ? (
         <Card>
           <p className="text-sm text-ink-2">
-            No assistant conversations recorded yet on this home. Chats with the Assistant are
-            saved here so you can review what was said and what it changed.
+            {filtering
+              ? "No conversations match your search or date range."
+              : "No assistant conversations recorded yet on this home. Chats with the Assistant are saved here so you can review what was said and what it changed."}
           </p>
         </Card>
       ) : (
