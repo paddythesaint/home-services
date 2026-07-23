@@ -5,6 +5,7 @@
 // so confirmations can link straight to it.
 
 import { addItem, updateItem, fetchItems } from "./firestoreApi"
+import { withQuote } from "./workOrders"
 import { todayLabel } from "./dates"
 
 // Where each action type's record can be seen once applied.
@@ -13,6 +14,7 @@ export const ACTION_DESTINATION = {
   log_job: "/job-history",
   log_system: "/health-report",
   service_request: "/",
+  log_quote: "/work-orders",
 }
 
 export async function applyAssistantAction(pid, action, email) {
@@ -57,6 +59,32 @@ export async function applyAssistantAction(pid, action, email) {
       verified: false,
       source: "assistant",
     })
+  } else if (action.type === "log_quote") {
+    // A contractor's bid (usually from an email reply) lands on the matching
+    // work order's quote comparison; without a matched order it becomes a
+    // fact so the number isn't lost.
+    const orders = await fetchItems(pid, "workOrders")
+    const order = orders.find((o) => o.id === action.workOrderId)
+    if (order) {
+      await updateItem(pid, "workOrders", order.id, {
+        quotes: withQuote(order, {
+          contractor: action.contractor || "",
+          amount: action.amount || "",
+          note: action.note || "",
+        }),
+        ...(!order.quoteStatus || ["none", "needed", "requested"].includes(order.quoteStatus)
+          ? { quoteStatus: "received" }
+          : {}),
+      })
+    } else {
+      await addItem(pid, "facts", {
+        text: `Quote received: ${action.contractor || "contractor"} — ${action.amount || "?"}${action.note ? ` (${action.note})` : ""}`,
+        category: "",
+        source: "email-intake",
+        confirmedBy: email || "",
+        date: todayLabel(),
+      })
+    }
   } else if (action.type === "service_request") {
     await addItem(pid, "workOrders", {
       title: action.title,

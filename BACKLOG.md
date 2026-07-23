@@ -48,6 +48,35 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 71 — email intake, phase 1: paste-to-parse + log_quote (7/13/26)
+Fourth greenlit enhancement, transport-independent core. The founder held
+the inbound-transport decision (Gmail alias vs custom domain + SendGrid/
+Cloudflare), so this ships everything that doesn't depend on it — when a
+transport lands, it feeds exactly this machinery.
+- **`emailIntake.js`**: the parse prompt (INTAKE_MARKER). Context carries
+  the open work orders (with ids) and tracked systems; the model classifies
+  the pasted email and proposes actions in the assistant's <action> format —
+  incl. the new **`log_quote`** ({workOrderId, contractor, amount, note}).
+  Rules: a price quote for pending work → log_quote (never log_job); an
+  invoice for completed work → log_job + save_fact.
+- **`log_quote` action type**: applyAssistantAction adds the bid to the
+  matched order's `quotes` comparison (via withQuote) and advances
+  quoteStatus → received; with no matched order it degrades to a fact so the
+  number isn't lost. Destination /work-orders.
+- **"Email intake" card** on the Assistant Log: paste → Parse into records →
+  stored as a conversation (source: "email-intake") with pending actions —
+  the Awaiting-confirmation queue and one-write-path apply from Slice 69 do
+  the rest. Full reuse, no new review machinery.
+- Closes the quote loop end to end: pack out (Slice 70) → reply pasted in →
+  parsed → confirmed → on the order's comparison → Choose winner (Slice 67).
+- Mock backend scripts the parse (keyed on the prompt marker, matched to the
+  first open order). Tests: an end-to-end page flow (paste → pending →
+  confirm → quote on wo-gutters, status received). Suite 277 green; builds
+  clean; browser-verified the whole arc.
+- **Remaining (needs founder decision):** the automated transport — Gmail
+  plus-address poller vs custom domain + SendGrid/Cloudflare webhook (the
+  latter also unlocks outbound notification digests).
+
 ## Slice 70 — quote pack v2: photos, printable pack, outbound log (7/13/26)
 Third greenlit enhancement — the quote request becomes a real pack.
 - **Photos attach.** `imageDocuments()` filters the property's filed photo

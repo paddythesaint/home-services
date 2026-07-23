@@ -15,7 +15,7 @@
 
 import { replacementHorizon, fmtMoneyRange } from "./benchmarks"
 
-export const ACTION_TYPES = ["save_fact", "service_request", "log_job", "log_system"]
+export const ACTION_TYPES = ["save_fact", "service_request", "log_job", "log_system", "log_quote"]
 
 const line = (label, value) => (value ? `${label}: ${value}` : null)
 
