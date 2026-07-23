@@ -48,6 +48,17 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 66 — Assistant Log: search + date filter (7/11/26)
+- **`conversations.js`**: `conversationMatches` (free-text across summary,
+  dates, who, message text, and committed-record labels), `inDateRange`
+  (bounds a free-text date label by from/to YYYY-MM-DD), and
+  `filterConversations` combining both.
+- **Assistant Log**: a filter bar — a search box + From/To date inputs +
+  Clear. Narrows both the conversation list and the Uploads & documents
+  section live; a distinct "no matches" empty state when nothing fits.
+- Tests: pure match/range/combine + a page filter test. Suite 259 green;
+  builds clean; browser-verified.
+
 ## Slice 65 — assistant can add systems; log includes docs; founder-only (7/11/26)
 Follow-ups on the Assistant Log, and the root cause of "I uploaded water-pump
 photos but it never showed in the Health Report."
