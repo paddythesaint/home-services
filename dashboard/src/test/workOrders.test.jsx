@@ -227,6 +227,22 @@ describe("Work order detail drawer", () => {
     })
   })
 
+  it("offers filed photos to attach and logs the outbound send", async () => {
+    renderPage(<WorkOrders />)
+    fireEvent.click(await screen.findByText("Gutter guards on rear roofline"))
+    // The seeded water-pump nameplate photo is offered as an attachment.
+    expect(await screen.findByText(/pump-nameplate.jpg/)).toBeInTheDocument()
+    // Copying the request stamps the outbound log and flips quote → requested…
+    fireEvent.click(screen.getByText(/Copy email/))
+    await waitFor(() => {
+      const w = __getItems("prop-ballard", "workOrders").find((x) => x.id === "wo-gutters")
+      expect(w.quoteLog).toHaveLength(1)
+      expect(w.quoteLog[0].to).toBe("copied to clipboard")
+      expect(w.quoteStatus).toBe("requested") // was already requested; stays
+    })
+    expect(await screen.findByText(/Requested — copied to clipboard/)).toBeInTheDocument()
+  })
+
   it("combines a sibling order and a same-trade priority into one quote", async () => {
     const { addItem } = await import("../mocks/firestoreApi")
     // Two more HVAC work orders + an open HVAC priority on the same property.

@@ -156,6 +156,45 @@ export function combinedQuoteEmail(anchor = {}, extras = [], property = {}) {
   return { subject, body }
 }
 
+// The property's photo-type documents — candidates to attach to a pack.
+export function imageDocuments(documents = []) {
+  return documents.filter(
+    (d) =>
+      (d.contentType || "").startsWith("image/") ||
+      /\.(jpe?g|png|gif|webp|heic)$/i.test(d.name || "")
+  )
+}
+
+// Append a photos section (shareable storage links) to an email body.
+export function withPhotoLinks(body, photos = []) {
+  if (!photos.length) return body
+  const lines = photos.map((p) => `  • ${p.name}: ${p.url}`)
+  return body.replace(
+    "We have photos of the affected units on file and can send them over on request.",
+    `PHOTOS (view links):\n${lines.join("\n")}`
+  )
+}
+
+// A print-ready pack: the quote request as one clean page — details, line
+// items, photos inline — for print-to-PDF or handing over as a file. Plain
+// HTML string; the drawer opens it in a new window and calls print().
+export function packHtml({ subject, body }, photos = []) {
+  const esc = (s) =>
+    String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+  const imgs = photos
+    .map(
+      (p) =>
+        `<figure style="margin:0"><img src="${esc(p.url)}" alt="${esc(p.name)}" style="max-width:100%;max-height:340px;border-radius:8px"/><figcaption style="font:12px sans-serif;color:#666">${esc(p.name)}</figcaption></figure>`
+    )
+    .join("")
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(subject)}</title></head>
+<body style="font:14px/1.5 -apple-system,sans-serif;color:#1a241e;max-width:44rem;margin:2rem auto;padding:0 1rem">
+<h1 style="font-size:20px">${esc(subject)}</h1>
+<pre style="white-space:pre-wrap;font:inherit">${esc(body)}</pre>
+${imgs ? `<h2 style="font-size:16px">Photos</h2><div style="display:flex;flex-direction:column;gap:12px">${imgs}</div>` : ""}
+</body></html>`
+}
+
 // A mailto: link that opens the operator's email client with the request
 // pre-filled. `to` is optional — a blank recipient still opens a draft.
 export function mailtoHref({ to = "", subject = "", body = "" }) {

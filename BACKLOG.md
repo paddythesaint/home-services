@@ -48,6 +48,24 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 70 — quote pack v2: photos, printable pack, outbound log (7/13/26)
+Third greenlit enhancement — the quote request becomes a real pack.
+- **Photos attach.** `imageDocuments()` filters the property's filed photo
+  docs (contentType or extension); a checkbox row in the Request-a-quote
+  section attaches them, and `withPhotoLinks()` swaps the "photos on
+  request" line for actual shareable view links in the email body.
+- **Print pack.** `packHtml()` renders the request as one clean page —
+  subject, full body, photos inline (escaped) — and a "Print pack" button
+  opens it in a new window and calls print(), for print-to-PDF or handing
+  over as a file.
+- **Outbound log.** Copy / Draft / Print all stamp `quoteLog` on the order
+  ({to, on}) and auto-advance quoteStatus none/needed → requested, so the
+  board and the Attention Inbox know the ask is out. Log lines render under
+  the section ("↗ Requested — Monticello Air · July 13, 2026").
+- Tests: imageDocuments filter, photo-link swap, pack HTML (escaping), and a
+  drawer flow (photo offered, copy stamps the log + status). Suite 276
+  green; builds clean; browser-verified all four behaviors.
+
 ## Slice 69 — assistant safety net: pending actions, record links, priority dedupe (7/13/26)
 Second greenlit enhancement — kills the "did it stick?" class of doubt.
 - **Never lose what was said.** `transcriptMessage` now keeps EVERY defined
