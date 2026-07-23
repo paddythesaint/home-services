@@ -14,6 +14,10 @@ import {
   withActionStatus,
 } from "../conversations"
 import { applyAssistantAction } from "../assistantActions"
+import { emailIntakePrompt } from "../emailIntake"
+import { parseAssistantReply, transcriptMessage } from "../assistant"
+import { callClaude } from "../backendApi"
+import { todayLabel } from "../dates"
 import { Card, PageHeader, StatTile, Button } from "../components"
 
 // The assistant log: every conversation on this home and the records each one
@@ -27,6 +31,7 @@ const PENDING_LABEL = {
   log_job: "Log job",
   log_system: "Add system",
   service_request: "File request",
+  log_quote: "Log quote",
 }
 
 function ActionChip({ type, label, status }) {
@@ -116,9 +121,45 @@ function ConversationCard({ conv }) {
 
 export default function Conversations() {
   const { uid, user } = useOutletContext()
-  const { items, loading, update } = useItems(uid, "conversations")
+  const { items, loading, update, add } = useItems(uid, "conversations")
   const { items: documents } = useItems(uid, "documents")
+  const { items: workOrders } = useItems(uid, "workOrders")
+  const { items: systems } = useItems(uid, "healthReport")
   const summary = conversationsSummary(items)
+
+  // Email intake (pipeline phase 1): paste a forwarded email or quote
+  // reply; Claude proposes records; they land as a stored conversation with
+  // pending actions — the Awaiting-confirmation queue below does the rest.
+  const [emailText, setEmailText] = useState("")
+  const [parsing, setParsing] = useState("") // "" | "busy" | "done" | "error"
+
+  async function parseEmail() {
+    const text = emailText.trim()
+    if (!text) return
+    setParsing("busy")
+    try {
+      const data = await callClaude(uid, emailIntakePrompt({ workOrders, systems }), [
+        { role: "user", content: text },
+      ])
+      const raw = data.content?.find((b) => b.type === "text")?.text || ""
+      const { text: replyText, actions } = parseAssistantReply(raw)
+      await add({
+        startedBy: user?.email || "",
+        startedOn: todayLabel(),
+        source: "email-intake",
+        summary: `Email intake: ${text.split("\n")[0].slice(0, 60)}`,
+        messages: [
+          transcriptMessage({ role: "user", text: text.slice(0, 2000) }),
+          transcriptMessage({ role: "assistant", text: replyText, actions }),
+        ],
+      })
+      setEmailText("")
+      setParsing("done")
+      setTimeout(() => setParsing(""), 3000)
+    } catch {
+      setParsing("error")
+    }
+  }
 
   // The safety net: proposed actions nobody confirmed before closing the
   // chat. Confirm applies the record here; dismiss retires the suggestion.
@@ -178,6 +219,36 @@ export default function Conversations() {
         />
         <StatTile label="Documents" value={documents.length} sub="Uploaded files" />
       </div>
+
+      <Card title="Email intake" className="mb-4">
+        <p className="text-xs text-ink-3 mb-2">
+          Paste a forwarded email — a contractor's quote reply, an invoice, a service
+          confirmation — and it becomes proposed records to review below. (Automatic
+          forwarding lands later; this is the same machinery.)
+        </p>
+        <textarea
+          className="w-full border border-line rounded-xl px-3.5 py-2.5 bg-surface text-ink text-sm focus:outline-none focus:border-brand-400"
+          rows={4}
+          placeholder="Paste the email text here…"
+          value={emailText}
+          onChange={(e) => setEmailText(e.target.value)}
+        />
+        <div className="mt-2 flex items-center gap-3">
+          <Button variant="subtle" onClick={parseEmail} disabled={parsing === "busy" || !emailText.trim()}>
+            {parsing === "busy" ? "Reading…" : "Parse into records"}
+          </Button>
+          {parsing === "done" && (
+            <span className="text-xs text-brand-700 font-medium">
+              Parsed — review the proposals below ↓
+            </span>
+          )}
+          {parsing === "error" && (
+            <span className="text-xs text-status-critical">
+              Couldn't reach the parser — try again.
+            </span>
+          )}
+        </div>
+      </Card>
 
       {pending.length > 0 && (
         <Card

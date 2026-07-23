@@ -21,6 +21,16 @@ export async function callClaude(propertyId, system, messages) {
     )
   }
 
+  // Email intake (pipeline phase 1): scripted quote-reply parse, matched to
+  // the first open work order listed in the prompt so tests/preview exercise
+  // the real log_quote path.
+  if (system && system.includes("EMAIL INTAKE")) {
+    const woId = (system.match(/- id: ([^\s·]+)/) || [])[1] || ""
+    return reply(
+      `This is a contractor's quote reply for pending work.\n<action>{"type":"log_quote","workOrderId":"${woId}","contractor":"Blue Ridge Gutter Co","amount":"$1,650","note":"Includes haul-away; 2-week lead time."}</action>\n<action>{"type":"save_fact","fact":"Blue Ridge Gutter Co quoted $1,650 for gutter guards, July 2026 (2-week lead time).","category":"Exterior"}</action>`
+    )
+  }
+
   const last = messages[messages.length - 1]
   const content = last?.content
   const text = (

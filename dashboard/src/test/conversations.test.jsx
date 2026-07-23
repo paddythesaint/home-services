@@ -151,6 +151,32 @@ describe("Assistant Log page", () => {
     })
   })
 
+  it("parses a pasted quote email into pending records, and confirm lands the quote on the order", async () => {
+    renderPage(<Conversations />)
+    await screen.findByText("Email intake")
+    fireEvent.change(screen.getByPlaceholderText(/Paste the email text/), {
+      target: {
+        value:
+          "From: Blue Ridge Gutter Co\nThanks for the opportunity — we can do the gutter guards for $1,650 including haul-away. About a 2-week lead time.",
+      },
+    })
+    fireEvent.click(screen.getByText("Parse into records"))
+    // The proposals land in the awaiting-confirmation queue (1 seeded + 2 new).
+    expect(await screen.findByText(/Awaiting confirmation \(3\)/)).toBeInTheDocument()
+    expect(screen.getAllByText(/Log quote:/).length).toBeGreaterThan(0)
+
+    // Confirm the quote → it lands on the gutter order's comparison list.
+    const confirms = screen.getAllByRole("button", { name: "Confirm" })
+    // The new quote proposal is in the list; find its row via the label.
+    fireEvent.click(confirms[confirms.length - 2]) // log_quote precedes save_fact in the new conv
+    await waitFor(() => {
+      const w = __getItems("prop-ballard", "workOrders").find((x) => x.id === "wo-gutters")
+      expect(w.quotes?.length).toBe(1)
+      expect(w.quotes[0]).toMatchObject({ contractor: "Blue Ridge Gutter Co", amount: "$1,650" })
+      expect(w.quoteStatus).toBe("received")
+    })
+  })
+
   it("filters the log by the search box", async () => {
     renderPage(<Conversations />)
     await screen.findByText(/New water pump installed/)
