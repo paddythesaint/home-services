@@ -48,6 +48,30 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 68 — Attention Inbox on the Command Center (7/13/26)
+First of the founder's greenlit top-enhancements: run ops from a queue, not
+memory. The "Needs attention now" card becomes the **Attention inbox** — the
+derived work queue unifying the workflow side with the record-side alerts.
+- **`attentionInbox.js`** (new): `workOrderAttention(orders, now)` flags
+  (1) homeowner requests still in triage ("New client request… waiting N
+  days"), (2) orders with quotes logged but none chosen ("N quotes in — pick
+  a winner", superseding the stall nag), and (3) open orders past a per-lane
+  age threshold (`STALL_DAYS`: triage 3, quote 7, in-progress 14 — total age,
+  since lane transitions aren't tracked).
+- **Ops.jsx**: each property now also subscribes workOrders and feeds these
+  into the attention rollup alongside high priorities, overdue checks, and
+  coverage alerts. The card is retitled "Attention inbox (N)", every row is a
+  button with a detail line and chevron, and clicking navigates to where you
+  act — switching the active property first for property-scoped destinations
+  (priorities/health/coverage) and going direct for portfolio pages (work
+  orders).
+- Tests: pure `workOrderAttention` (request age, quote-decision precedence,
+  chosen-quote clears, stall thresholds, done skipped) + an Ops render
+  asserting the fixture's client request surfaces. Suite 268 green; builds
+  clean; browser-verified the unified 6-item inbox and click-through.
+- Deferred by design: emailed digests/instant notifications ride with the
+  inbound email pipeline (enhancement 4), which brings the email service.
+
 ## Slice 67 — persist assistant photos + multi-quote comparison (7/11/26)
 Two greenlit follow-ups.
 - **Assistant photo uploads are now filed.** Images were only shown to the
