@@ -6,6 +6,9 @@ import {
   combinableOrders,
   combinablePriorities,
   combinedQuoteEmail,
+  imageDocuments,
+  withPhotoLinks,
+  packHtml,
 } from "../quoteRequest"
 
 const net = [
@@ -104,6 +107,35 @@ describe("combinedQuoteEmail", () => {
   it("falls back to the single-item email when nothing extra is folded in", () => {
     const single = combinedQuoteEmail(anchor, [], property)
     expect(single).toEqual(quoteRequestEmail(anchor, property))
+  })
+})
+
+describe("quote pack v2: photos + printable pack", () => {
+  const docs = [
+    { id: "d1", name: "pump-nameplate.jpg", contentType: "image/jpeg", url: "https://x/1" },
+    { id: "d2", name: "invoice.pdf", contentType: "application/pdf", url: "https://x/2" },
+    { id: "d3", name: "unit.PNG", url: "https://x/3" }, // no contentType — extension wins
+  ]
+  it("picks only image documents as attach candidates", () => {
+    expect(imageDocuments(docs).map((d) => d.id)).toEqual(["d1", "d3"])
+  })
+  it("swaps the photos-on-request line for actual view links", () => {
+    const { body } = quoteRequestEmail({ title: "Fan clean", category: "HVAC" }, {})
+    const withLinks = withPhotoLinks(body, [{ name: "pump-nameplate.jpg", url: "https://x/1" }])
+    expect(withLinks).toContain("PHOTOS (view links):")
+    expect(withLinks).toContain("pump-nameplate.jpg: https://x/1")
+    expect(withLinks).not.toContain("can send them over on request")
+    // No photos → the original line stays.
+    expect(withPhotoLinks(body, [])).toContain("can send them over on request")
+  })
+  it("builds a print-ready pack with the request and inline photos, escaped", () => {
+    const html = packHtml(
+      { subject: "Quote request: <Fan>", body: "WHAT WE NEED\nClean fan" },
+      [{ name: "pump.jpg", url: "https://x/1" }]
+    )
+    expect(html).toContain("Quote request: &lt;Fan&gt;")
+    expect(html).toContain("WHAT WE NEED")
+    expect(html).toContain('src="https://x/1"')
   })
 })
 

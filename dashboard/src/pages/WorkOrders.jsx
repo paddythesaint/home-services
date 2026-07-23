@@ -34,6 +34,9 @@ import {
   combinablePriorities,
   combinedQuoteEmail,
   mailtoHref,
+  imageDocuments,
+  withPhotoLinks,
+  packHtml,
 } from "../quoteRequest"
 import { todayLabel } from "../dates"
 import { Card, PageHeader, Button, Modal, DynamicForm, StatTile, UrgencyBadge } from "../components"
@@ -59,7 +62,9 @@ function WorkOrderDrawer({
   const [briefing, setBriefing] = useState("idle") // idle | loading | error
   const [copied, setCopied] = useState(false)
   const [priorities, setPriorities] = useState([])
+  const [documents, setDocuments] = useState([])
   const [picked, setPicked] = useState(() => new Set()) // combined-quote line items
+  const [pickedPhotos, setPickedPhotos] = useState(() => new Set()) // attached photo doc ids
   const [qName, setQName] = useState("")
   const [qAmount, setQAmount] = useState("")
   const [qNote, setQNote] = useState("")
@@ -94,8 +99,12 @@ function WorkOrderDrawer({
   useEffect(() => {
     let active = true
     setPicked(new Set())
+    setPickedPhotos(new Set())
     fetchItems(w.propertyId, "priorityList")
       .then((list) => active && setPriorities(list))
+      .catch(() => {})
+    fetchItems(w.propertyId, "documents")
+      .then((list) => active && setDocuments(list))
       .catch(() => {})
     return () => {
       active = false
@@ -116,10 +125,28 @@ function WorkOrderDrawer({
       .filter((p) => picked.has(p.id))
       .map((p) => ({ title: p.title, notes: p.reason })),
   ]
-  const { subject, body } = combinedQuoteEmail(w, extras, property)
+  const photoChoices = imageDocuments(documents)
+  const photos = photoChoices.filter((d) => pickedPhotos.has(d.id))
+  const base = combinedQuoteEmail(w, extras, property)
+  const subject = base.subject
+  const body = withPhotoLinks(base.body, photos)
   const itemCount = extras.length + 1
 
+  // Outbound log: sending (copy, draft, or print) stamps who/when on the
+  // order and moves the quote status to "requested" — so the board and the
+  // attention inbox know the ask is out.
+  async function logOutbound(to) {
+    const entry = { on: todayLabel(), to: to || "email" }
+    await updateItem(w.propertyId, "workOrders", w.id, {
+      quoteLog: [...(w.quoteLog || []), entry],
+      ...(!w.quoteStatus || ["none", "needed"].includes(w.quoteStatus)
+        ? { quoteStatus: "requested" }
+        : {}),
+    })
+  }
+
   async function copyRequest() {
+    logOutbound("copied to clipboard")
     try {
       await navigator.clipboard.writeText(`Subject: ${subject}\n\n${body}`)
       setCopied(true)
@@ -127,6 +154,16 @@ function WorkOrderDrawer({
     } catch {
       setCopied(false)
     }
+  }
+
+  function printPack() {
+    logOutbound("printed pack")
+    const win = window.open("", "_blank", "noopener")
+    if (!win) return
+    win.document.write(packHtml({ subject, body }, photos))
+    win.document.close()
+    win.focus()
+    win.print()
   }
 
   async function generate() {
@@ -261,14 +298,50 @@ function WorkOrderDrawer({
               <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-3">
                 Request a quote{itemCount > 1 ? ` · ${itemCount} items` : ""}
               </h3>
-              <button
-                type="button"
-                onClick={copyRequest}
-                className="text-xs font-medium text-brand-600 hover:text-brand-800"
-              >
-                {copied ? "Copied ✓" : "Copy email"}
-              </button>
+              <span className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={printPack}
+                  className="text-xs font-medium text-brand-600 hover:text-brand-800"
+                >
+                  Print pack
+                </button>
+                <button
+                  type="button"
+                  onClick={copyRequest}
+                  className="text-xs font-medium text-brand-600 hover:text-brand-800"
+                >
+                  {copied ? "Copied ✓" : "Copy email"}
+                </button>
+              </span>
             </div>
+
+            {photoChoices.length > 0 && (
+              <div className="mb-3">
+                <p className="text-[11px] uppercase tracking-wide text-ink-3 mb-1">
+                  Attach photos (view links go in the request)
+                </p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1">
+                  {photoChoices.map((d) => (
+                    <label key={d.id} className="flex items-center gap-1.5 text-xs text-ink-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="accent-brand-700"
+                        checked={pickedPhotos.has(d.id)}
+                        onChange={() =>
+                          setPickedPhotos((prev) => {
+                            const next = new Set(prev)
+                            next.has(d.id) ? next.delete(d.id) : next.add(d.id)
+                            return next
+                          })
+                        }
+                      />
+                      📷 {d.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {(otherOrders.length > 0 || priorityChoices.length > 0) && (
               <div className="mb-3 rounded-xl border border-line p-2.5">
@@ -330,6 +403,7 @@ function WorkOrderDrawer({
                       </span>
                       <a
                         href={mailtoHref({ to: c.email, subject, body })}
+                        onClick={() => logOutbound(c.name)}
                         className="shrink-0 text-xs font-medium text-brand-600 hover:text-brand-800"
                       >
                         {c.email ? "Draft email ↗" : "Draft (no email) ↗"}
@@ -356,6 +430,16 @@ function WorkOrderDrawer({
                 {body}
               </pre>
             </details>
+
+            {(w.quoteLog || []).length > 0 && (
+              <ul className="mt-2 flex flex-col gap-0.5">
+                {w.quoteLog.map((e, i) => (
+                  <li key={i} className="text-[11px] text-ink-3">
+                    ↗ Requested — {e.to} · {e.on}
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
 
           <section>
