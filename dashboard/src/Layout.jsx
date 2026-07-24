@@ -74,7 +74,6 @@ const TOOLS_NAV = [
   { key: "import", to: "/import", label: "Import Records", icon: "import" },
   { key: "conversations", to: "/conversations", label: "Assistant Log", icon: "assistant" },
   { key: "systemMap", to: "/system-map", label: "System Map", icon: "map" },
-  { key: "census", to: "/census", label: "Record Census", icon: "map" },
 ]
 
 // Whether a nav item should read as active for the current path — hubs

@@ -35,7 +35,7 @@ export const businessRole = (email) => STAFF_ROLES[(email || "").toLowerCase()] 
 // detail pages as tabs, and the intake tools live under Tools for the
 // seats that use them.
 const NAV = {
-  founder: ["overview", "assistant", "record", "plan", "walkthrough", "import", "systemMap", "conversations", "census"],
+  founder: ["overview", "assistant", "record", "plan", "walkthrough", "import", "systemMap", "conversations"],
   relationship: ["overview", "assistant", "record", "plan", "walkthrough", "import", "systemMap"],
   technician: ["overview", "assistant", "record", "plan", "walkthrough"],
   homeowner: ["overview", "assistant", "record", "plan"],
