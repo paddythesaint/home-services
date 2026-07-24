@@ -12,7 +12,7 @@ import { overlap } from "./recordAudit"
 // category + detail + brand; `capture` is the cheapest zero-typing way to
 // fill the gap, feeding the guided fill session.
 export const EXPECTED_RURAL_HOME = [
-  { label: "Well pump", match: /well pump|submersible/i, capture: "nameplate photo" },
+  { label: "Well pump", match: /well pump|water pump|submersible/i, capture: "nameplate photo" },
   { label: "Well pressure tank", match: /pressure tank/i, capture: "nameplate photo" },
   { label: "Water treatment / softener", match: /soften|neutraliz|water treatment|filtration/i, capture: "nameplate photo" },
   { label: "Septic system", match: /septic|drainfield/i, capture: "walkthrough question" },
