@@ -102,11 +102,17 @@ account at each stage.
 1. Open https://console.cloud.google.com/apis/credentials and make sure the
    project selector (top bar) shows the same project as Firebase.
 2. Enable the Gmail API: https://console.cloud.google.com/apis/library/gmail.googleapis.com → **Enable**.
-3. If asked to configure the "OAuth consent screen" first: choose
-   **External**, app name "HPS Email Intake", your email for the contacts,
-   **Save** through the steps (no scopes needed here), and under
-   **Test users** add `cvillehomeservicestest@gmail.com`. Leave the app in
-   *Testing* mode — that's fine for a single mailbox and skips verification.
+3. Check the **OAuth consent screen** (left menu). Firebase sign-in usually
+   configured one already — if so, don't rename it (its name shows on the
+   dashboard's Google sign-in prompt); just check the **Publishing status**.
+   If none exists: choose **External**, any app name, your email for the
+   contacts, **Save** through the steps (no scopes needed here).
+   Either way, the status must be **In production** — click **Publish app**
+   if it says Testing. IMPORTANT: Testing-mode refresh tokens with Gmail
+   scopes expire after **7 days** (the poller would die weekly); a published
+   app's tokens persist. Publishing without Google verification is fine for
+   personal use — step B's authorization just shows an "unverified app"
+   warning you click through (Advanced → Go to app).
 4. Back in **Credentials** → **+ Create credentials → OAuth client ID** →
    Application type **Web application**, name "HPS Gmail poller".
    Under **Authorized redirect URIs** add exactly:
@@ -145,6 +151,8 @@ Notes: scope is `gmail.modify` (read + mark-as-read only — the credential
 cannot send or delete). With one property in the portfolio, ALL mail routes
 to it; when home #2 arrives, tag forwards per home
 (`cvillehomeservicestest+<tag>@gmail.com`) and set the matching `emailTag`
-on each property. Google expires Testing-mode refresh tokens after ~6 months
-of non-use; if intake stops and ping shows hasGmail:true but the function
-logs "token refresh failed", repeat step B.
+on each property. Refresh tokens can still die if the intake account's
+password changes or access is revoked from its Google Account security page;
+if intake stops and ping shows hasGmail:true but the function logs "token
+refresh failed", repeat step B. (Never leave the consent screen in Testing
+mode — Gmail-scope refresh tokens expire after 7 days there.)
