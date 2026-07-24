@@ -48,6 +48,24 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 75 — live-record census instrument (7/24/26)
+Phase 0 of the grounded roadmap: a founder-only **Record Census** page
+(Tools nav, /census) that audits the ACTUAL registry — not fixtures.
+- **`recordCensus.js`**: `assetCompleteness` scores every system 0–100 on
+  the weighted fields downstream features consume (make/model 20, install
+  year 20, verified condition 15, location 10, serial 10 — found in detail
+  OR linked facts, warranty link 10, service history 10, photo 5);
+  `EXPECTED_RURAL_HOME` is the 20-entry template for this property class
+  (well/septic/propane/generator/workshop + full appliance suite) diffed
+  into a missing-systems list, each tagged with its cheapest zero-typing
+  capture path; `featureFuel` reports per roadmap feature whether trigger
+  data is in the tank (capital triggers, weekly brief, Emergency Card,
+  appliance doctrine, recall matching, vendor designation).
+- Fill plan batches gaps into one guided session (N nameplate photos + M
+  walkthrough questions). **Copy census summary** emits the paste-back
+  block that grounds roadmap data-readiness scores on production data.
+- 9 unit tests; suite 302 green.
+
 ## Slice 74 — Record health sweep with one-tap fixes (7/24/26)
 The gatekeeper's judgment applied retrospectively: a founder card on the
 Assistant Log that audits what's ALREADY in the record.
