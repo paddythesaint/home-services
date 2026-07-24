@@ -8,23 +8,25 @@ governs throughout.*
 
 ## The five sentences (phone version)
 
-The live-record census now exists as a founder page (Tools → Record
-Census) — open it once and tap **Copy census summary** to replace this
-document's provisional readiness scores with production truth. Provisional
-evidence says the registry is strong on this month's crisis systems (well
-pump, pressure tank — serials, photos, dates) and near-empty on appliances
-and verification dates, exactly the audit's blind spot. One backlog now
-exists: 24 candidates scored on value, downside, data-readiness,
-freshness, and effort — Wave 1 is Emergency Card, weekly brief, the
-census fill session, and a two-line fix that makes photo-only reporting
-work. Ecobee is dead on arrival (developer program closed), Govee's
-official API is unreliable for leak sensors but its *alert emails* ride
-our existing pipeline for free, and Airthings is the only true API
-integration worth building. The customer surface review found the product
-already mobile-honest except for three things: typing is still required to
-send a photo, the calendar expects authorship instead of defaults, and
-the founder's one-time import banners still squat on the daily home
-screen.
+The live census ran 7/24 on the production record: **27 assets, average
+completeness 58/100** — bigger and better-dated than the audit assumed
+(8/10 major systems carry install years), with three uniform holes: an
+**empty warranty ledger**, **no serials on 17 assets**, and **zero
+emergency/shutoff facts**. That grounding promoted **capital-event
+triggers into Wave 1** (their fuel is already in the tank) alongside the
+photo-only capture fix, the Emergency Card, the weekly brief, and a
+~10-photo/6-question fill session that registers the 8 missing systems.
+Ecobee is dead on arrival (developer program closed), Govee's official
+API is unreliable for leak sensors but its *alert emails* ride our
+existing pipeline for free, and Airthings is the only true API
+integration worth building. The customer surface review found the
+product already mobile-honest except for three things: typing is still
+required to send a photo, the calendar expects authorship instead of
+defaults, and the founder's one-time import banners still squat on the
+daily home screen. Nothing gets killed — the role system already built
+"operator mode" — but three screens get demoted and two settings become
+benchmark-derived defaults, taking the owner's ongoing configuration
+surface to zero.
 
 ---
 
@@ -42,9 +44,9 @@ founder-only **Record Census** page (`dashboard/src/pages/Census.jsx`,
 engine `dashboard/src/recordCensus.js`, PR #103) computes the full census
 from the live record in the founder's authenticated browser.
 
-**The binding step (3 minutes, Patrick):** open Tools → Record Census on
-895, tap **Copy census summary**, paste it back. Every ★-marked
-data-readiness score below is provisional until that paste.
+**The binding step was completed 7/24**: the founder ran the census on
+895 and pasted the summary back. §1.3 holds the results; every
+data-readiness score in Part 2 is grounded on them.
 
 ## 1.2 What the census measures
 
@@ -60,36 +62,52 @@ data-readiness score below is provisional until that paste.
 - **Feature-fuel table** (`featureFuel`): per roadmap candidate, is the
   trigger data in the tank?
 
-## 1.3 Provisional census (documented live evidence, pending the paste)
+## 1.3 The live census (founder paste-back, 7/24/26) — FINAL
 
-From this month's real interactions and the applied insight waves
-(BACKLOG.md Slices 45/70–74 entries; DEMO.md):
+**27 assets, average completeness 58/100.** The full per-asset block is
+archived with this section's history; the findings that change the plan:
 
-- **Strong**: well pressure tank (Zilmet Hydro-Plus ZHP, serial
-  900906331977, installed 7/26 by Sunwave), water pump (Grundfos MQ3-45,
-  nameplate photos, warranty fact), standby generator (22kW, install
-  2021 per records-index wave), furnace (replaced 2021 per closing-docs
-  wave), radon mitigation (known unserviced, 5.7 pCi/L), propane
-  (ownership + service plan resolved through the dedupe work).
-- **Weak**: verified-condition dates (the `verified` flag exists on the
-  Health Report but most verifications predate any cadence), warranty
-  links outside the pump, location fields.
-- **Almost certainly absent**: the entire appliance suite (washer, dryer,
-  refrigerator, dishwasher, range) — consistent with `benchmarks.js`
-  having no appliance entries; bath extractor fans exist as *work orders*
-  (Slice 70's quote pack), not registry assets; workshop/outbuilding
-  systems; electrical panel as a first-class asset.
+- **The registry is bigger and better-dated than the audit assumed**:
+  27 assets including both heat pump zones, both water heaters, the
+  mini-split, the humidifier, and — surprise — partial appliance coverage
+  (Laundry and Kitchen & Appliances entries cover washer/dryer/range).
+  **8/10 major systems carry install years** → capital-event triggers
+  are READY today, no fill required.
+- **The warranty ledger is empty in production**: 0 entries — every one
+  of the 27 assets misses its warranty link. The Grundfos and Zilmet
+  warranties exist only as facts. This is the single most uniform gap in
+  the record.
+- **Verification cadence is unused in production**: 0 cadenced systems.
+  Confirms the surface review's call — cadences must default from
+  `benchmarks.js`, not await founder authorship.
+- **Serials are the biggest per-field hole** (17 of 27 assets), then
+  locations (~13) and photos (~10) — all captured by the same nameplate
+  photo, which is why the fill session is photo-led.
+- **Genuinely missing from the registry (8)**: well pump*, well pressure
+  tank, water treatment/softener, workshop/outbuilding, sump pump, bath
+  exhaust fans (they exist as *work orders*, not assets), refrigerator,
+  dishwasher. (*The Grundfos "water pump (basement)" may be this entry
+  under another name — the template match was widened 7/24 to catch it;
+  the Zilmet pressure tank appears truly unregistered despite its fact.)
+- **30/39 jobs are contractor-linked** → vendor designation has receipts
+  waiting; recall matching has 12 brand+model assets to chew on.
+- **0 shutoff facts** → the Emergency Card walkthrough starts from a
+  blank page, exactly as predicted.
 
-## 1.4 The fill plan (zero typing)
+## 1.4 The fill plan (zero typing) — now concrete
 
-One guided session closes every expected gap: on fixture data the
-template computes ~11 nameplate photos + ~5 walkthrough questions; the
-live number comes from the census page. Capture paths per gap are already
-assigned (`EXPECTED_RURAL_HOME[].capture`); the existing machinery — the
-assistant's photo→`log_system` flow (`pages/Assistant.jsx`,
-`assistantActions.js`) and the resumable Walkthrough
-(`pages/Walkthrough.jsx`) — carries all of it. **This session is a Wave 1
-item because four Wave 2 features burn its output as fuel.**
+One guided session, photo-led: **~10 nameplate photos** (pressure tank,
+water treatment, sump pump, refrigerator, dishwasher, plus serial-and-
+location shots for the biggest per-field holes: both heat pumps, both
+water heaters, generator already at 90) and **~6 walkthrough questions**
+(septic pump-out date, electrical panel age, workshop systems, bath-fan
+count/locations, propane tank location, window/roof years if known).
+Alongside: promote the two known warranty facts (Grundfos, Zilmet) into
+the warranty ledger, and register the pressure tank from its existing
+fact. The assistant's photo→`log_system` flow and the resumable
+Walkthrough carry all of it. **Wave 1 item; two Wave 2 features (recall
+matching, appliance doctrine) sharpen with its output — but no longer
+gate on it.**
 
 ---
 
@@ -119,25 +137,25 @@ role layer, homeowner Assistant Log access) · parked tasks #67–69
 ## 2.3 The ranked backlog
 
 Scores 1–5. **Composite = 2·Value + Downside + Readiness + Freshness −
-Effort.** ★ = provisional readiness pending the census paste. Rule
-honored: readiness < 3 ⇒ nothing above Wave 2 without an attached fill
-plan.
+Effort.** Readiness scores are **final, grounded on the 7/24 live census
+paste-back** (27 assets, avg 58/100). Rule honored: readiness < 3 ⇒
+nothing above Wave 2 without an attached fill plan.
 
 | # | Item | V | D | R | F | E | Σ | Wave |
 |---|---|---|---|---|---|---|---|---|
 | 1 | **Photo-only capture fix** — allow photo-without-text send (`Assistant.jsx:134` blocks it); store email image attachments as documents (`functions/gmail.js` `extractBody` drops them) | 5 | 4 | 5 | 5 | 1 | **23** | **1** |
-| 2 | **Emergency Card** — per-home page for the worst night; built by ~30-min guided walkthrough; entries linked to dossiers so changes flag review | 5 | 5 | 2→5 after its own walkthrough | 5 | 2 | **22** | **1** |
-| 3 | **Weekly email brief** — due tasks, overdue verifications, warranty expiries (`warranties.js`), stalls (`attentionInbox.js`), forecast windows (`forecast.js`); Gmail identity live, needs send capability | 5 | 4 | 4★ | 5 | 3 | **20** | **1** |
-| 4 | **Census fill session** — one guided pass closing the registry gaps (`recordCensus.js` fill plan) | 4 | 4 | 5 | 4 | 2 | **19** | **1** |
-| 5 | **Designated vendor per trade (simple)** — primary + fallback + one-line rationale on the network (`contractorDirectory.js`, `quoteRequest.js` `suggestedContractors` consumes it) | 4 | 3 | 5 | 4 | 2 | **18** | **2** |
-| 6 | **Capital-event triggers** — benchmark window crossing auto-stages a work order (`benchmarks.js` + `forecast.js` + `workOrders.js`) | 5 | 5 | 2★ *(fill plan: item 4)* | 5 | 3 | **19** | **2** (after 4) |
+| 2 | **Emergency Card** — per-home page for the worst night; built by ~30-min guided walkthrough (census: 0 shutoff facts — starts blank, as expected); entries linked to dossiers so changes flag review | 5 | 5 | 2→5 after its own walkthrough | 5 | 2 | **22** | **1** |
+| 3 | **Weekly email brief** — due tasks (census: 22 live calendar tasks), stalls (`attentionInbox.js`), forecast windows (`forecast.js`), warranty expiries once the ledger fills; Gmail identity live, needs send capability | 5 | 4 | 5 | 5 | 3 | **21** | **1** |
+| 4 | **Capital-event triggers** — benchmark window crossing auto-stages a work order (`benchmarks.js` + `forecast.js` + `workOrders.js`). **Census: 8/10 majors dated → READY, promoted into Wave 1** | 5 | 5 | 5 | 5 | 3 | **22** | **1** |
+| 5 | **Census fill session** — ~10 nameplate photos + ~6 questions (§1.4); registers the 8 missing systems, fills serials/locations, seeds the empty warranty ledger | 4 | 4 | 5 | 4 | 2 | **19** | **1** |
+| 6 | **Designated vendor per trade (simple)** — primary + fallback + one-line rationale (census: 30/39 jobs contractor-linked — receipts exist) | 4 | 3 | 5 | 4 | 2 | **18** | **2** |
 | 7 | **Machine-email telemetry** — expectation table over the live poller (`functions/index.js` `emailPoller`): Generac/Govee/service-confirmation emails auto-forwarded by mailbox rule; a missing expected email is itself an alert | 4 | 4 | 4 | 5 | 3 | **18** | **2** |
-| 8 | **Recall matching** — CPSC API against brand+model (INSIGHT-IDEAS #3) | 3 | 4 | 2★ *(fill plan: item 4)* | 5 | 2 | **15** | **2** |
+| 8 | **Recall matching** — CPSC API against brand+model (census: 12/27 assets ready; fill session widens it) | 3 | 4 | 4 | 5 | 2 | **17** | **2** |
 | 9 | **Weather-driven calendar nudges** — NWS forecast → freeze/storm nudges riding the brief (INSIGHT-IDEAS #1–2) | 3 | 3 | 4 | 5 | 3 | **15** | **2** |
-| 10 | **Airthings ingestion** — humidity/radon thresholds → priorities; alerts ride the brief | 4 | 4 | 3 (API key in hand, no code) | 5 | 4 | **16** | **3** |
-| 11 | **Repair-vs-replace doctrine** — appliance rows in `benchmarks.js` + 50%-rule verdict pre-staged on parsed quotes | 4 | 3 | 2★ *(fill plan: item 4)* | 4 | 3 | **14** | **3** |
-| 12 | **Standing authority (R3)** — thresholds under which routine PM auto-schedules with designated vendors; *hard dependency: items 3, 5, 6 live first* | 5 | 3 | 1 today | 5 | 4 | **15** | **3** |
-| 13 | **10-year capital plan + spend smoothing** — extends `forecast.js`; bundling via `combinedQuoteEmail` | 3 | 3 | 3★ | 5 | 3 | **14** | **3** |
+| 10 | **Airthings ingestion** — humidity/radon thresholds → priorities; alerts ride the brief. Census note: the monitor itself is already a registry asset | 4 | 4 | 3 (API key in hand, no code) | 5 | 4 | **16** | **3** |
+| 11 | **Repair-vs-replace doctrine** — appliance rows in `benchmarks.js` + 50%-rule verdict pre-staged on parsed quotes (census: 3/5 appliance classes registered) | 4 | 3 | 4 | 4 | 3 | **16** | **3** |
+| 12 | **Standing authority (R3)** — thresholds under which routine PM auto-schedules with designated vendors; *hard dependency: items 3, 4, 6 live first* | 5 | 3 | 1 today | 5 | 4 | **15** | **3** |
+| 13 | **10-year capital plan + spend smoothing** — extends `forecast.js`; bundling via `combinedQuoteEmail` (census: 8/10 majors dated — horizon math is fueled) | 3 | 3 | 4 | 5 | 3 | **15** | **3** |
 | 14 | **Annual walkthrough → State-of-the-Home** — yearly condition recharge producing `HomeReport.jsx`'s report | 3 | 3 | 5 | 3 (yearly founder-run ritual) | 2 | **15** | **3** |
 | 15 | **Transferable dossier export (R1)** — the record as sale/insurance artifact | 3 | 2 | 4 | 4 | 3 | **13** | **3** |
 | 16 | **Technician share access** (BACKLOG) — scoped visit access; feeds vendor accountability | 2 | 2 | 3 | 4 | 4 | **9** | 3 |
@@ -249,8 +267,9 @@ journey.
 
 ## What happens next
 
-1. Patrick: open **Tools → Record Census** (live after this deploy), tap
-   **Copy census summary**, paste it back — the ★ scores update and Wave
-   2's order finalizes.
-2. Build proceeds: item 1 (hours, not days), then Emergency Card, then
-   the brief, then the fill session — each a normal slice with tests.
+The census paste-back landed 7/24 and this document's scores are final.
+Build order: item 1 (photo-only capture — hours, not days), then the
+Emergency Card, then the weekly brief, then capital-event triggers, then
+the fill session — each a normal slice with tests. The 7/24 census block
+is preserved in the git history of this file for the next re-census to
+diff against.
