@@ -605,6 +605,16 @@ export default function Ops() {
       {founder && (
         <div className="mt-4">
           <SystemStatus user={user} />
+          <Card title="Record census" className="mt-4">
+            <p className="text-sm text-ink-2">
+              Back-office QA: how complete the selected home's registry is, what a home of
+              its class should have that the record doesn't, and which intelligence features
+              have their trigger data. Run it on every new home at onboarding.{" "}
+              <Link to="/census" className="text-brand-700 underline hover:text-brand-900">
+                Open the census →
+              </Link>
+            </p>
+          </Card>
         </div>
       )}
 

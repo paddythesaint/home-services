@@ -48,6 +48,50 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## PARKED — grounded-roadmap build waves (founder hold, 7/24/26)
+Full scoring, rationale, and cut list in **GROUNDED-ROADMAP.md** (grounded
+on the 7/24 live census: 27 assets, avg 58/100). Founder decision: fill
+the information gaps first (see the fill session below), build later.
+Priority order when resumed:
+
+**Wave 1 — build next:**
+- [ ] Photo-only capture fix — allow photo-without-text send
+      (Assistant.jsx:134) + persist email image attachments as documents
+      (functions/gmail.js drops them). Hours, not days.
+- [ ] Emergency Card — per-home worst-night page (0 shutoff facts on
+      record today); built by ~30-min guided walkthrough; printable;
+      reachable pre-tour.
+- [ ] Weekly email brief — generated from existing data (22 live calendar
+      tasks, stalls, forecast windows, warranty expiries once ledger
+      fills); Gmail send capability is the only new plumbing.
+- [ ] Capital-event triggers — benchmark window crossing auto-stages a
+      work order. Census: 8/10 majors dated → fuel already in the tank.
+- [ ] Census fill session — see "Filling the gaps" plan (the current
+      active effort).
+
+**Wave 2:**
+- [ ] Designated vendor per trade (primary + fallback + one-line
+      rationale; 30/39 jobs already contractor-linked).
+- [ ] Machine-email telemetry — expectation table over the live poller
+      (Generac/Govee alert emails auto-forwarded; a missing expected
+      email is itself an alert).
+- [ ] CPSC recall matching (12/27 assets carry brand+model today).
+- [ ] Weather-driven calendar nudges (NWS forecast, rides the brief).
+
+**Wave 3:**
+- [ ] Airthings ingestion (only Tier-A sensor API; key in hand).
+- [ ] Repair-vs-replace doctrine + appliance benchmark rows.
+- [ ] Standing authority (depends on brief + triggers + designations).
+- [ ] 10-year capital plan + spend smoothing.
+- [ ] Annual walkthrough → State-of-the-Home recharge.
+- [ ] Transferable dossier export (record-as-asset).
+- [ ] Technician share access (pre-existing backlog item, folded in).
+
+**UX demotions (do opportunistically):** founder import banners off Home;
+merge Forecast into Home Report; benchmark-default verification cadences;
+seed care calendar from the seasonal playbook. Census page moved off
+Tools nav → Command Center card (7/24, founder-only back office).
+
 ## Slice 75 — live-record census instrument (7/24/26)
 Phase 0 of the grounded roadmap: a founder-only **Record Census** page
 (Tools nav, /census) that audits the ACTUAL registry — not fixtures.
