@@ -12,6 +12,7 @@ import {
   transcriptMessage,
 } from "../assistant"
 import { applyAssistantAction, ACTION_DESTINATION } from "../assistantActions"
+import { auditAction, hasDuplicate } from "../recordAudit"
 import { Card, Button } from "../components"
 
 // The 24/7 concierge: knows this home's record (and nothing else), answers
@@ -39,7 +40,7 @@ function chipPrompt(action) {
   return `File request: "${action.title}"`
 }
 
-function ActionChip({ action, onConfirm }) {
+function ActionChip({ action, onConfirm, findings = [] }) {
   if (action.status === "done") {
     const to = ACTION_DESTINATION[action.type]
     return (
@@ -54,11 +55,24 @@ function ActionChip({ action, onConfirm }) {
     )
   }
   return (
-    <span className="inline-flex items-center gap-2 bg-plane border border-line rounded-xl px-3 py-2">
-      <span className="text-xs text-ink-2">{chipPrompt(action)}</span>
-      <Button variant="subtle" className="!py-1 !px-3 !text-xs shrink-0" onClick={onConfirm}>
-        {CHIP_BUTTON[action.type]}
-      </Button>
+    <span className="inline-flex flex-col gap-1.5 bg-plane border border-line rounded-xl px-3 py-2">
+      <span className="inline-flex items-center gap-2">
+        <span className="text-xs text-ink-2">{chipPrompt(action)}</span>
+        <Button variant="subtle" className="!py-1 !px-3 !text-xs shrink-0" onClick={onConfirm}>
+          {hasDuplicate(findings) ? "Save anyway" : CHIP_BUTTON[action.type]}
+        </Button>
+      </span>
+      {findings.map((f, i) => (
+        <span
+          key={i}
+          className={`text-xs ${f.kind === "unclear" ? "text-ink-3" : "text-amber-800"}`}
+        >
+          {f.kind === "duplicate" && "⚠ Possible duplicate — "}
+          {f.kind === "conflict" && "⚠ Check the record — "}
+          {f.note}
+          {f.match && `: “${f.match}”`}
+        </span>
+      ))}
     </span>
   )
 }
@@ -293,7 +307,12 @@ export default function Assistant() {
               {m.actions?.length > 0 && (
                 <div className="mt-2 flex flex-col items-start gap-2">
                   {m.actions.map((a, j) => (
-                    <ActionChip key={j} action={a} onConfirm={() => confirmAction(i, j)} />
+                    <ActionChip
+                      key={j}
+                      action={a}
+                      findings={auditAction(a, { facts: factsApi.items, systems, jobs, workOrders })}
+                      onConfirm={() => confirmAction(i, j)}
+                    />
                   ))}
                 </div>
               )}

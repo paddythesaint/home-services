@@ -139,7 +139,11 @@ describe("Assistant Log page", () => {
     expect(await screen.findByText(/Awaiting confirmation \(1\)/)).toBeInTheDocument()
     // Appears in the queue AND as a chip on the conversation card below.
     expect(screen.getAllByText(/Water pump warranty registered/).length).toBeGreaterThan(0)
-    fireEvent.click(screen.getByText("Confirm"))
+    // The gatekeeper (Slice 73): the seeded record already holds a very
+    // similar fact, so the row warns and the button softens to "anyway".
+    expect(screen.getByText(/Possible duplicate/)).toBeInTheDocument()
+    expect(screen.getByText(/Grundfos MQ3-45 water pump warranty/)).toBeInTheDocument()
+    fireEvent.click(screen.getByText("Confirm anyway"))
     await waitFor(() => {
       // The fact was written to the record…
       const facts = __getItems("prop-ballard", "facts")

@@ -199,13 +199,14 @@ describe("assistant page", () => {
     await screen.findByText(/I'm the HPS assistant/)
     await ask("We replaced the water heater last month")
     expect(await screen.findByText(/Record: "Water heater replaced/)).toBeInTheDocument()
-    // Nothing written until the member confirms.
-    expect(__getItems("prop-ballard", "facts")).toHaveLength(0)
+    // Nothing written until the member confirms (the seeded fixture fact
+    // is the only one there).
+    const heaterFact = () =>
+      __getItems("prop-ballard", "facts").find((f) => f.text.includes("Water heater replaced"))
+    expect(heaterFact()).toBeUndefined()
     fireEvent.click(screen.getByText("Save"))
     expect(await screen.findByText(/Saved to the record/)).toBeInTheDocument()
-    const facts = __getItems("prop-ballard", "facts")
-    expect(facts).toHaveLength(1)
-    expect(facts[0]).toMatchObject({
+    expect(heaterFact()).toMatchObject({
       text: "Water heater replaced in June 2026.",
       source: "assistant",
     })
