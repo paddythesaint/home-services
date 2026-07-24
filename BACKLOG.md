@@ -48,6 +48,27 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 74 — Record health sweep with one-tap fixes (7/24/26)
+The gatekeeper's judgment applied retrospectively: a founder card on the
+Assistant Log that audits what's ALREADY in the record.
+- **`sweepRecord()`** in recordAudit.js: duplicate fact pairs (keeps the
+  fuller statement, archives the thinner), stale "still pending" facts
+  with later completion evidence (another done-fact or a logged job),
+  duplicate systems/jobs (advisory — their pages own the fix), thin facts.
+  Every finding carries a stable key; "Keep it"/"Not a duplicate"
+  dismissals persist in an `auditDismissals` collection and stick across
+  runs.
+- **Supersession, not deletion**: fixes set `archived: true` +
+  `archivedNote` on the old fact — it stays in history but drops out of
+  the assistant's context (buildAssistantContext filters), the
+  gatekeeper, and future sweeps.
+- Similarity hardening while wiring this: month names and bare numbers no
+  longer count toward overlap (two records sharing only "July 2026"
+  aren't about the same thing), and a pending-vs-done pair is routed to
+  the stale-fact path instead of being mislabeled a duplicate.
+- Fixtures seed the real-world shape (a "not yet completed" pump fact +
+  its later install fact) so mock mode demos the sweep. Suite 293 green.
+
 ## Slice 73 — record-quality gatekeeper on pending actions (7/24/26)
 With four intake mouths (chat, photos, pasted emails, forwarded emails)
 feeding one record, quality control moves to the door: every pending
