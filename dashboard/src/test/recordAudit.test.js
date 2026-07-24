@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { auditAction, hasDuplicate, overlap } from "../recordAudit"
+import { auditAction, hasDuplicate, overlap, sweepRecord } from "../recordAudit"
 
 const record = {
   facts: [
@@ -90,5 +90,65 @@ describe("recordAudit", () => {
         record
       )
     ).toEqual([])
+  })
+
+  it("ignores archived facts everywhere", () => {
+    const rec = {
+      facts: [{ id: "f1", text: "Grundfos water pump warranty registered July 2026", archived: true }],
+    }
+    expect(auditAction({ type: "save_fact", fact: "Water pump warranty registered with Grundfos, July 2026" }, rec)).toEqual([])
+    expect(sweepRecord(rec)).toEqual([])
+  })
+})
+
+describe("sweepRecord (Slice 74)", () => {
+  const facts = [
+    { id: "f1", text: "Well pressure tank replacement recommended; not yet completed (June 2026)" },
+    { id: "f2", text: "Replacement well pressure tank installed by Sunwave, July 2026" },
+    { id: "f3", text: "Whole-house generator serviced by Fitch, annual plan, October 2025" },
+    { id: "f4", text: "Generator serviced by Fitch on the annual plan, October 2025" },
+    { id: "f5", text: "Roof unknown" },
+  ]
+
+  it("pairs duplicate facts, keeping the fuller statement", () => {
+    const f = sweepRecord({ facts }).find((x) => x.kind === "duplicate-facts")
+    expect(f).toBeTruthy()
+    expect(f.keep.id).toBe("f3")
+    expect(f.redundant.id).toBe("f4")
+  })
+
+  it("flags a stale pending fact superseded by a completion fact", () => {
+    const f = sweepRecord({ facts }).find((x) => x.kind === "stale-fact")
+    expect(f.stale.id).toBe("f1")
+    expect(f.evidence).toMatch(/installed by Sunwave/)
+  })
+
+  it("accepts a logged job as completion evidence", () => {
+    const f = sweepRecord({
+      facts: [facts[0]],
+      jobs: [{ id: "j9", title: "Well pressure tank replacement", date: "July 23, 2026" }],
+    }).find((x) => x.kind === "stale-fact")
+    expect(f.evidence).toMatch(/July 23, 2026/)
+  })
+
+  it("flags thin facts, duplicate systems, and same-day duplicate jobs", () => {
+    const out = sweepRecord({
+      facts: [facts[4]],
+      systems: [
+        { id: "s1", category: "Water pump" },
+        { id: "s2", category: "Water pump (basement)", detail: "Grundfos" },
+      ],
+      jobs: [
+        { id: "j1", title: "Gutter cleaning", date: "May 1, 2026" },
+        { id: "j2", title: "Gutter cleaning", date: "May 1, 2026" },
+      ],
+    })
+    expect(out.map((x) => x.kind).sort()).toEqual(["duplicate-jobs", "duplicate-systems", "thin-fact"])
+  })
+
+  it("honors remembered dismissals by key", () => {
+    const all = sweepRecord({ facts })
+    const keys = all.map((f) => f.key)
+    expect(sweepRecord({ facts }, keys)).toEqual([])
   })
 })

@@ -181,6 +181,30 @@ describe("Assistant Log page", () => {
     })
   })
 
+  it("Record health sweep: flags the stale pump fact and one tap supersedes it", async () => {
+    renderPage(<Conversations />)
+    expect(await screen.findByText(/Record health \(1\)/)).toBeInTheDocument()
+    expect(screen.getByText(/not yet completed \(June 2026\)/)).toBeInTheDocument()
+    expect(screen.getByText(/Later record: .*installed by Sunwave/)).toBeInTheDocument()
+    fireEvent.click(screen.getByText("Mark superseded"))
+    await waitFor(() => {
+      const stale = __getItems("prop-ballard", "facts").find((f) => f.id === "fact-pump-pending")
+      expect(stale.archived).toBe(true)
+      expect(stale.archivedNote).toMatch(/Superseded/)
+      expect(screen.queryByText(/Record health/)).not.toBeInTheDocument()
+    })
+  })
+
+  it("Record health sweep: 'Keep it' dismissal is remembered", async () => {
+    renderPage(<Conversations />)
+    await screen.findByText(/Record health \(1\)/)
+    fireEvent.click(screen.getByText("Keep it"))
+    await waitFor(() => {
+      expect(__getItems("prop-ballard", "auditDismissals")).toHaveLength(1)
+      expect(screen.queryByText(/Record health/)).not.toBeInTheDocument()
+    })
+  })
+
   it("filters the log by the search box", async () => {
     renderPage(<Conversations />)
     await screen.findByText(/New water pump installed/)

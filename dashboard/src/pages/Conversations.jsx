@@ -14,7 +14,7 @@ import {
   withActionStatus,
 } from "../conversations"
 import { applyAssistantAction } from "../assistantActions"
-import { auditAction, hasDuplicate } from "../recordAudit"
+import { auditAction, hasDuplicate, sweepRecord } from "../recordAudit"
 import { emailIntakePrompt } from "../emailIntake"
 import { parseAssistantReply, transcriptMessage } from "../assistant"
 import { callClaude } from "../backendApi"
@@ -126,9 +126,47 @@ export default function Conversations() {
   const { items: documents } = useItems(uid, "documents")
   const { items: workOrders } = useItems(uid, "workOrders")
   const { items: systems } = useItems(uid, "healthReport")
-  const { items: facts } = useItems(uid, "facts")
+  const factsApi = useItems(uid, "facts")
+  const facts = factsApi.items
   const { items: jobs } = useItems(uid, "jobHistory")
+  const dismissApi = useItems(uid, "auditDismissals")
   const summary = conversationsSummary(items)
+
+  // The Record health sweep: the gatekeeper's judgment applied to what's
+  // already in the record. Findings persist until fixed or dismissed —
+  // dismissals are remembered per finding key.
+  const health = sweepRecord(
+    { facts, systems, jobs, workOrders },
+    dismissApi.items.map((d) => d.key)
+  )
+  const [healthBusy, setHealthBusy] = useState("")
+
+  async function fixHealth(f) {
+    setHealthBusy(f.key)
+    try {
+      if (f.kind === "duplicate-facts")
+        await factsApi.update(f.redundant.id, {
+          archived: true,
+          archivedNote: `Duplicate of "${f.keep.text.slice(0, 80)}"`,
+        })
+      if (f.kind === "stale-fact")
+        await factsApi.update(f.stale.id, {
+          archived: true,
+          archivedNote: `Superseded — ${String(f.evidence).slice(0, 80)}`,
+        })
+    } finally {
+      setHealthBusy("")
+    }
+  }
+
+  async function dismissHealth(f) {
+    setHealthBusy(f.key)
+    try {
+      await dismissApi.add({ key: f.key, dismissedOn: todayLabel() })
+    } finally {
+      setHealthBusy("")
+    }
+  }
 
   // Email intake (pipeline phase 1): paste a forwarded email or quote
   // reply; Claude proposes records; they land as a stored conversation with
@@ -305,6 +343,90 @@ export default function Conversations() {
                       className="text-xs text-ink-3 hover:text-ink disabled:opacity-50"
                     >
                       Dismiss
+                    </button>
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </Card>
+      )}
+
+      {health.length > 0 && (
+        <Card title={`Record health (${health.length})`} className="mb-4">
+          <p className="text-xs text-ink-3 mb-2">
+            The record audit found existing entries worth a look — duplicates, statements a
+            later record supersedes, and thin facts. Fixes archive the old entry (kept in
+            history, out of the working record); dismissals are remembered.
+          </p>
+          <ul className="flex flex-col gap-3">
+            {health.map((f) => {
+              const busy = healthBusy === f.key
+              return (
+                <li key={f.key} className="text-sm">
+                  {f.kind === "duplicate-facts" && (
+                    <>
+                      <p className="text-ink">
+                        <span className="font-medium">Duplicate facts</span> — keeping:{" "}
+                        <span className="text-ink-2">“{f.keep.text}”</span>
+                      </p>
+                      <p className="text-ink-3 text-xs mt-0.5">Archive: “{f.redundant.text}”</p>
+                    </>
+                  )}
+                  {f.kind === "stale-fact" && (
+                    <>
+                      <p className="text-ink">
+                        <span className="font-medium">Superseded?</span>{" "}
+                        <span className="text-ink-2">“{f.stale.text}”</span>
+                      </p>
+                      <p className="text-ink-3 text-xs mt-0.5">Later record: “{f.evidence}”</p>
+                    </>
+                  )}
+                  {f.kind === "duplicate-systems" && (
+                    <p className="text-ink">
+                      <span className="font-medium">Same system twice?</span>{" "}
+                      <span className="text-ink-2">
+                        “{f.a.category}” and “{f.b.category}” — manage on the Health Report.
+                      </span>
+                    </p>
+                  )}
+                  {f.kind === "duplicate-jobs" && (
+                    <p className="text-ink">
+                      <span className="font-medium">Same job twice?</span>{" "}
+                      <span className="text-ink-2">
+                        “{f.a.title}” and “{f.b.title}” ({f.a.date || "no date"}) — manage in Job
+                        History.
+                      </span>
+                    </p>
+                  )}
+                  {f.kind === "thin-fact" && (
+                    <p className="text-ink">
+                      <span className="font-medium">Thin fact</span>{" "}
+                      <span className="text-ink-2">“{f.fact.text}” — {f.note.toLowerCase()}</span>
+                    </p>
+                  )}
+                  <span className="flex items-center gap-2 mt-1.5">
+                    {(f.kind === "duplicate-facts" || f.kind === "stale-fact") && (
+                      <Button
+                        variant="subtle"
+                        className="!py-1 !px-3 !text-xs"
+                        disabled={busy}
+                        onClick={() => fixHealth(f)}
+                      >
+                        {busy
+                          ? "…"
+                          : f.kind === "duplicate-facts"
+                            ? "Archive duplicate"
+                            : "Mark superseded"}
+                      </Button>
+                    )}
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => dismissHealth(f)}
+                      className="text-xs text-ink-3 hover:text-ink disabled:opacity-50"
+                    >
+                      {f.kind === "duplicate-facts" ? "Not a duplicate" : "Keep it"}
                     </button>
                   </span>
                 </li>

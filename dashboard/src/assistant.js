@@ -165,10 +165,13 @@ export function buildAssistantContext({
     )
   }
 
-  if (facts.length) {
+  // Archived facts (merged duplicates, superseded statements) stay out of
+  // the assistant's working knowledge.
+  const liveFacts = facts.filter((f) => !f.archived)
+  if (liveFacts.length) {
     parts.push(
       "LEARNED FACTS (from earlier conversations):\n" +
-        facts.map((f) => `- ${f.text}${f.date ? ` (recorded ${f.date})` : ""}`).join("\n")
+        liveFacts.map((f) => `- ${f.text}${f.date ? ` (recorded ${f.date})` : ""}`).join("\n")
     )
   }
 

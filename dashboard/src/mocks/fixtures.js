@@ -46,6 +46,22 @@ export const fixtureData = {
             source: "assistant",
             date: "July 12, 2026",
           },
+          // A stale "still pending" fact plus its later completion — the
+          // Record health sweep (Slice 74) flags the pair for supersession.
+          {
+            id: "fact-pump-pending",
+            text: "Water pump replacement recommended; not yet completed (June 2026)",
+            category: "Plumbing",
+            source: "assistant",
+            date: "June 20, 2026",
+          },
+          {
+            id: "fact-pump-installed",
+            text: "Replacement water pump installed by Sunwave, July 2026",
+            category: "Plumbing",
+            source: "assistant",
+            date: "July 12, 2026",
+          },
         ],
         healthReport: [
           {
