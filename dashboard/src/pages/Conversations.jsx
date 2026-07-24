@@ -14,6 +14,7 @@ import {
   withActionStatus,
 } from "../conversations"
 import { applyAssistantAction } from "../assistantActions"
+import { auditAction, hasDuplicate } from "../recordAudit"
 import { emailIntakePrompt } from "../emailIntake"
 import { parseAssistantReply, transcriptMessage } from "../assistant"
 import { callClaude } from "../backendApi"
@@ -125,6 +126,8 @@ export default function Conversations() {
   const { items: documents } = useItems(uid, "documents")
   const { items: workOrders } = useItems(uid, "workOrders")
   const { items: systems } = useItems(uid, "healthReport")
+  const { items: facts } = useItems(uid, "facts")
+  const { items: jobs } = useItems(uid, "jobHistory")
   const summary = conversationsSummary(items)
 
   // Email intake (pipeline phase 1): paste a forwarded email or quote
@@ -263,14 +266,28 @@ export default function Conversations() {
             {pending.map((p) => {
               const key = `${p.conversationId}-${p.msgIndex}-${p.actionIndex}`
               const busy = busyKey === key
+              const findings = auditAction(p.action, { facts, systems, jobs, workOrders })
               return (
-                <li key={key} className="flex items-center justify-between gap-3 text-sm">
+                <li key={key} className="flex items-start justify-between gap-3 text-sm">
                   <span className="min-w-0">
                     <span className="font-medium text-ink">
                       {PENDING_LABEL[p.action.type] || p.action.type}:
                     </span>{" "}
                     <span className="text-ink-2">{actionLabel(p.action)}</span>
                     {p.startedOn && <span className="text-ink-3"> · {p.startedOn}</span>}
+                    {findings.map((f, i) => (
+                      <span
+                        key={i}
+                        className={`block text-xs mt-0.5 ${
+                          f.kind === "unclear" ? "text-ink-3" : "text-amber-800"
+                        }`}
+                      >
+                        {f.kind === "duplicate" && "⚠ Possible duplicate — "}
+                        {f.kind === "conflict" && "⚠ Check the record — "}
+                        {f.note}
+                        {f.match && `: “${f.match}”`}
+                      </span>
+                    ))}
                   </span>
                   <span className="shrink-0 flex items-center gap-2">
                     <Button
@@ -279,7 +296,7 @@ export default function Conversations() {
                       disabled={busy}
                       onClick={() => resolvePending(p, "done")}
                     >
-                      {busy ? "…" : "Confirm"}
+                      {busy ? "…" : hasDuplicate(findings) ? "Confirm anyway" : "Confirm"}
                     </Button>
                     <button
                       type="button"

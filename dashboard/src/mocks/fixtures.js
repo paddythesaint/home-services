@@ -35,6 +35,18 @@ export const fixtureData = {
         memberEmails: ["paddythesaint@gmail.com", "sally@example.com", "tech@example.com"],
       },
       collections: {
+        // One fact that near-duplicates conv-1's pending save_fact, so the
+        // record-quality gatekeeper (Slice 73) has something to catch in
+        // mock mode and tests.
+        facts: [
+          {
+            id: "fact-pump-warranty",
+            text: "Grundfos MQ3-45 water pump warranty registered, July 2026",
+            category: "Plumbing",
+            source: "assistant",
+            date: "July 12, 2026",
+          },
+        ],
         healthReport: [
           {
             id: "sys-hvac",

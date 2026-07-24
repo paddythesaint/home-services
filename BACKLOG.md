@@ -48,6 +48,28 @@ logic extracted out of BusinessContractors.jsx), facts.js, dates.js, plus a
 render smoke test per page against the mock store. Red tests now block the
 GitHub Pages deploy (deploy.yml runs `npm test` before build).
 
+## Slice 73 — record-quality gatekeeper on pending actions (7/24/26)
+With four intake mouths (chat, photos, pasted emails, forwarded emails)
+feeding one record, quality control moves to the door: every pending
+assistant action is now audited against the existing record before the
+founder confirms it. Advisory only — the founder always decides.
+- **`recordAudit.js`**: pure module. Token-containment overlap (robust for
+  terse titles vs full sentences) drives three finding kinds:
+  *duplicate* (similar fact / tracked system / logged job / open order /
+  quote already on the order), *conflict* (a completion statement that may
+  supersede a stale "not yet done" fact — modeled on the real well-tank
+  case from 7/22-23 — or an install-year mismatch on a tracked system),
+  *unclear* (job without a date, quote without an amount, thin fact,
+  system without brand/model).
+- Findings render inline in both confirm surfaces — the chat's action
+  chips and the Assistant Log's Awaiting-confirmation queue — and a
+  duplicate softens the confirm button to **"Confirm anyway"** so double
+  entries can't be rubber-stamped.
+- Fixtures seed one near-duplicate fact so mock mode demos the catch.
+  8 unit tests + page assertions; suite 285 green; builds clean.
+- Next (approved direction): the retrospective "Record health" sweep with
+  one-tap merge/supersede, applying the same module to yesterday's data.
+
 ## Slice 72 — email intake, phase 2: Gmail poller connector (7/23/26)
 The transport landed: founder set up cvillehomeservicestest@gmail.com as the
 shared intake mailbox. A scheduled Cloud Function now feeds the exact
