@@ -76,16 +76,17 @@ describe("doors and lenses", () => {
     localStorage.removeItem("healthCollapsed")
     renderPage(<HealthReport />)
     // Plumbing holds the water heater; it's visible until collapsed.
-    expect(await screen.findByText("Water Heater")).toBeInTheDocument()
+    expect((await screen.findAllByText("Water Heater")).length).toBeGreaterThan(0)
     // The trade header (uppercase label) is the toggle. Plumbing appears in
     // the glance summary too, so click the section heading specifically.
     const headings = screen.getAllByRole("button", { name: /Plumbing/ })
     fireEvent.click(headings[headings.length - 1])
-    await waitFor(() =>
-      expect(screen.queryByText("Water Heater")).not.toBeInTheDocument()
-    )
+    // Collapsing hides the trade card; the 4a "Every system" row remains.
+    await waitFor(() => expect(screen.getAllByText("Water Heater")).toHaveLength(1))
     fireEvent.click(screen.getAllByRole("button", { name: /Plumbing/ }).slice(-1)[0])
-    expect(await screen.findByText("Water Heater")).toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.getAllByText("Water Heater").length).toBeGreaterThan(1)
+    )
   })
 
   it("Health Report consolidates systems under trade sections with rollups", async () => {

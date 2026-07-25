@@ -14,6 +14,7 @@ import { replacementHorizon, fmtMoneyRange, defaultVerifyMonths } from "../bench
 import {
   Card,
   ConditionBadge,
+  ConditionMeter,
   VerifiedBadge,
   PageHeader,
   Button,
@@ -130,18 +131,95 @@ export default function HealthReport() {
     })
   }
 
+  // 4a voice: the page opens with a verdict sentence, then every system as
+  // one plain-language row. The trade-section CRUD machinery below stays —
+  // it becomes the operator depth as the sweep completes.
+  const behaving = items.filter((s) => !s.condition || s.condition === "good").length
+  const watching4a = items.length - behaving
+  const meterCounts = items.reduce((acc, s) => {
+    const k = s.condition || "good"
+    acc[k] = (acc[k] || 0) + 1
+    return acc
+  }, {})
+  const NUMS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"]
+  const sentenceFor = (s) => {
+    const bits = []
+    if (s.brand || s.detail) bits.push([s.brand, s.detail].filter(Boolean).join(" — "))
+    if (s.installYear) bits.push(`installed ${s.installYear}`)
+    if (s.location) bits.push(`in the ${s.location.toLowerCase()}`)
+    const base = bits.length ? `${bits.join(", ")}.` : "On the record — details coming as we verify."
+    const noteBit = (s.note || "").split(/(?<=\.)\s/)[0]
+    return s.condition && s.condition !== "good" && noteBit ? `${base} ${noteBit}` : base
+  }
+
   return (
     <div>
       <RecordTabs />
       <PageHeader
-        title="Property Health Report"
+        title={`${NUMS[behaving] || behaving} system${behaving === 1 ? " is" : "s are"} behaving.`}
+        clause={
+          watching4a > 0
+            ? `We're watching ${watching4a === 1 ? "one" : NUMS[watching4a]?.toLowerCase() || watching4a}.`
+            : "Nothing needs your attention."
+        }
         subtitle={
           profile.walkthroughCompletedOn
-            ? `Walkthrough completed ${profile.walkthroughCompletedOn} at ${profile.address}`
-            : `Systems inventory for ${profile.address}`
+            ? `Everything here comes from our own eyes — walkthrough completed ${profile.walkthroughCompletedOn} — plus your closing package and the March energy audit.`
+            : `The systems record for ${profile.address}, built from documents and visits.`
         }
         action={<Button onClick={() => setEditing("new")}>+ Add system</Button>}
       />
+
+      {items.length > 0 && (
+        <div className="max-w-[620px] mb-8">
+          <ConditionMeter counts={meterCounts} />
+        </div>
+      )}
+
+      {items.length > 0 && (
+        <div className="mb-10">
+          <p className="eyebrow m-0 mb-2">Every system</p>
+          <ul className="m-0 p-0 list-none">
+            {items.map((s) => (
+              <li
+                key={`row4a-${s.id}`}
+                className="grid grid-cols-[12px_1fr_118px] gap-3 py-3 border-t border-line last:border-b"
+              >
+                <span
+                  className="w-2 h-2 rounded-full mt-1.5"
+                  style={{
+                    background:
+                      s.condition === "urgent"
+                        ? "var(--color-status-critical)"
+                        : s.condition === "attention"
+                          ? "var(--color-status-warn)"
+                          : "var(--color-status-good)",
+                  }}
+                  aria-hidden="true"
+                />
+                <span className="min-w-0">
+                  <Link
+                    to={`/system/${s.id}`}
+                    className="text-[15px] font-medium text-ink hover:text-brand-700"
+                  >
+                    {s.category}
+                  </Link>
+                  <span className="block text-[13.5px] leading-[1.55] text-ink-2 mt-0.5">
+                    {sentenceFor(s)}
+                  </span>
+                </span>
+                <span
+                  className={`numeric text-[11.5px] text-right pt-1 ${
+                    s.lastServiced ? "text-ink-3" : "text-status-warn"
+                  }`}
+                >
+                  {s.lastServiced || "never serviced"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {unverifiedCount > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4 text-sm text-amber-900">
