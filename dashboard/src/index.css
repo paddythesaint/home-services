@@ -1,41 +1,55 @@
-@import "@fontsource-variable/inter";
-@import "@fontsource-variable/fraunces";
+@import "@fontsource-variable/newsreader";
+@import "@fontsource-variable/instrument-sans";
+@import "@fontsource/jetbrains-mono";
 @import "tailwindcss";
 
+/* Redesign theme — replaces the previous Inter/Fraunces + white-card system.
+   Aesthetic: warm paper, deep forest ink, hairline rules instead of cards.
+   npm i @fontsource-variable/newsreader @fontsource-variable/instrument-sans @fontsource/jetbrains-mono */
+
 @theme {
-  /* Inter for UI, Fraunces for display — the warm-serif-over-clean-sans
-     pairing. Both variable, both self-hosted (no external requests). */
-  --font-sans: "Inter Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Fraunces Variable", Georgia, "Times New Roman", serif;
+  --font-sans: "Instrument Sans Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Newsreader Variable", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* Brand greens — chrome & identity only, never data */
-  --color-brand-50: #f4f7f2;
-  --color-brand-100: #e5ebe0;
-  --color-brand-200: #ccd8c2;
-  --color-brand-400: #7c9a68;
-  --color-brand-600: #4a6741;
-  --color-brand-700: #3a5233;
-  --color-brand-800: #2b3f26;
-  --color-brand-900: #1d2b19;
-  --color-brand-950: #131e10;
+  /* Surfaces — warm paper, not white */
+  --color-plane: #eae7de;   /* app background */
+  --color-surface: #fcfbf7; /* panel / page surface */
+  --color-sunk: #f2f0e7;    /* rails, tinted blocks */
+  --color-sunk-2: #f7f5ee;  /* footers, ask bar */
+  --color-field: #ffffff;   /* inputs */
 
-  /* Ink & chrome (dataviz reference tokens) */
-  --color-ink: #191917;
-  --color-ink-2: #52514e;
-  --color-ink-3: #8b8880;
-  --color-surface: #ffffff;
-  --color-plane: #f6f5f1;
-  --color-line: #e7e5dd;
+  /* Ink */
+  --color-ink: #1c1e18;
+  --color-ink-2: #5a5e50;
+  --color-ink-3: #8d9081;
+  --color-ink-4: #a8a79a;   /* de-emphasised clause inside a headline */
 
-  /* Status palette — fixed, ships with icon + label, never color alone */
-  --color-status-good: #0ca30c;
-  --color-status-warn: #fab219;
-  --color-status-serious: #ec835a;
-  --color-status-critical: #d03b3b;
+  /* Rules — two weights only: hairline and emphasis */
+  --color-line: #efebe0;    /* row hairline */
+  --color-line-2: #e0dcd0;  /* panel border, table hairline */
+  --color-rule: #1c1e18;    /* first column of a figure row */
 
-  /* Elevation — soft, warm-tinted, quiet */
-  --shadow-card: 0 1px 2px rgba(25, 25, 23, 0.04), 0 2px 8px rgba(25, 25, 23, 0.03);
-  --shadow-raised: 0 2px 4px rgba(25, 25, 23, 0.06), 0 12px 32px rgba(25, 25, 23, 0.1);
+  /* Brand greens — chrome and identity only, never data */
+  --color-brand-900: #1a291f;
+  --color-brand-700: #24382b;
+  --color-brand-500: #3f6b4a;
+  --color-brand-100: #e9ede4;
+
+  /* Status — dot + label always, never colour alone */
+  --color-status-good: #4a7a55;
+  --color-status-warn: #a8701f;
+  --color-status-critical: #9e3b2c;
+  --color-status-idle: #c9c6b8;
+
+  /* Elevation — one card shadow, one raised. Panels mostly rely on borders. */
+  --shadow-card: 0 1px 2px rgba(28, 30, 24, 0.04), 0 12px 32px -18px rgba(28, 30, 24, 0.18);
+  --shadow-raised: 0 2px 4px rgba(28, 30, 24, 0.06), 0 16px 40px -16px rgba(28, 30, 24, 0.22);
+  --shadow-pill: 0 1px 2px rgba(28, 30, 24, 0.08);
+
+  --radius-panel: 18px;
+  --radius-block: 14px;
+  --radius-control: 12px;
 }
 
 html,
@@ -53,10 +67,33 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Display headings get Fraunces' character at a moderate optical size —
-   warmth without the ink-trap extremes. */
+/* Display: Newsreader at a moderate optical size, near-book weight.
+   Headlines are NOT bold in this system — size and serif carry them. */
 .font-display {
   font-family: var(--font-display);
-  font-variation-settings: "opsz" 28;
+  font-variation-settings: "opsz" 32;
+  font-weight: 400;
   letter-spacing: -0.01em;
+}
+
+/* Section eyebrow: the only place uppercase tracking is used. */
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+/* Data figures and timestamps take the mono face at 10.5–11.5px. */
+.numeric {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+a {
+  color: var(--color-brand-700);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--color-brand-500);
 }

@@ -76,16 +76,17 @@ describe("doors and lenses", () => {
     localStorage.removeItem("healthCollapsed")
     renderPage(<HealthReport />)
     // Plumbing holds the water heater; it's visible until collapsed.
-    expect(await screen.findByText("Water Heater")).toBeInTheDocument()
+    expect((await screen.findAllByText("Water Heater")).length).toBeGreaterThan(0)
     // The trade header (uppercase label) is the toggle. Plumbing appears in
     // the glance summary too, so click the section heading specifically.
     const headings = screen.getAllByRole("button", { name: /Plumbing/ })
     fireEvent.click(headings[headings.length - 1])
-    await waitFor(() =>
-      expect(screen.queryByText("Water Heater")).not.toBeInTheDocument()
-    )
+    // Collapsing hides the trade card; the 4a "Every system" row remains.
+    await waitFor(() => expect(screen.getAllByText("Water Heater")).toHaveLength(1))
     fireEvent.click(screen.getAllByRole("button", { name: /Plumbing/ }).slice(-1)[0])
-    expect(await screen.findByText("Water Heater")).toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.getAllByText("Water Heater").length).toBeGreaterThan(1)
+    )
   })
 
   it("Health Report consolidates systems under trade sections with rollups", async () => {
@@ -155,13 +156,18 @@ describe("doors and lenses", () => {
     renderPage(<PriorityList />)
     // The low-urgency caulk item lives only in the main list (not the visit
     // manifest or a quote bundle), so it's an unambiguous probe.
-    expect(await screen.findByText("Re-caulk master bath shower")).toBeInTheDocument()
+    // The caulk item renders in the 4c horizon columns AND the working list.
+    const caulkCount = (await screen.findAllByText("Re-caulk master bath shower")).length
     fireEvent.click(screen.getByRole("button", { name: /^High/ }))
+    // Filtering to High drops it from the working list; the "On our radar"
+    // horizon column deliberately keeps showing every horizon.
     await waitFor(() =>
-      expect(screen.queryByText("Re-caulk master bath shower")).not.toBeInTheDocument()
+      expect(screen.getAllByText("Re-caulk master bath shower").length).toBeLessThan(caulkCount)
     )
     fireEvent.click(screen.getByRole("button", { name: /^Low/ }))
-    expect(await screen.findByText("Re-caulk master bath shower")).toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.getAllByText("Re-caulk master bath shower").length).toBe(caulkCount)
+    )
   })
 
   it("Job History groups by system on demand", async () => {

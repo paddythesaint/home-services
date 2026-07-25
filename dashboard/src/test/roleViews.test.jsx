@@ -122,11 +122,11 @@ describe("hub tab gating", () => {
     const { renderPage } = await import("./renderPage")
     const { default: JobHistory } = await import("../pages/JobHistory")
     renderPage(<JobHistory />, { user: TECH })
-    await screen.findAllByText("Job History")
+    await screen.findAllByText("Everything we've done")
     expect(screen.queryByText("Contractors")).not.toBeInTheDocument()
     const { default: CareCalendar } = await import("../pages/CareCalendar")
     renderPage(<CareCalendar />, { user: TECH })
-    await screen.findAllByText("What's Next")
+    await screen.findAllByText("The year of care")
     expect(screen.queryByText("Cost Forecast")).not.toBeInTheDocument()
   })
 

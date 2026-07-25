@@ -3,13 +3,16 @@ import { PlanTabs } from "../HubTabs"
 import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import { addItem } from "../firestoreApi"
-import { todayLabel } from "../dates"
+import { todayLabel, todayISO, isoToLabel } from "../dates"
+import { seasonalPlan, recurrenceInsights } from "../maintenanceIntelligence"
 import { viewFor } from "../roles"
 import { workOrderFromPriority, workOrderFromBundle } from "../workOrders"
 import { suggestRequirements } from "../requirementSuggestions"
 import { groupByTrade, tradeForItem } from "../trades"
 import { findDuplicates } from "../issuePlaybook"
 import IssueInsights from "../IssueInsights"
+
+const W4C = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"]
 import {
   RESOLUTION_PATHS,
   PATH_META,
@@ -33,6 +36,8 @@ import {
   Button,
   Modal,
   DynamicForm,
+  Detail,
+  StatusBadge,
 } from "../components"
 
 const fields = [
@@ -408,7 +413,12 @@ function ResolutionSection({ item, update }) {
 }
 
 export default function PriorityList() {
-  const { uid, user } = useOutletContext()
+  const { uid, user, profile } = useOutletContext()
+  // Absorbed from the retired What's Next page (redesign sweep, 7/25):
+  // the proactive layer needs the systems, calendar, and job record.
+  const { items: wnSystems } = useItems(uid, "healthReport")
+  const { items: wnCalendar } = useItems(uid, "careCalendar")
+  const { items: wnJobs } = useItems(uid, "jobHistory")
   const founder = viewFor(user?.email).business
   const { items, add, update, remove, moveUp, moveDown } = useItems(uid, "priorityList")
   const [editing, setEditing] = useState(null)
@@ -497,24 +507,212 @@ export default function PriorityList() {
     <div>
       <PlanTabs />
       <PageHeader
-        title="90-Day Priorities"
-        subtitle="Ranked recommendations — and for each one, what's needed to close it out and how it gets done."
+        title={
+          openItems.filter((i) => i.urgency === "high").length > 0
+            ? `${W4C[openItems.filter((i) => i.urgency === "high").length] || openItems.filter((i) => i.urgency === "high").length} thing${openItems.filter((i) => i.urgency === "high").length === 1 ? "" : "s"} this week.`
+            : "Nothing urgent this week."
+        }
+        clause={
+          openItems.length > 0
+            ? "No decision is needed from you — we bring each one when it's ready."
+            : "The list is clear."
+        }
+        subtitle="What we're lining up for this home, in the order it matters. Anything here can be asked about in the assistant; nothing moves without you seeing it."
         action={<Button onClick={() => setEditing("new")}>+ Add item</Button>}
       />
 
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        <StatTile label="Open" value={counts.open} sub="Next 90 days" />
-        <StatTile
-          label="Ready to action"
-          value={counts.ready}
-          sub="Nothing missing to close"
-        />
-        <StatTile
-          label="Next visit closes"
-          value={counts.nextVisit}
-          sub="Batched on the subscription"
-        />
-      </div>
+      {/* 4c: three horizons, headed by rules — this week / 30 days / radar. */}
+      {openItems.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6 mb-10">
+          {[
+            ["This week", openItems.filter((i) => i.urgency === "high")],
+            ["Next 30 days", openItems.filter((i) => (i.urgency || "medium") === "medium")],
+            ["On our radar", openItems.filter((i) => i.urgency === "low")],
+          ].map(([label, list], idx) => (
+            <div key={label} className={`pt-2.5 border-t ${idx === 0 ? "border-rule" : "border-line-2"}`}>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-[13px] font-medium text-ink">{label}</span>
+                <span className="numeric text-[11px] text-ink-3">{list.length}</span>
+              </div>
+              <ul className="m-0 mt-3 p-0 list-none flex flex-col gap-3.5">
+                {list.length === 0 && <li className="text-[12.5px] text-ink-4">Nothing here.</li>}
+                {list.map((i) => (
+                  <li key={`c4-${i.id}`}>
+                    <span className="flex items-start gap-2">
+                      <span
+                        className="w-[7px] h-[7px] rounded-full mt-[5px] shrink-0"
+                        style={{
+                          background:
+                            i.urgency === "high"
+                              ? "var(--color-status-critical)"
+                              : i.urgency === "low"
+                                ? "var(--color-status-good)"
+                                : "var(--color-status-warn)",
+                        }}
+                        aria-hidden="true"
+                      />
+                      <span className="text-sm font-medium text-ink leading-tight">{i.title}</span>
+                    </span>
+                    {i.reason && (
+                      <p className="m-0 mt-1 ml-[15px] text-[13px] leading-[1.55] text-ink-2">
+                        {i.reason}
+                      </p>
+                    )}
+                    <Detail>
+                      <p className="numeric m-0 mt-1 ml-[15px] text-[10.5px] text-ink-3">
+                        {[i.estCost, i.category].filter(Boolean).join(" · ") || "no estimate yet"}
+                      </p>
+                    </Detail>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Absorbed from the retired What's Next page: due checks and care
+          for the month, recurring-issue insight, and the seasonal head
+          start. Same anchors, new home. */}
+      {(() => {
+        const season = seasonalPlan(new Date(), profile)
+        const onPlan = new Set(items.map((p) => p.seasonalId).filter(Boolean))
+        const recurring = recurrenceInsights(wnJobs)
+        const month = new Date().toLocaleDateString("en-US", { month: "long" })
+        const monthTasks = wnCalendar.filter(
+          (t) => t.month === month && t.doneYear !== new Date().getFullYear()
+        )
+        const dueChecks = wnSystems
+          .filter((s) => s.nextDue && s.nextDue <= todayISO())
+          .sort((a, b) => a.nextDue.localeCompare(b.nextDue))
+        const scheduledJobs = wnJobs.filter((j) => j.status === "scheduled")
+        return (
+          <>
+            {(dueChecks.length > 0 || monthTasks.length > 0 || scheduledJobs.length > 0) && (
+              <Card title={`This month (${month})`} className="mb-4">
+                <ul className="divide-y divide-line">
+                  {dueChecks.map((s) => (
+                    <li key={s.id} className="py-2.5 flex items-start justify-between gap-3">
+                      <span className="min-w-0">
+                        <Link
+                          to={`/system/${s.id}`}
+                          className="text-sm font-medium text-ink hover:text-brand-700"
+                        >
+                          {s.category}
+                        </Link>
+                        <p className="m-0 text-xs text-ink-3">
+                          recurring check was due {isoToLabel(s.nextDue)}
+                        </p>
+                      </span>
+                      <span className="shrink-0 text-xs text-status-critical">check due</span>
+                    </li>
+                  ))}
+                  {monthTasks.map((t) => (
+                    <li key={t.id} className="py-2.5 flex items-start justify-between gap-3">
+                      <Link
+                        to="/care-calendar"
+                        className="text-sm font-medium text-ink hover:text-brand-700"
+                      >
+                        {t.task}
+                      </Link>
+                      <span className="shrink-0 text-xs text-ink-3">care task</span>
+                    </li>
+                  ))}
+                  {scheduledJobs.map((j) => (
+                    <li key={j.id} className="py-2.5 flex items-start justify-between gap-3">
+                      <span className="min-w-0">
+                        <Link
+                          to="/job-history"
+                          className="text-sm font-medium text-ink hover:text-brand-700"
+                        >
+                          {j.title}
+                        </Link>
+                        <p className="m-0 text-xs text-ink-3">
+                          {j.date}
+                          {j.sub ? ` · ${j.sub}` : ""}
+                        </p>
+                      </span>
+                      <StatusBadge status={j.status} />
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            )}
+
+            {recurring.length > 0 && (
+              <Card title="Worth a closer look" className="mb-4">
+                <p className="text-xs text-ink-3 mb-2">
+                  Systems that keep coming back — a recurring issue often has a root cause
+                  worth addressing once, rather than paying for it again.
+                </p>
+                <ul className="divide-y divide-line">
+                  {recurring.map((r) => (
+                    <li key={r.key} className="py-2.5 flex items-start justify-between gap-3">
+                      <span className="min-w-0">
+                        <Link
+                          to="/job-history"
+                          className="text-sm font-medium text-ink hover:text-brand-700"
+                        >
+                          {r.label}
+                        </Link>
+                        <p className="m-0 text-xs text-ink-3 mt-0.5">{r.note}</p>
+                      </span>
+                      <span className="shrink-0 text-xs text-ink-3 whitespace-nowrap">
+                        {r.count}× · {r.rising ? "costs rising" : "recurring"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            )}
+
+            <Card title={`This season at your home · ${season.label}`} className="mb-4">
+              <p className="text-xs text-ink-3 mb-2">
+                A head start on {season.label.toLowerCase()} — the care a home in your area
+                wants this time of year
+                {season.tailored ? `, tuned to your ${season.region} climate` : ""}. Add any
+                to the plan.
+              </p>
+              <ul className="divide-y divide-line">
+                {season.tasks.map((t) => {
+                  const added = onPlan.has(t.id)
+                  return (
+                    <li key={t.id} className="py-2.5 flex items-start justify-between gap-3">
+                      <span className="min-w-0">
+                        <p className="m-0 text-sm font-medium text-ink">{t.label}</p>
+                        <p className="m-0 text-xs text-ink-3 mt-0.5">
+                          {t.trade} · {t.note}
+                        </p>
+                      </span>
+                      {added ? (
+                        <span className="shrink-0 text-xs text-ink-3 whitespace-nowrap">
+                          On the plan ✓
+                        </span>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          className="!px-0 !text-xs whitespace-nowrap shrink-0"
+                          onClick={() =>
+                            add({
+                              title: t.label,
+                              category: t.trade,
+                              reason: `Seasonal (${season.label}): ${t.note}`,
+                              urgency: "low",
+                              seasonalId: t.id,
+                            })
+                          }
+                        >
+                          + Add to plan
+                        </Button>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </Card>
+          </>
+        )
+      })()}
 
       {viewFor(user?.email).staff &&
         (() => {
@@ -759,7 +957,9 @@ export default function PriorityList() {
                 </div>
                 <div className="text-right shrink-0 flex flex-col items-end gap-2">
                   <UrgencyBadge urgency={item.urgency} />
-                  <p className="text-sm text-ink-2">{item.estCost}</p>
+                  <Detail>
+                    <p className="text-sm text-ink-2">{item.estCost}</p>
+                  </Detail>
                   {index !== null && urgency === "all" && (
                   <div className="flex gap-1">
                     <button

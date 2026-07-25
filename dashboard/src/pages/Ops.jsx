@@ -17,7 +17,8 @@ import SystemStatus from "../SystemStatus"
 import {
   Card,
   PageHeader,
-  StatTile,
+  Figure,
+  FigureRow,
   UrgencyBadge,
   ConditionBadge,
   Button,
@@ -44,7 +45,15 @@ const rank = (u) => (u === "high" ? 3 : u === "medium" ? 2 : 1)
 // One property's live rollup. Reports metrics + attention items up so the
 // command center can aggregate across the portfolio, and renders its own
 // actionable queue.
-function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractors, onOpen }) {
+function OpsProperty({
+  propertyId,
+  profile,
+  onMetrics,
+  onAttention,
+  onContractors,
+  onOrders = () => {},
+  onOpen,
+}) {
   const priorityApi = useItems(propertyId, "priorityList")
   const { items: systems } = useItems(propertyId, "healthReport")
   const { items: jobs } = useItems(propertyId, "jobHistory")
@@ -160,6 +169,16 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propertyId, priorityApi.items, systems, warranties, workOrders, profile.address])
 
+  // Lift the raw orders too — the 3a pipeline reads lanes across the
+  // whole portfolio. Same stable-array dependency rule as above.
+  useEffect(() => {
+    onOrders(
+      propertyId,
+      workOrders.map((w) => ({ ...w, property: profile.address }))
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propertyId, workOrders, profile.address])
+
   useEffect(() => {
     const names = [
       ...new Set(
@@ -270,6 +289,7 @@ export default function Ops() {
   const [metrics, setMetrics] = useState({})
   const [attention, setAttention] = useState({})
   const [contractors, setContractors] = useState({})
+  const [orders, setOrders] = useState({})
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState("")
   const [deleting, setDeleting] = useState(null) // property pending delete confirmation
@@ -394,11 +414,19 @@ export default function Ops() {
   const attentionFeed = Object.values(attention).flat().sort((a, b) => rank(b.urgency) - rank(a.urgency))
   const allContractors = [...new Set(Object.values(contractors).flat())].sort()
 
+  // 3a voice: the page opens with what needs a human, not a department name.
+  const n = attentionFeed.length
+  const NUM_WORDS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"]
+  const headline =
+    n === 0
+      ? "Nothing needs you today."
+      : `${NUM_WORDS[n] || n} thing${n === 1 ? "" : "s"} need${n === 1 ? "s" : ""} you today.`
+
   return (
     <div>
       <PageHeader
-        title="Business"
-        subtitle="Command center for running the service — portfolio health, demand, and what needs action across every property. Internal financials and client health arrive as a separate founder-only layer."
+        title={headline}
+        clause={n === 0 ? "All quiet across the portfolio." : "Sorted by urgency."}
         action={
           founder ? (
             <Button onClick={() => setCreating(true)}>+ New property</Button>
@@ -416,22 +444,21 @@ export default function Ops() {
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 mb-4">
-            <StatTile label="Properties" value={state.list.length} sub="Under management" />
-            <StatTile
-              label="Open work"
-              value={totals.open}
-              sub={`${totals.high} high · ${totals.ready} ready · ${totals.nextVisit} next visit`}
-            />
-            <StatTile
-              label="At risk if deferred"
-              value={totals.riskCeiling > 0 ? `$${totals.riskCeiling.toLocaleString("en-US")}` : "—"}
-              sub={`${totals.clusters} issue cluster${totals.clusters === 1 ? "" : "s"}`}
-            />
-            <StatTile label="Overdue checks" value={totals.overdue} sub="SLA risk" />
-            <StatTile label="Urgent systems" value={totals.urgent} sub="Needs attention" />
-            <StatTile label="Scheduled" value={totals.scheduled} sub="Jobs in flight" />
-            <StatTile label="Completed" value={totals.completed} sub="Jobs all-time" />
+          {/* 3a business figures — five, hairline-ruled, ink rule on the lead. */}
+          <div className="mb-8">
+            <FigureRow cols={5}>
+              <Figure lead value={state.list.length} label="properties under management" />
+              <Figure
+                value={totals.open}
+                label={`open work · ${totals.high} high · ${totals.ready} ready`}
+              />
+              <Figure
+                value={totals.riskCeiling > 0 ? `$${totals.riskCeiling.toLocaleString("en-US")}` : "—"}
+                label={`at risk if deferred · ${totals.clusters} cluster${totals.clusters === 1 ? "" : "s"}`}
+              />
+              <Figure value={totals.overdue} label="overdue checks" />
+              <Figure value={totals.urgent} label="urgent systems" />
+            </FigureRow>
           </div>
 
           <div className="mb-4">
@@ -444,35 +471,44 @@ export default function Ops() {
                   high-urgency work, overdue checks, and lapsing coverage all surface here.
                 </p>
               ) : (
-                <ul className="divide-y divide-line">
+                <ul className="m-0 p-0 list-none">
+                  {/* 3a rows: dot · what · where · act. Color never alone —
+                      the badge keeps the word next to the severity dot. */}
                   {attentionFeed.map((item) => (
                     <li key={item.key}>
                       <button
                         type="button"
                         onClick={() => openAttention(item)}
-                        className="w-full py-2.5 flex items-start justify-between gap-3 text-left group"
+                        className="w-full grid grid-cols-[12px_1.9fr_1fr_auto] items-center gap-3 py-2.5 text-left border-t border-line group hover:bg-ink/[0.02]"
                       >
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-ink group-hover:text-brand-700">
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{
+                            background:
+                              item.kind === "check" || item.urgency === "high"
+                                ? "var(--color-status-critical)"
+                                : item.urgency === "medium"
+                                  ? "var(--color-status-warn)"
+                                  : "var(--color-status-idle)",
+                          }}
+                          aria-hidden="true"
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium text-ink truncate group-hover:text-brand-700">
                             {item.title}
-                          </p>
-                          <p className="text-xs text-ink-3">
-                            {item.property}
-                            {item.detail && ` · ${item.detail}`}
-                          </p>
-                        </div>
-                        <span className="shrink-0 flex items-center gap-2">
+                          </span>
+                          {item.detail && (
+                            <span className="block text-[12.5px] text-ink-3 truncate">{item.detail}</span>
+                          )}
+                        </span>
+                        <span className="text-[12.5px] text-ink-3 truncate">{item.property}</span>
+                        <span className="shrink-0 flex items-center gap-2.5">
                           {item.kind === "check" ? (
                             <ConditionBadge condition="urgent" />
                           ) : (
                             <UrgencyBadge urgency={item.urgency} />
                           )}
-                          <span
-                            className="text-ink-3 group-hover:text-brand-700"
-                            aria-hidden="true"
-                          >
-                            ›
-                          </span>
+                          <span className="text-[12.5px] text-brand-700">Open →</span>
                         </span>
                       </button>
                     </li>
@@ -481,6 +517,64 @@ export default function Ops() {
               )}
             </Card>
           </div>
+
+          {/* 3a pipeline: five headed hairline lists, no card chrome. The
+              lanes read across the whole portfolio; rows link to the board. */}
+          {(() => {
+            const allOrders = Object.values(orders).flat()
+            const LANES = [
+              ["triage", "Triage"],
+              ["quote", "Quoting"],
+              ["scheduled", "Scheduled"],
+              ["in-progress", "In progress"],
+              ["done", "Recently done"],
+            ]
+            if (allOrders.length === 0) return null
+            return (
+              <div className="mb-8">
+                <p className="eyebrow m-0 mb-3.5">Pipeline</p>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-x-6 gap-y-5">
+                  {LANES.map(([lane, label], i) => {
+                    const list =
+                      lane === "done"
+                        ? allOrders.filter((w) => w.lane === "done").slice(-4).reverse()
+                        : allOrders.filter((w) => w.lane === lane)
+                    return (
+                      <div key={lane} className={`pt-2.5 border-t ${i === 0 ? "border-rule" : "border-line-2"}`}>
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="text-[12.5px] font-medium text-ink">{label}</span>
+                          <span className="numeric text-[11px] text-ink-3">{list.length}</span>
+                        </div>
+                        <ul className="m-0 mt-2 p-0 list-none">
+                          {list.map((w) => (
+                            <li key={`${w.propertyId || w.property}-${w.id}`} className="border-b border-line py-2">
+                              <Link to="/work-orders" className="block group">
+                                <span className="block text-[12.5px] text-ink leading-snug group-hover:text-brand-700">
+                                  {w.title}
+                                </span>
+                                <span className="numeric block text-[10.5px] text-ink-3 mt-0.5">
+                                  {[
+                                    (w.property || "").split(" ")[0],
+                                    w.quoteAmount || null,
+                                    w.scheduledFor || null,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(" · ") || "—"}
+                                </span>
+                              </Link>
+                            </li>
+                          ))}
+                          {list.length === 0 && (
+                            <li className="text-[11px] text-ink-4 py-2">empty</li>
+                          )}
+                        </ul>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })()}
 
           <h2 className="text-sm font-semibold text-ink-2 mb-2">By property</h2>
           <div className="flex flex-col gap-4">
@@ -492,6 +586,7 @@ export default function Ops() {
                 onMetrics={(id, m) => setMetrics((prev) => ({ ...prev, [id]: m }))}
                 onAttention={(id, items) => setAttention((prev) => ({ ...prev, [id]: items }))}
                 onContractors={(id, names) => setContractors((prev) => ({ ...prev, [id]: names }))}
+                onOrders={(id, list) => setOrders((prev) => ({ ...prev, [id]: list }))}
                 onOpen={founder ? openProperty : undefined}
               />
             ))}

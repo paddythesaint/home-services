@@ -55,9 +55,11 @@ describe("photo visibility and audit", () => {
     renderPage(<HealthReport />)
     // HVAC carries photo-hvac-1. Delete the system from its card.
     const hvacTitle = (await screen.findAllByText("HVAC")).find(
-      (el) => el.closest("a")?.getAttribute("href") === "/system/sys-hvac"
+      (el) =>
+        el.closest("a")?.getAttribute("href") === "/system/sys-hvac" &&
+        el.closest(".bg-sunk")
     )
-    const hvacCard = hvacTitle.closest(".bg-surface")
+    const hvacCard = hvacTitle.closest(".bg-sunk")
     fireEvent.click(within(hvacCard).getByText("Delete"))
     expect(
       await screen.findByText(/Its 1 photo will be removed with it/)

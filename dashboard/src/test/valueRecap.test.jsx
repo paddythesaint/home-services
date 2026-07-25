@@ -37,13 +37,12 @@ describe("buildRecap", () => {
 })
 
 describe("recap card on the calm home", () => {
-  it("shows the homeowner their year of value", async () => {
+  it("shows the homeowner their year of care — never currency (2a)", async () => {
     renderPage(<Overview />, { uid: "prop-ridge", user: ALTON })
-    expect(
-      await screen.findByText("Your membership, the last 12 months")
-    ).toBeInTheDocument()
-    // Ridge fixture: one completed job by Monticello Air at $195.
-    expect(screen.getByText("handled by trusted pros")).toBeInTheDocument()
-    expect(screen.getByText("$195")).toBeInTheDocument()
+    // The recap now lives in the figure row: care counts, no dollars.
+    expect(await screen.findByText("tasks handled for you")).toBeInTheDocument()
+    expect(screen.getByText("systems on record")).toBeInTheDocument()
+    // Ridge fixture has a $195 job — the amount must NOT reach this surface.
+    expect(screen.queryByText(/\$195/)).not.toBeInTheDocument()
   })
 })

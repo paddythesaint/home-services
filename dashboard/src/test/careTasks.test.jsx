@@ -8,7 +8,7 @@ import { describe, it, expect } from "vitest"
 import { screen, fireEvent, waitFor, within } from "@testing-library/react"
 import { renderPage } from "./renderPage"
 import CareCalendar from "../pages/CareCalendar"
-import WhatsNext from "../pages/WhatsNext"
+import PriorityList from "../pages/PriorityList"
 import Assistant from "../pages/Assistant"
 import { __getItems, updateItem } from "../mocks/firestoreApi"
 
@@ -44,7 +44,7 @@ describe("care task completion loop", () => {
     expect(await screen.findByText(/· done /)).toBeInTheDocument()
   })
 
-  it("What's Next drops a task once it's done for the year", async () => {
+  it("the This-month strip drops a task once it's done for the year", async () => {
     // The store resets between tests — stamp the task done directly.
     const cal = __getItems("prop-ballard", "careCalendar").find(
       (t) => t.task === "Flush water heater"
@@ -53,8 +53,8 @@ describe("care task completion loop", () => {
       doneOn: "July 7, 2026",
       doneYear: thisYear,
     })
-    renderPage(<WhatsNext />)
-    await screen.findAllByText("What's Next")
+    renderPage(<PriorityList />)
+    await screen.findAllByText(/This month/)
     expect(screen.queryByText("Flush water heater")).not.toBeInTheDocument()
     expect(screen.getByText("Inspect deck boards")).toBeInTheDocument()
   })

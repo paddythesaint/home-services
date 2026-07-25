@@ -62,10 +62,10 @@ const PROPERTY_NAV = [
   },
   {
     key: "plan",
-    to: "/whats-next",
+    to: "/priority-list",
     label: "The Plan",
     icon: "calendar",
-    match: ["/whats-next", "/care-calendar", "/priority-list", "/home-report"],
+    match: ["/care-calendar", "/priority-list", "/home-report"],
   },
 ]
 
@@ -231,24 +231,22 @@ export default function Layout({ user }) {
 
   return (
     <div className="min-h-screen bg-plane text-ink flex">
-      <aside className="hidden md:flex w-60 shrink-0 flex-col bg-brand-900 text-brand-50 p-5">
-        <div className="mb-8 px-2">
-          <p className="text-[11px] uppercase tracking-[0.14em] text-brand-200">
-            Charlottesville
-          </p>
-          <p className="font-display text-lg font-semibold leading-snug">
+      {/* 3a rail: sunk paper, hairline right border, white active pill.
+          The dark-green chrome retired with the redesign (7/25). */}
+      <aside className="hidden md:flex w-[214px] shrink-0 flex-col bg-sunk border-r border-line-2 p-4">
+        <div className="mb-7 px-2">
+          <p className="eyebrow m-0">Charlottesville</p>
+          <p className="font-display m-0 mt-0.5 text-base leading-[1.25] text-brand-700">
             Home &amp; Property Services
           </p>
         </div>
         {founder && (portfolio?.length ?? 0) > 1 && (
           <label className="block mb-5 px-2">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-300">
-              Viewing property
-            </span>
+            <span className="eyebrow">Viewing property</span>
             <select
               value={activePropertyId || ""}
               onChange={(e) => setActiveProperty(e.target.value)}
-              className="mt-1.5 w-full bg-brand-800 text-brand-50 text-sm rounded-md px-2 py-1.5 border border-brand-700"
+              className="mt-1.5 w-full bg-field text-ink text-[13px] rounded-(--radius-control) px-2 py-1.5 border border-line-2"
             >
               {portfolio.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -265,18 +263,16 @@ export default function Layout({ user }) {
               className="flex flex-col gap-0.5"
               data-tour={section.heading === "Business" ? "business-nav" : "property-nav"}
             >
-              <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-300">
-                {section.heading}
-              </p>
+              <p className="eyebrow px-3 pb-1 m-0">{section.heading}</p>
               {section.items.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   end={item.end}
-                  className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors ${
+                  className={`flex items-center gap-2.5 rounded-(--radius-control) px-3 py-2 text-[13.5px] transition-colors ${
                     navActive(item, pathname)
-                      ? "bg-brand-50 text-brand-900 font-medium"
-                      : "text-brand-100 hover:bg-brand-800"
+                      ? "bg-white text-ink font-medium shadow-(--shadow-pill)"
+                      : "text-ink-2 hover:text-ink hover:bg-ink/[0.04]"
                   }`}
                 >
                   <NavIcon name={item.icon} />
@@ -286,21 +282,21 @@ export default function Layout({ user }) {
             </div>
           ))}
         </nav>
-        <div className="mt-auto pt-8 px-2 text-xs text-brand-200 leading-relaxed">
+        <div className="mt-auto pt-8 px-2 text-xs text-ink-3 leading-relaxed">
           <button
             type="button"
             onClick={() => setTourOpen(true)}
-            className="mb-3 text-brand-200 hover:text-white underline underline-offset-2"
+            className="mb-3 text-ink-3 hover:text-ink underline underline-offset-2"
           >
             App tour
           </button>
-          <p className="font-medium text-brand-100">{profile.tier}</p>
+          <p className="font-medium text-ink-2">{profile.tier}</p>
           <p>{profile.address}</p>
           <p>{profile.areaLabel}</p>
           <button
             type="button"
             onClick={() => signOut(auth)}
-            className="mt-3 text-brand-200 hover:text-white underline underline-offset-2"
+            className="mt-3 text-ink-3 hover:text-ink underline underline-offset-2"
           >
             Sign out
           </button>

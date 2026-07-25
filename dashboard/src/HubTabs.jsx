@@ -8,16 +8,15 @@ import { NavLink, useOutletContext } from "react-router-dom"
 import { viewFor } from "./roles"
 
 const RECORD = [
-  { key: "health", to: "/health-report", label: "Systems & Health" },
-  { key: "history", to: "/job-history", label: "Job History" },
+  { key: "health", to: "/health-report", label: "Health of the house" },
+  { key: "history", to: "/job-history", label: "Everything we've done" },
   { key: "coverage", to: "/coverage", label: "Coverage" },
   { key: "contractors", to: "/contractors", label: "Contractors" },
 ]
 
 const PLAN = [
-  { key: "next", to: "/whats-next", label: "What's Next" },
-  { key: "calendar", to: "/care-calendar", label: "Care Calendar" },
-  { key: "priorities", to: "/priority-list", label: "90-Day Priorities" },
+  { key: "calendar", to: "/care-calendar", label: "The year of care" },
+  { key: "priorities", to: "/priority-list", label: "What's next" },
   { key: "report", to: "/home-report", label: "Year in Review" },
 ]
 

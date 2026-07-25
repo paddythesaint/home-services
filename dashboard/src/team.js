@@ -10,7 +10,7 @@ export const TEAM = [
     phone: "",
   },
   {
-    name: "Paddy",
+    name: "Patrick",
     title: "Property & systems",
     email: "paddythesaint@gmail.com",
     phone: "",

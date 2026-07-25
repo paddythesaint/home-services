@@ -29,7 +29,7 @@ describe("founders' idea board", () => {
     expect(await screen.findByText("Annual chimney sweep bundle")).toBeInTheDocument()
     // Attributed to the signed-in founder with today's date (the fixture
     // idea is also Paddy's, so anchor on the new idea's card).
-    const card = screen.getByText("Annual chimney sweep bundle").closest(".bg-surface")
+    const card = screen.getByText("Annual chimney sweep bundle").closest(".bg-sunk")
     expect(within(card).getByText(new RegExp(MOCK_FOUNDER.displayName))).toBeInTheDocument()
   })
 
@@ -37,7 +37,7 @@ describe("founders' idea board", () => {
     renderPage(<Ideas />)
     const card = (
       await screen.findByText("Seasonal photo report — before/after each visit")
-    ).closest(".bg-surface")
+    ).closest(".bg-sunk")
     fireEvent.click(within(card).getByText("Done"))
     await waitFor(() =>
       expect(screen.getByText("Show done (2)")).toBeInTheDocument()

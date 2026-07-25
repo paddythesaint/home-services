@@ -22,7 +22,7 @@ describe("forecast section on the Home Report (merged 7/24)", () => {
 describe("lifespan line on the Health Report", () => {
   it("annotates systems that have a benchmark and an install year", async () => {
     renderPage(<HealthReport />)
-    await screen.findByText("Water Heater")
+    await screen.findAllByText("Water Heater")
     expect(screen.getByText(/Year 7 of a typical 8–12/)).toBeInTheDocument()
     expect(screen.getByText(/replacement window 2027–2031/)).toBeInTheDocument()
   })
