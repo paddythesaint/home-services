@@ -67,13 +67,17 @@ export async function fetchMemberProperties(email) {
 export async function createProperty(data, user) {
   const email = (user.email || "").toLowerCase()
   const id = genId("prop")
+  const { starterCalendar } = await import("../maintenanceIntelligence")
   store.properties[id] = {
     profile: {
       ...data,
       members: [{ email, name: user.displayName || "", role: "owner" }],
       memberEmails: [email],
     },
-    collections: {},
+    collections: {
+      // Same seeding as the real API: a year of climate-tailored rhythm.
+      careCalendar: starterCalendar(data).map((t) => ({ id: genId("cal"), ...t })),
+    },
   }
   return id
 }

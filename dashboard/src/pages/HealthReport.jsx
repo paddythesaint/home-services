@@ -10,7 +10,7 @@ import { viewFor } from "../roles"
 import { groupByTrade } from "../trades"
 import { addItem, deleteSystemDeep } from "../firestoreApi"
 import { todayLabel, todayISO, isoToLabel, addMonthsISO } from "../dates"
-import { replacementHorizon, fmtMoneyRange } from "../benchmarks"
+import { replacementHorizon, fmtMoneyRange, defaultVerifyMonths } from "../benchmarks"
 import {
   Card,
   ConditionBadge,
@@ -111,7 +111,9 @@ export default function HealthReport() {
   // its frequency, and drop a dated entry in the activity log so the history
   // accumulates rather than overwrites.
   async function logVerification(system) {
-    const freq = Number(system.verifyFrequencyMonths) || 0
+    // No hand-set cadence → the system's benchmark default applies, so
+    // verifications start a recurring rhythm without any configuration.
+    const freq = Number(system.verifyFrequencyMonths) || defaultVerifyMonths(system)
     const patch = {
       verified: true,
       verifiedOn: todayLabel(),

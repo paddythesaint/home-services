@@ -92,6 +92,21 @@ merge Forecast into Home Report; benchmark-default verification cadences;
 seed care calendar from the seasonal playbook. Census page moved off
 Tools nav → Command Center card (7/24, founder-only back office).
 
+## Slice 78 — UX cleanups 2: configuration becomes defaults (7/25/26)
+The "near-zero settings surface" pair from the customer-surface review:
+- **Cadence defaults from benchmarks**: `defaultVerifyMonths(system)` in
+  benchmarks.js (per-key table: water heaters 12, HVAC/generator/gutters/
+  softener 6, septic 36, radon 24, …). `logVerification` on the Health
+  Report falls back to it when no hand-set cadence exists — so the fill
+  session's verifications start recurring rhythms with zero configuration
+  (census showed 0 cadenced systems in production).
+- **Care calendar seeds itself**: `starterCalendar(profile)` maps the
+  climate-tailored seasonal playbook onto four anchor months (April/July/
+  October/January). `createProperty` (real + mock) seeds every new home
+  with it, and an empty calendar offers a one-tap "Add the seasonal
+  starter plan" instead of a blank grid.
+- Suite 305 green (3 new tests).
+
 ## Slice 77 — UX cleanups 1: banners off Home, one money page (7/25/26)
 First two of the approved opportunistic UX cleanups (the customer-surface
 review's demotions):

@@ -93,3 +93,24 @@ describe("fmtMoneyRange", () => {
     expect(fmtMoneyRange([500, 1200], "per window")).toBe("$500–1,200 per window")
   })
 })
+
+describe("defaultVerifyMonths (7/25 cadence defaults)", () => {
+  it("derives a cadence from the system's benchmark", async () => {
+    const { defaultVerifyMonths } = await import("../benchmarks")
+    expect(defaultVerifyMonths({ category: "Water Heater" })).toBe(12)
+    expect(defaultVerifyMonths({ category: "Standby Generator" })).toBe(6)
+    expect(defaultVerifyMonths({ category: "Septic System" })).toBe(36)
+    expect(defaultVerifyMonths({ category: "Paint & Finishes" })).toBe(0)
+  })
+})
+
+describe("starterCalendar (7/25 seeded rhythm)", () => {
+  it("spreads the climate playbook across four anchor months", async () => {
+    const { starterCalendar } = await import("../maintenanceIntelligence")
+    const tasks = starterCalendar({ areaLabel: "Charlottesville, VA 22901" })
+    const months = new Set(tasks.map((t) => t.month))
+    expect(months).toEqual(new Set(["April", "July", "October", "January"]))
+    expect(tasks.length).toBeGreaterThan(12)
+    expect(tasks.every((t) => t.task)).toBe(true)
+  })
+})

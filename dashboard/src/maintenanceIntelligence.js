@@ -89,6 +89,22 @@ export function seasonalPlan(date = new Date(), profile = null) {
   }
 }
 
+// The month each season's tasks land on when a calendar is seeded from the
+// playbook — a new home starts with a full year of sensible rhythm and the
+// owner authors nothing (7/25 UX cleanup).
+const SEASON_SEED_MONTH = { spring: "April", summer: "July", fall: "October", winter: "January" }
+
+export function starterCalendar(profile = null) {
+  const region = climateFor(profile)
+  return SEASONS.flatMap((season, si) =>
+    playbookFor(region, season).map((t, i) => ({
+      month: SEASON_SEED_MONTH[season],
+      task: t.label,
+      order: si * 100 + i,
+    }))
+  )
+}
+
 // --- Recurrence & aging --------------------------------------------------
 
 const YEAR_MS = 365 * 86_400_000

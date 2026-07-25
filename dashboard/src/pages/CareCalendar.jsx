@@ -5,6 +5,7 @@ import { useItems } from "../useItems"
 import { addItem } from "../firestoreApi"
 import { todayLabel } from "../dates"
 import { tradeForItem } from "../trades"
+import { starterCalendar } from "../maintenanceIntelligence"
 import { Card, PageHeader, Button, Modal, DynamicForm } from "../components"
 
 const THIS_YEAR = new Date().getFullYear()
@@ -29,8 +30,20 @@ const fields = [
 ]
 
 export default function CareCalendar() {
-  const { uid } = useOutletContext()
+  const { uid, profile } = useOutletContext()
   const { items, add, update, remove } = useItems(uid, "careCalendar")
+  const [seeding, setSeeding] = useState(false)
+
+  // An empty calendar offers the climate-tailored starter plan instead of a
+  // blank grid — nobody should have to author a year of maintenance rhythm.
+  async function seedStarter() {
+    setSeeding(true)
+    try {
+      for (const t of starterCalendar(profile)) await add(t)
+    } finally {
+      setSeeding(false)
+    }
+  }
   const [editing, setEditing] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [loggingJob, setLoggingJob] = useState(null) // task just marked done
@@ -50,6 +63,17 @@ export default function CareCalendar() {
         subtitle="Your seasonal maintenance schedule — add tasks month by month."
         action={<Button onClick={() => setEditing("new")}>+ Add task</Button>}
       />
+      {items.length === 0 && (
+        <Card className="mb-4">
+          <p className="text-sm text-ink-2 mb-2">
+            No care tasks yet. Start with the seasonal plan for this home's climate — a year
+            of sensible maintenance rhythm you can then tune.
+          </p>
+          <Button variant="subtle" onClick={seedStarter} disabled={seeding}>
+            {seeding ? "Adding…" : "Add the seasonal starter plan"}
+          </Button>
+        </Card>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {MONTHS.map((month) => {
           const monthItems = items.filter((i) => i.month === month)
