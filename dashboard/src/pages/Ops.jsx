@@ -17,7 +17,8 @@ import SystemStatus from "../SystemStatus"
 import {
   Card,
   PageHeader,
-  StatTile,
+  Figure,
+  FigureRow,
   UrgencyBadge,
   ConditionBadge,
   Button,
@@ -394,11 +395,19 @@ export default function Ops() {
   const attentionFeed = Object.values(attention).flat().sort((a, b) => rank(b.urgency) - rank(a.urgency))
   const allContractors = [...new Set(Object.values(contractors).flat())].sort()
 
+  // 3a voice: the page opens with what needs a human, not a department name.
+  const n = attentionFeed.length
+  const NUM_WORDS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"]
+  const headline =
+    n === 0
+      ? "Nothing needs you today."
+      : `${NUM_WORDS[n] || n} thing${n === 1 ? "" : "s"} need${n === 1 ? "s" : ""} you today.`
+
   return (
     <div>
       <PageHeader
-        title="Business"
-        subtitle="Command center for running the service — portfolio health, demand, and what needs action across every property. Internal financials and client health arrive as a separate founder-only layer."
+        title={headline}
+        clause={n === 0 ? "All quiet across the portfolio." : "Sorted by urgency."}
         action={
           founder ? (
             <Button onClick={() => setCreating(true)}>+ New property</Button>
@@ -416,22 +425,21 @@ export default function Ops() {
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 mb-4">
-            <StatTile label="Properties" value={state.list.length} sub="Under management" />
-            <StatTile
-              label="Open work"
-              value={totals.open}
-              sub={`${totals.high} high · ${totals.ready} ready · ${totals.nextVisit} next visit`}
-            />
-            <StatTile
-              label="At risk if deferred"
-              value={totals.riskCeiling > 0 ? `$${totals.riskCeiling.toLocaleString("en-US")}` : "—"}
-              sub={`${totals.clusters} issue cluster${totals.clusters === 1 ? "" : "s"}`}
-            />
-            <StatTile label="Overdue checks" value={totals.overdue} sub="SLA risk" />
-            <StatTile label="Urgent systems" value={totals.urgent} sub="Needs attention" />
-            <StatTile label="Scheduled" value={totals.scheduled} sub="Jobs in flight" />
-            <StatTile label="Completed" value={totals.completed} sub="Jobs all-time" />
+          {/* 3a business figures — five, hairline-ruled, ink rule on the lead. */}
+          <div className="mb-8">
+            <FigureRow cols={5}>
+              <Figure lead value={state.list.length} label="properties under management" />
+              <Figure
+                value={totals.open}
+                label={`open work · ${totals.high} high · ${totals.ready} ready`}
+              />
+              <Figure
+                value={totals.riskCeiling > 0 ? `$${totals.riskCeiling.toLocaleString("en-US")}` : "—"}
+                label={`at risk if deferred · ${totals.clusters} cluster${totals.clusters === 1 ? "" : "s"}`}
+              />
+              <Figure value={totals.overdue} label="overdue checks" />
+              <Figure value={totals.urgent} label="urgent systems" />
+            </FigureRow>
           </div>
 
           <div className="mb-4">
@@ -444,35 +452,44 @@ export default function Ops() {
                   high-urgency work, overdue checks, and lapsing coverage all surface here.
                 </p>
               ) : (
-                <ul className="divide-y divide-line">
+                <ul className="m-0 p-0 list-none">
+                  {/* 3a rows: dot · what · where · act. Color never alone —
+                      the badge keeps the word next to the severity dot. */}
                   {attentionFeed.map((item) => (
                     <li key={item.key}>
                       <button
                         type="button"
                         onClick={() => openAttention(item)}
-                        className="w-full py-2.5 flex items-start justify-between gap-3 text-left group"
+                        className="w-full grid grid-cols-[12px_1.9fr_1fr_auto] items-center gap-3 py-2.5 text-left border-t border-line group hover:bg-ink/[0.02]"
                       >
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-ink group-hover:text-brand-700">
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{
+                            background:
+                              item.kind === "check" || item.urgency === "high"
+                                ? "var(--color-status-critical)"
+                                : item.urgency === "medium"
+                                  ? "var(--color-status-warn)"
+                                  : "var(--color-status-idle)",
+                          }}
+                          aria-hidden="true"
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium text-ink truncate group-hover:text-brand-700">
                             {item.title}
-                          </p>
-                          <p className="text-xs text-ink-3">
-                            {item.property}
-                            {item.detail && ` · ${item.detail}`}
-                          </p>
-                        </div>
-                        <span className="shrink-0 flex items-center gap-2">
+                          </span>
+                          {item.detail && (
+                            <span className="block text-[12.5px] text-ink-3 truncate">{item.detail}</span>
+                          )}
+                        </span>
+                        <span className="text-[12.5px] text-ink-3 truncate">{item.property}</span>
+                        <span className="shrink-0 flex items-center gap-2.5">
                           {item.kind === "check" ? (
                             <ConditionBadge condition="urgent" />
                           ) : (
                             <UrgencyBadge urgency={item.urgency} />
                           )}
-                          <span
-                            className="text-ink-3 group-hover:text-brand-700"
-                            aria-hidden="true"
-                          >
-                            ›
-                          </span>
+                          <span className="text-[12.5px] text-brand-700">Open →</span>
                         </span>
                       </button>
                     </li>
