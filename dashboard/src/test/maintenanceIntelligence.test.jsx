@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest"
 import { screen, fireEvent, waitFor } from "@testing-library/react"
 import { renderPage } from "./renderPage"
-import WhatsNext from "../pages/WhatsNext"
+import PriorityList from "../pages/PriorityList"
 import { __getItems } from "../mocks/firestoreApi"
 import {
   seasonFor,
@@ -84,9 +84,9 @@ describe("recurrence & aging (pure)", () => {
   })
 })
 
-describe("What's Next proactive layer", () => {
+describe("proactive layer (merged into What's next, 7/25)", () => {
   it("shows the seasonal checklist and adds a task to the 90-day plan", async () => {
-    renderPage(<WhatsNext />)
+    renderPage(<PriorityList />)
     const seasonHeading = await screen.findByText(/This season at your home/)
     expect(seasonHeading).toBeInTheDocument()
     const addButtons = await screen.findAllByText("+ Add to plan")
@@ -98,7 +98,7 @@ describe("What's Next proactive layer", () => {
   })
 
   it("surfaces the recurring-HVAC insight from seeded job history", async () => {
-    renderPage(<WhatsNext />)
+    renderPage(<PriorityList />)
     expect(await screen.findByText("Worth a closer look")).toBeInTheDocument()
     expect(screen.getByText(/needed attention 2 times/)).toBeInTheDocument()
   })

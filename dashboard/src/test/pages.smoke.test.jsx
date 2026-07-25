@@ -16,7 +16,6 @@ import Contractors from "../pages/Contractors"
 import ImportBundle from "../pages/ImportBundle"
 import Ops from "../pages/Ops"
 import BusinessContractors from "../pages/BusinessContractors"
-import WhatsNext from "../pages/WhatsNext"
 
 describe("page smoke tests (mock data layer)", () => {
   it("Overview renders the property and its stat tiles", async () => {
@@ -36,16 +35,15 @@ describe("page smoke tests (mock data layer)", () => {
     expect(screen.getAllByText("Water Heater").length).toBeGreaterThan(0)
   })
 
-  it("What's Next merges checks, care tasks, and the 90-day queue", async () => {
-    renderPage(<WhatsNext />)
-    expect((await screen.findAllByText("What's Next")).length).toBeGreaterThan(0)
-    expect(screen.getByText(/This month/)).toBeInTheDocument()
+  it("What's next merges checks, care tasks, and the horizons", async () => {
+    renderPage(<PriorityList />)
+    expect((await screen.findAllByText(/This month/)).length).toBeGreaterThan(0)
     // The overdue radon check surfaces and links to its dossier.
     const radon = screen.getByText("Radon Mitigation")
     expect(radon.closest("a")).toHaveAttribute("href", "/system/sys-radon")
-    // July care tasks and the priority queue ride along.
+    // July care tasks ride along, and the horizons carry the queue.
     expect(screen.getByText("Flush water heater")).toBeInTheDocument()
-    expect(screen.getByText("Next 90 days")).toBeInTheDocument()
+    expect(screen.getByText("Next 30 days")).toBeInTheDocument()
   })
 
   it("Care Calendar shows seasonal tasks", async () => {

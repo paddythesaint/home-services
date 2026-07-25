@@ -62,10 +62,10 @@ const PROPERTY_NAV = [
   },
   {
     key: "plan",
-    to: "/whats-next",
+    to: "/priority-list",
     label: "The Plan",
     icon: "calendar",
-    match: ["/whats-next", "/care-calendar", "/priority-list", "/home-report"],
+    match: ["/care-calendar", "/priority-list", "/home-report"],
   },
 ]
 
