@@ -2,6 +2,7 @@ import { lazy } from "react"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import AuthGate from "./AuthGate"
 import Layout from "./Layout"
+import { ViewModeProvider } from "./components"
 
 // Every page is its own chunk — the first paint ships the shell (auth,
 // layout, Firebase core) and each page loads on first visit. Overview is
@@ -31,7 +32,8 @@ const Census = lazy(() => import("./pages/Census"))
 
 export default function App() {
   return (
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
+    <ViewModeProvider>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
       <AuthGate>
         {(user) => (
           <Routes>
@@ -64,6 +66,7 @@ export default function App() {
           </Routes>
         )}
       </AuthGate>
-    </BrowserRouter>
+      </BrowserRouter>
+    </ViewModeProvider>
   )
 }

@@ -323,7 +323,7 @@ describe("homeowner-facing 'Happening now'", () => {
       uid: "prop-ridge",
       user: { email: "alton@example.com", displayName: "Alton", uid: "u-alton" },
     })
-    expect(await screen.findByText("Happening now")).toBeInTheDocument()
+    expect(await screen.findByText("In motion")).toBeInTheDocument()
     expect(screen.getByText(/scheduled for July 12, 2026/)).toBeInTheDocument()
   })
 

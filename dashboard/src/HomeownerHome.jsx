@@ -1,22 +1,29 @@
 import { useState } from "react"
-import { Link, useOutletContext } from "react-router-dom"
+import { useOutletContext } from "react-router-dom"
 import { useItems } from "./useItems"
 import { addItem } from "./firestoreApi"
 import { todayLabel } from "./dates"
 import { isUnderway, isOpenWorkOrder } from "./workOrders"
-import { buildRecap, formatSpend } from "./valueRecap"
-import { seedAddressHint } from "./seedData"
+import { buildRecap } from "./valueRecap"
+import { businessRole } from "./roles"
 import { TEAM } from "./team"
-import hero895 from "./assets/hero-895.jpg"
-import { Card, Button, Modal } from "./components"
+import {
+  Section,
+  Row,
+  Figure,
+  FigureRow,
+  AskBar,
+  Segmented,
+  Detail,
+  ConditionMeter,
+} from "./components"
 
-// The homeowner's home screen — the calm answer to three questions:
-// is my home okay, what's happening, and how do I reach you. None of the
-// operational machinery (insight banners, verification states, stat
-// grids) renders here; that's ours, not theirs.
+// The homeowner's Overview, redesign spec section 1 (option 2a): one warm
+// surface panel that answers three questions — is my home okay, what's
+// happening, how do I reach you — with no operational machinery visible in
+// Simple. The Detailed depth (founder/staff only) adds the operator band.
+// The old "Request service" modal is gone; the ask bar is always open.
 
-// A homeowner's own request is visible from the moment they send it —
-// nothing they ask for ever disappears into a void.
 const visibleToHomeowner = (w) =>
   isUnderway(w) || (w.source === "homeowner" && isOpenWorkOrder(w))
 
@@ -27,15 +34,33 @@ function happeningLabel(w) {
   return "received — we're arranging it"
 }
 
-function statusLine(systems) {
-  if (systems.length === 0) return "We're building your home's record."
+function happeningRight(w, systems) {
+  const attention = systems.some(
+    (s) => s.condition !== "good" && w.category && s.category === w.category
+  )
+  if (attention) return { word: "Attention", tone: "warn" }
+  if (w.lane === "scheduled" || w.lane === "in-progress")
+    return { word: "Scheduled", tone: "muted" }
+  return { word: "Waiting", tone: "muted" }
+}
+
+// The headline's two clauses: the assurance in ink, the caveat de-emphasised.
+function headlineFor(systems) {
+  if (systems.length === 0)
+    return { lead: "We're building your home's record.", clause: "" }
   const urgent = systems.filter((s) => s.condition === "urgent").length
   const attention = systems.filter((s) => s.condition === "attention").length
   if (urgent > 0)
-    return `We're on it — ${urgent} item${urgent === 1 ? "" : "s"} being handled with priority.`
+    return {
+      lead: "We're on it —",
+      clause: ` ${urgent} item${urgent === 1 ? "" : "s"} being handled with priority.`,
+    }
   if (attention > 0)
-    return `Healthy overall — ${attention} item${attention === 1 ? "" : "s"} on our watch list.`
-  return "Your home is in good shape."
+    return {
+      lead: "Your home is in good shape.",
+      clause: ` ${attention} item${attention === 1 ? "" : "s"} sit${attention === 1 ? "s" : ""} on our watch list.`,
+    }
+  return { lead: "Your home is in good shape.", clause: "" }
 }
 
 export default function HomeownerHome() {
@@ -45,11 +70,11 @@ export default function HomeownerHome() {
   const { items: jobs } = useItems(uid, "jobHistory")
   const { items: visitNotes } = useItems(uid, "visitNotes")
   const { items: priorities } = useItems(uid, "priorityList")
+  const { items: contractors } = useItems(uid, "contractors")
   const latestNote = visitNotes[visitNotes.length - 1]
   const recap = buildRecap({ jobs, priorities })
 
-  const [requesting, setRequesting] = useState(false)
-  const [message, setMessage] = useState("")
+  const [askText, setAskText] = useState("")
   const [sent, setSent] = useState(false)
 
   const happening = workOrders.filter(visibleToHomeowner)
@@ -57,10 +82,39 @@ export default function HomeownerHome() {
     .filter((j) => j.status === "completed")
     .slice(-3)
     .reverse()
-  const isSeedProperty = seedAddressHint.test(profile.address || "")
 
+  const headline = headlineFor(systems)
+  const counts = systems.reduce((acc, s) => {
+    const key = s.condition || "good"
+    acc[key] = (acc[key] || 0) + 1
+    return acc
+  }, {})
+
+  // The lede: the latest visit note's first sentence, plus the open item.
+  const noteSentence = latestNote
+    ? `${(latestNote.body || "").split(/(?<=\.)\s/)[0]}`
+    : "Your team keeps this page current after every visit."
+  const watching = systems.find((s) => s.condition && s.condition !== "good")
+  const lede = watching
+    ? `${noteSentence} We're keeping an eye on the ${watching.category.toLowerCase()}.`
+    : noteSentence
+
+  // Next visit figure: the nearest scheduled work order, if any.
+  const nextVisit = workOrders.find((w) => w.lane === "scheduled" && w.scheduledFor)
+  const nextVisitValue = nextVisit
+    ? nextVisit.scheduledFor
+    : profile.nextInvoiceDate
+      ? "On call"
+      : "On call"
+  const nextVisitLabel = nextVisit
+    ? `next visit${nextVisit.contractorName ? ` · ${nextVisit.contractorName}` : ""}`
+    : "no visit needed — we'll reach out"
+
+  const prosOnCall = contractors.length || TEAM.length
+
+  // The ask bar writes exactly what the old modal wrote.
   async function sendRequest() {
-    const text = message.trim()
+    const text = askText.trim()
     if (!text) return
     await addItem(uid, "workOrders", {
       title: text.split("\n")[0].slice(0, 70),
@@ -77,198 +131,219 @@ export default function HomeownerHome() {
       scheduledFor: "",
       createdOn: todayLabel(),
     })
-    setMessage("")
-    setRequesting(false)
+    setAskText("")
     setSent(true)
   }
 
+  // The depth control belongs to founders and staff — a homeowner account
+  // never sees it (spec: Interactions & behavior).
+  const showDepth = Boolean(businessRole(user?.email))
+
   return (
-    <div>
-      {isSeedProperty ? (
-        <div className="relative rounded-2xl overflow-hidden mb-6 shadow-(--shadow-card)">
-          <img src={hero895} alt={profile.address} className="w-full h-52 md:h-72 object-cover" />
-          <div
-            className="absolute inset-0 bg-gradient-to-t from-brand-950/75 via-brand-950/15 to-transparent"
-            aria-hidden="true"
-          />
-          <div className="absolute bottom-0 left-0 right-0 p-5 md:p-7">
-            <h1 className="font-display text-2xl md:text-4xl font-semibold text-white leading-tight">
-              {profile.address}
-            </h1>
-            <p className="text-sm text-white/85 mt-1.5">{statusLine(systems)}</p>
-          </div>
-        </div>
-      ) : (
-        <div className="mb-6">
-          <h1 className="font-display text-2xl md:text-[32px] font-semibold text-ink leading-tight">
-            {profile.address}
-          </h1>
-          <p className="text-sm text-ink-2 mt-1.5">{statusLine(systems)}</p>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 flex flex-col gap-4">
-          <Card className="scroll-mt-4" data-tour="request">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="font-display text-lg font-semibold text-ink">Need anything?</h2>
-                <p className="text-sm text-ink-2 mt-1">
-                  A repair, a question, something that doesn't look right — send it over and
-                  we'll take it from there. Prefer to chat?{" "}
-                  <Link to="/assistant" className="text-brand-600 hover:text-brand-800 underline">
-                    Ask the assistant
-                  </Link>
-                  , any hour.
-                </p>
-                {sent && (
-                  <p className="text-sm font-medium text-brand-700 mt-2">
-                    Received — we'll be in touch shortly. You'll see it under "Happening now"
-                    while we arrange it.
-                  </p>
-                )}
-              </div>
-              <Button onClick={() => setRequesting(true)} className="shrink-0">
-                Request service
-              </Button>
-            </div>
-          </Card>
-
-          {latestNote && (
-            <Card>
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-3 mb-2">
-                A note from your team{latestNote.sentOn ? ` · ${latestNote.sentOn}` : ""}
-              </p>
-              <p className="text-sm text-ink-2 whitespace-pre-line">{latestNote.body}</p>
-            </Card>
-          )}
-
-          {happening.length > 0 && (
-            <Card>
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-3 mb-2">
-                Happening now
-              </p>
-              <ul className="flex flex-col gap-1.5">
-                {happening.map((w) => (
-                  <li key={w.id} className="text-sm text-ink-2">
-                    <span className="font-medium text-ink">{w.title}</span> — {happeningLabel(w)}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
-
-          {recap.hasAnything && (
-            <Card>
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-3 mb-3">
-                Your membership, the last 12 months
-              </p>
-              <div className="flex flex-wrap gap-x-8 gap-y-3">
-                <div>
-                  <p className="font-display text-2xl font-semibold text-ink leading-tight">
-                    {recap.tasksDone}
-                  </p>
-                  <p className="text-xs text-ink-3">
-                    task{recap.tasksDone === 1 ? "" : "s"} completed
-                  </p>
-                </div>
-                <div>
-                  <p className="font-display text-2xl font-semibold text-ink leading-tight">
-                    {recap.withPros}
-                  </p>
-                  <p className="text-xs text-ink-3">handled by trusted pros</p>
-                </div>
-                <div>
-                  <p className="font-display text-2xl font-semibold text-ink leading-tight">
-                    {recap.issuesResolved}
-                  </p>
-                  <p className="text-xs text-ink-3">
-                    issue{recap.issuesResolved === 1 ? "" : "s"} closed out
-                  </p>
-                </div>
-                {recap.coordinatedSpend > 0 && (
-                  <div>
-                    <p className="font-display text-2xl font-semibold text-ink leading-tight">
-                      {formatSpend(recap.coordinatedSpend)}
-                    </p>
-                    <p className="text-xs text-ink-3">of work coordinated for you</p>
-                  </div>
-                )}
-              </div>
-            </Card>
-          )}
-
-          {recentCare.length > 0 && (
-            <Card>
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-3 mb-2">
-                Recent care
-              </p>
-              <ul className="divide-y divide-line">
-                {recentCare.map((j) => (
-                  <li key={j.id} className="py-2 text-sm text-ink-2 flex justify-between gap-3">
-                    <span>
-                      <span className="font-medium text-ink">{j.title}</span>
-                      {j.date && <span className="text-ink-3"> · {j.date}</span>}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
-        </div>
-
-        <Card title="Your team" data-tour="team">
-          <ul className="flex flex-col gap-3">
-            {TEAM.map((t) => (
-              <li key={t.name}>
-                <p className="text-sm font-semibold text-ink">{t.name}</p>
-                <p className="text-xs text-ink-3">{t.title}</p>
-                <p className="text-xs mt-0.5">
-                  {t.email && (
-                    <a
-                      href={`mailto:${t.email}`}
-                      className="text-brand-600 hover:text-brand-800 underline"
-                    >
-                      {t.email}
-                    </a>
-                  )}
-                  {t.email && t.phone && " · "}
-                  {t.phone && (
-                    <a href={`tel:${t.phone}`} className="text-brand-600 hover:text-brand-800">
-                      {t.phone}
-                    </a>
-                  )}
-                </p>
-              </li>
-            ))}
-          </ul>
-          <p className="text-xs text-ink-3 mt-3 pt-3 border-t border-line">
-            Anything urgent, call or text — the button here works too, and we see it right
-            away.
-          </p>
-        </Card>
+    <div className="bg-surface border border-line-2 rounded-(--radius-panel) shadow-(--shadow-card)">
+      {/* Header strip */}
+      <div className="flex items-center justify-between gap-4 px-8 py-4 border-b border-line">
+        <p className="eyebrow m-0">{profile.address}</p>
+        {showDepth && <Segmented />}
       </div>
 
-      {requesting && (
-        <Modal title="What can we take care of?" onClose={() => setRequesting(false)}>
-          <textarea
-            autoFocus
-            rows={4}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="e.g. The kitchen disposal is jammed — hums but won't spin."
-            className="w-full border border-line rounded-xl px-3.5 py-2.5 bg-surface text-ink text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/25"
-          />
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="subtle" onClick={() => setRequesting(false)}>
-              Cancel
-            </Button>
-            <Button onClick={sendRequest} disabled={!message.trim()}>
-              Send request
-            </Button>
+      <div className="px-5 py-6 md:px-11 md:pt-10 md:pb-9">
+        {/* 1 · Headline */}
+        <h1 className="font-display m-0 text-[29px] md:text-[44px] leading-[1.1] text-ink">
+          {headline.lead}
+          {headline.clause && <span className="text-ink-4">{headline.clause}</span>}
+        </h1>
+
+        {/* 2 · Lede */}
+        <p className="m-0 mt-4 max-w-[620px] text-[14.5px] leading-[1.65] text-ink-2 text-pretty">
+          {lede}
+        </p>
+
+        {/* 3 · Condition meter */}
+        {systems.length > 0 && (
+          <div className="mt-6 max-w-[620px]">
+            <ConditionMeter counts={counts} />
           </div>
-        </Modal>
-      )}
+        )}
+
+        {/* 4 · Figure row — care given, never currency */}
+        <div className="mt-9">
+          <FigureRow>
+            <Figure lead value={recap.tasksDone} label="tasks handled for you" />
+            <Figure value={systems.length} label="systems on record" />
+            <Figure value={prosOnCall} label="trusted pros on call" />
+            <Figure value={nextVisitValue} label={nextVisitLabel} />
+          </FigureRow>
+        </div>
+
+        {/* 5 · Two-column body */}
+        <div className="mt-11 grid grid-cols-1 md:grid-cols-[1.55fr_1fr] gap-10">
+          <div className="flex flex-col gap-9">
+            <Section label="In motion" aside={happening.length ? `${happening.length}` : null}>
+              {happening.length === 0 ? (
+                <p className="m-0 text-[13.5px] text-ink-3 pt-1">
+                  Nothing in motion — all quiet.
+                </p>
+              ) : (
+                happening.map((w) => {
+                  const right = happeningRight(w, systems)
+                  return (
+                    <Row
+                      key={w.id}
+                      title={w.title}
+                      meta={happeningLabel(w)}
+                      right={right.word}
+                      tone={right.tone}
+                    />
+                  )
+                })
+              )}
+            </Section>
+
+            <Section label="Recent care">
+              {recentCare.length === 0 ? (
+                <p className="m-0 text-[13.5px] text-ink-3 pt-1">
+                  Care will show here as it happens.
+                </p>
+              ) : (
+                recentCare.map((j) => (
+                  <Row key={j.id} title={j.title} meta={[j.date, j.sub].filter(Boolean).join(" · ")} />
+                ))
+              )}
+            </Section>
+          </div>
+
+          <div className="flex flex-col gap-6">
+            <div className="bg-sunk rounded-(--radius-block) p-5" data-tour="team">
+              <p className="eyebrow m-0 mb-3.5">Your team</p>
+              <ul className="m-0 p-0 list-none flex flex-col gap-3">
+                {TEAM.map((t) => (
+                  <li key={t.name}>
+                    <p className="m-0 text-sm font-medium text-ink">{t.name}</p>
+                    <p className="m-0 text-[12.5px] text-ink-3">{t.title}</p>
+                  </li>
+                ))}
+              </ul>
+              <p className="m-0 mt-3.5 pt-3.5 border-t border-line-2 text-[12.5px] text-ink-3">
+                {latestNote?.sentOn
+                  ? `Last note from your team · ${latestNote.sentOn}`
+                  : "Anything urgent, call or text — we see it right away."}
+              </p>
+            </div>
+
+            <Section label="Membership">
+              <p className="m-0 text-sm text-ink">{profile.tier || "Member"} plan</p>
+              <p className="m-0 mt-1 text-[12.5px] text-ink-3">
+                {profile.nextInvoiceDate
+                  ? `Nothing due — next statement ${profile.nextInvoiceDate}`
+                  : "Nothing due"}
+              </p>
+            </Section>
+          </div>
+        </div>
+
+        {/* 6 · Operator band — never reaches a homeowner */}
+        <Detail>
+          <div className="mt-10 bg-[#F3F1E9] rounded-(--radius-block) px-7 py-6">
+            <div className="flex items-baseline justify-between gap-4">
+              <p className="eyebrow m-0">Operator view · not shown to the homeowner</p>
+              <span className="numeric text-[11px] text-ink-3">
+                {workOrders.length} orders · {systems.length} systems
+              </span>
+            </div>
+
+            <div className="mt-4 overflow-x-auto">
+              <div className="grid grid-cols-[1.5fr_1fr_.8fr_.7fr_.7fr] min-w-[560px]">
+                {["Order", "Pro", "Quote", "Margin", "Lane"].map((h) => (
+                  <span key={h} className="text-[10.5px] uppercase tracking-wide text-[#9A9C8E] pb-1.5">
+                    {h}
+                  </span>
+                ))}
+                {workOrders
+                  .filter((w) => w.lane !== "done" && w.lane !== "canceled")
+                  .map((w) => (
+                    <RowCells
+                      key={w.id}
+                      cells={[
+                        w.title,
+                        w.contractorName || "—",
+                        w.quoteAmount || "—",
+                        "—",
+                        w.lane,
+                      ]}
+                    />
+                  ))}
+              </div>
+            </div>
+
+            <div className="mt-6 overflow-x-auto">
+              <div className="grid grid-cols-[1.6fr_1fr_1fr_.8fr] min-w-[520px]">
+                {["System", "Installed", "Last serviced", "State"].map((h) => (
+                  <span key={h} className="text-[10.5px] uppercase tracking-wide text-[#9A9C8E] pb-1.5">
+                    {h}
+                  </span>
+                ))}
+                {systems.map((s) => (
+                  <RowCells
+                    key={s.id}
+                    cells={[
+                      s.category,
+                      s.installYear || "—",
+                      s.lastServiced || "—",
+                      <span key="state" className="inline-flex items-center gap-1.5">
+                        <span
+                          className="w-[7px] h-[7px] rounded-full"
+                          style={{
+                            background:
+                              s.condition === "urgent"
+                                ? "var(--color-status-critical)"
+                                : s.condition === "attention"
+                                  ? "var(--color-status-warn)"
+                                  : "var(--color-status-good)",
+                          }}
+                          aria-hidden="true"
+                        />
+                        {s.condition || "good"}
+                      </span>,
+                    ]}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </Detail>
+
+        {/* 7 · Ask bar — replaces the Request service modal */}
+        <div className="mt-10" data-tour="request">
+          <AskBar
+            value={askText}
+            onChange={setAskText}
+            onSend={sendRequest}
+            hint={`${TEAM.map((t) => t.name).join(" and ")} read these directly. Anything urgent, call or text — we see it right away.`}
+          />
+          {sent && (
+            <p className="m-0 mt-3 text-[13px] font-medium text-brand-700">
+              Received — you'll see it above under "In motion" while we arrange it.
+            </p>
+          )}
+        </div>
+      </div>
     </div>
+  )
+}
+
+// One body row of an operator-band table: shared top hairline, 9px rhythm.
+function RowCells({ cells }) {
+  return (
+    <>
+      {cells.map((c, i) => (
+        <span
+          key={i}
+          className="text-[12.5px] text-ink-2 py-[9px] border-t border-[#E4E0D4] pr-3 truncate"
+        >
+          {c}
+        </span>
+      ))}
+    </>
   )
 }

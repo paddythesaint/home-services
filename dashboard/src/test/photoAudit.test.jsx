@@ -57,7 +57,7 @@ describe("photo visibility and audit", () => {
     const hvacTitle = (await screen.findAllByText("HVAC")).find(
       (el) => el.closest("a")?.getAttribute("href") === "/system/sys-hvac"
     )
-    const hvacCard = hvacTitle.closest(".bg-surface")
+    const hvacCard = hvacTitle.closest(".bg-sunk")
     fireEvent.click(within(hvacCard).getByText("Delete"))
     expect(
       await screen.findByText(/Its 1 photo will be removed with it/)

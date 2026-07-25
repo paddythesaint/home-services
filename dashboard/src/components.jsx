@@ -1,39 +1,147 @@
-import { useState } from "react"
+import { createContext, useContext, useState } from "react"
 import { Link } from "react-router-dom"
 
-export function Card({ title, children, className = "", ...rest }) {
+/* Redesigned primitives. Same export names as the old components.jsx so
+   existing pages keep compiling; the look changes underneath. New primitives
+   at the bottom (Section, Row, Figure, FigureRow, Segmented, Detail, AskBar)
+   are what pages should migrate to — they replace stacked <Card> grids with
+   hairline-ruled sections. */
+
+/* ---------- view mode: Simple (homeowner) vs Detailed (operator) ---------- */
+
+const ViewMode = createContext({ mode: "simple", setMode: () => {} })
+
+export function ViewModeProvider({ children, initial = "simple" }) {
+  const [mode, setMode] = useState(initial)
+  return <ViewMode.Provider value={{ mode, setMode }}>{children}</ViewMode.Provider>
+}
+
+export const useViewMode = () => useContext(ViewMode)
+
+/** Wrap anything that must never reach a homeowner: costs, margins, lanes,
+    contractor economics. Renders only in Detailed. */
+export function Detail({ children }) {
+  return useViewMode().mode === "detailed" ? children : null
+}
+
+export function Segmented({ onPhoto = false }) {
+  const { mode, setMode } = useViewMode()
+  const track = onPhoto
+    ? "flex p-0.5 rounded-full bg-white/20 backdrop-blur-sm"
+    : "flex p-0.5 rounded-full bg-[#f0ede4]"
+  const seg = (active) => {
+    const base = "rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors"
+    if (onPhoto)
+      return `${base} ${active ? "bg-surface text-ink" : "text-white/80"}`
+    return `${base} ${active ? "bg-white text-ink shadow-(--shadow-pill)" : "text-ink-3"}`
+  }
   return (
-    <div
-      className={`bg-surface border border-line rounded-2xl p-5 md:p-6 shadow-(--shadow-card) ${className}`}
-      {...rest}
-    >
-      {title && (
-        <h2 className="text-[15px] font-semibold text-ink mb-3.5 tracking-tight">{title}</h2>
-      )}
-      {children}
+    <div className={track} role="group" aria-label="Level of detail">
+      <button type="button" className={seg(mode === "simple")} onClick={() => setMode("simple")}>
+        Simple
+      </button>
+      <button type="button" className={seg(mode === "detailed")} onClick={() => setMode("detailed")}>
+        Detailed
+      </button>
     </div>
   )
 }
 
-// Status chips: a colored dot carries the state, the label stays in ink —
-// per the status-palette rule, color never carries meaning alone.
-function StatusChip({ color, children }) {
+/* ---------- structure ---------- */
+
+/** A titled band of content separated by rules, not a floating card.
+    Use this instead of <Card> for everything on a page surface. */
+export function Section({ label, aside, children, className = "" }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-2 whitespace-nowrap">
-      <span
-        className="w-2 h-2 rounded-full shrink-0"
-        style={{ background: color }}
-        aria-hidden="true"
-      />
-      {children}
-    </span>
+    <section className={className}>
+      {(label || aside) && (
+        <div className="flex items-baseline justify-between gap-4">
+          {label && <p className="eyebrow m-0">{label}</p>}
+          {aside && <span className="text-xs text-ink-3">{aside}</span>}
+        </div>
+      )}
+      <div className="mt-3.5">{children}</div>
+    </section>
   )
 }
+
+/** One hairline-ruled list row. `meta` is the muted second line, `right` the
+    status word. Rows share a top border; the list closes itself. */
+export function Row({ title, meta, right, tone = "muted", to }) {
+  const toneClass = {
+    muted: "text-ink-2",
+    warn: "text-status-warn",
+    critical: "text-status-critical",
+  }[tone]
+  const body = (
+    <div className="flex justify-between gap-5 py-3.5 border-t border-line last:border-b">
+      <div>
+        <p className="m-0 text-[14.5px] font-medium text-ink">{title}</p>
+        {meta && <p className="m-0 mt-0.5 text-[12.5px] text-ink-3">{meta}</p>}
+      </div>
+      {right && <span className={`text-[12.5px] whitespace-nowrap pt-0.5 ${toneClass}`}>{right}</span>}
+    </div>
+  )
+  return to ? <Link to={to} className="block hover:bg-ink/[0.02]">{body}</Link> : body
+}
+
+/** A single figure. First one in a row gets `lead` for the ink-weight rule. */
+export function Figure({ value, label, lead = false }) {
+  return (
+    <div className={`pt-3 border-t ${lead ? "border-rule" : "border-line-2"}`}>
+      <p className="font-display m-0 text-[32px] leading-none text-ink whitespace-nowrap">{value}</p>
+      <p className="m-0 mt-1.5 text-xs text-ink-3">{label}</p>
+    </div>
+  )
+}
+
+export function FigureRow({ children, cols = 4 }) {
+  // Static class map — Tailwind can't see template-literal class names.
+  const colClass = { 3: "md:grid-cols-3", 4: "md:grid-cols-4", 5: "md:grid-cols-5" }[cols] || "md:grid-cols-4"
+  return <div className={`grid grid-cols-2 ${colClass} gap-x-7 gap-y-5`}>{children}</div>
+}
+
+/** The always-open request field. Replaces the "Request service" modal —
+    a homeowner should never meet a dialog to ask for help. */
+export function AskBar({ value, onChange, onSend, hint }) {
+  return (
+    <div>
+      <div className="flex items-center gap-3.5 pl-5 p-2 bg-field border border-line-2 rounded-2xl">
+        <span className="w-2 h-2 rounded-full bg-status-good shrink-0" aria-hidden="true" />
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Something need attention? Tell Sally — she reads these directly."
+          className="flex-1 bg-transparent text-[14.5px] text-ink placeholder:text-ink-4 focus:outline-none"
+        />
+        <button
+          type="button"
+          onClick={onSend}
+          className="bg-brand-700 text-surface rounded-(--radius-control) px-5 py-2.5 text-[13.5px] font-medium hover:bg-brand-900"
+        >
+          Send
+        </button>
+      </div>
+      {hint && <p className="m-0 mt-3 ml-0.5 text-xs text-ink-4">{hint}</p>}
+    </div>
+  )
+}
+
+/* ---------- status ---------- */
 
 export const CONDITION_META = {
   good: { label: "Good", color: "var(--color-status-good)" },
   attention: { label: "Attention", color: "var(--color-status-warn)" },
   urgent: { label: "Urgent", color: "var(--color-status-critical)" },
+}
+
+function StatusChip({ color, children }) {
+  return (
+    <span className="inline-flex items-center gap-[7px] text-[12.5px] text-ink-2 whitespace-nowrap">
+      <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ background: color }} aria-hidden="true" />
+      {children}
+    </span>
+  )
 }
 
 export function ConditionBadge({ condition }) {
@@ -54,7 +162,7 @@ export function UrgencyBadge({ urgency }) {
 
 const JOB_STATUS_META = {
   completed: { label: "Completed", color: "var(--color-status-good)" },
-  scheduled: { label: "Scheduled", color: "var(--color-ink-3)" },
+  scheduled: { label: "Scheduled", color: "var(--color-status-idle)" },
 }
 
 export function StatusBadge({ status }) {
@@ -64,69 +172,27 @@ export function StatusBadge({ status }) {
 
 export function VerifiedBadge({ verified }) {
   return verified ? (
-    <span className="inline-flex items-center gap-1 text-xs font-medium text-ink-2 whitespace-nowrap">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M20 6L9 17l-5-5" stroke="var(--color-status-good)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-      Verified
-    </span>
+    <StatusChip color="var(--color-status-good)">Verified</StatusChip>
   ) : (
-    <span className="text-xs font-medium text-ink-3 whitespace-nowrap">Unverified</span>
+    <span className="text-[12.5px] text-ink-3 whitespace-nowrap">Unverified</span>
   )
 }
 
-// Stat tile per the dataviz figure contract: sentence-case label,
-// semibold value, optional secondary line. Values stay proportional-figure.
-// Pass `to` to make the number a door — the whole tile links through to
-// the page that explains it.
-export function StatTile({ label, value, sub, to }) {
-  const body = (
-    <>
-      <p className="text-xs font-medium text-ink-2">{label}</p>
-      <p className="font-display text-[28px] font-semibold text-ink mt-1 leading-tight">{value}</p>
-      {sub && <p className="text-xs text-ink-3 mt-1">{sub}</p>}
-    </>
-  )
-  const frame = "bg-surface border border-line rounded-2xl p-4 md:p-5 shadow-(--shadow-card)"
-  if (to) {
-    return (
-      <Link
-        to={to}
-        className={`${frame} block hover:border-brand-400 hover:shadow-md transition-shadow`}
-        aria-label={`${label}: open`}
-      >
-        {body}
-      </Link>
-    )
-  }
-  return <div className={frame}>{body}</div>
-}
-
-// Horizontal segmented meter of system conditions. Status colors carry the
-// fill; the legend row beneath (dot + label + count in ink) is the identity
-// channel, so the bar is never read by color alone. 2px surface gaps.
+/** Two-segment health bar. Legend below carries identity; 2px gaps. */
 export function ConditionMeter({ counts }) {
   const entries = ["good", "attention", "urgent"]
     .map((key) => ({ key, ...CONDITION_META[key], count: counts[key] || 0 }))
     .filter((e) => e.count > 0)
   const total = entries.reduce((sum, e) => sum + e.count, 0)
-
-  if (total === 0) {
-    return <p className="text-sm text-ink-3">No systems recorded yet.</p>
-  }
-
+  if (total === 0) return <p className="text-sm text-ink-3">No systems recorded yet.</p>
   return (
     <div>
-      <div className="flex h-2.5 rounded-full overflow-hidden gap-[2px] bg-surface">
+      <div className="flex h-2 gap-[2px] rounded-full overflow-hidden">
         {entries.map((e) => (
-          <div
-            key={e.key}
-            style={{ width: `${(e.count / total) * 100}%`, background: e.color }}
-            className="first:rounded-l-full last:rounded-r-full"
-          />
+          <div key={e.key} style={{ flex: e.count, background: e.color }} />
         ))}
       </div>
-      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2.5">
+      <div className="flex flex-wrap gap-x-5 gap-y-1 mt-2.5">
         {entries.map((e) => (
           <StatusChip key={e.key} color={e.color}>
             {e.label} · {e.count}
@@ -137,30 +203,63 @@ export function ConditionMeter({ counts }) {
   )
 }
 
-export function PageHeader({ title, subtitle, action }) {
+/* ---------- page furniture ---------- */
+
+/** The page's opening sentence. Pass `clause` for the de-emphasised half:
+    "Your home is in good shape." + " One item sits on our watch list." */
+export function PageHeader({ title, clause, subtitle, action }) {
   return (
-    <div className="mb-6 flex items-start justify-between gap-4">
-      <div>
-        <h1 className="font-display text-2xl md:text-[32px] font-semibold text-ink leading-tight">{title}</h1>
-        {subtitle && <p className="text-sm text-ink-2 mt-1.5">{subtitle}</p>}
+    <div className="mb-8 flex items-start justify-between gap-6">
+      <div className="max-w-[620px]">
+        <h1 className="font-display m-0 text-[32px] md:text-[44px] leading-[1.1] text-ink">
+          {title}
+          {clause && <span className="text-ink-4"> {clause}</span>}
+        </h1>
+        {subtitle && <p className="m-0 mt-4 text-[14.5px] leading-[1.65] text-ink-2 text-pretty">{subtitle}</p>}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
   )
 }
 
+/** Kept for pages not yet migrated. Now a quiet tinted block, not a
+    white floating card — prefer <Section>. */
+export function Card({ title, children, className = "", ...rest }) {
+  return (
+    <div className={`bg-sunk rounded-(--radius-block) p-5 md:p-6 ${className}`} {...rest}>
+      {title && <p className="eyebrow m-0 mb-3.5">{title}</p>}
+      {children}
+    </div>
+  )
+}
+
+export function StatTile({ label, value, sub, to }) {
+  // Label and sub stay separate text nodes (pages and tests address them
+  // individually); visually they read as the Figure's single caption line.
+  const body = (
+    <div className="pt-3 border-t border-line-2">
+      <p className="font-display m-0 text-[32px] leading-none text-ink whitespace-nowrap">{value}</p>
+      <p className="m-0 mt-1.5 text-xs text-ink-3">
+        <span>{label}</span>
+        {sub && <span className="text-ink-4"> · {sub}</span>}
+      </p>
+    </div>
+  )
+  return to ? <Link to={to} className="block hover:opacity-70 transition-opacity">{body}</Link> : body
+}
+
 export function Button({ children, variant = "primary", className = "", ...props }) {
   const variants = {
-    primary:
-      "bg-brand-700 text-white shadow-(--shadow-card) hover:bg-brand-800 hover:shadow-(--shadow-raised)",
-    subtle: "bg-brand-100 text-brand-900 hover:bg-brand-200",
+    primary: "bg-brand-700 text-surface hover:bg-brand-900",
+    subtle: "bg-brand-100 text-brand-900 hover:bg-sunk",
     ghost: "text-ink-2 hover:text-ink hover:bg-ink/5",
+    outline: "border border-line-2 text-ink-2 hover:border-ink-3",
     danger: "text-status-critical hover:bg-status-critical/10",
   }
   return (
     <button
       type="button"
-      className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-plane disabled:opacity-50 disabled:pointer-events-none ${variants[variant]} ${className}`}
+      className={`rounded-(--radius-control) px-5 py-2.5 text-[13.5px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-50 disabled:pointer-events-none ${variants[variant]} ${className}`}
       {...props}
     >
       {children}
@@ -168,18 +267,15 @@ export function Button({ children, variant = "primary", className = "", ...props
   )
 }
 
+/** Only for destructive confirmation and true detours. Anything a homeowner
+    initiates should be inline (see AskBar). */
 export function Modal({ title, onClose, children }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-950/40 backdrop-blur-[2px] p-4">
-      <div className="bg-surface rounded-2xl shadow-(--shadow-raised) w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-900/40 backdrop-blur-[2px] p-4">
+      <div className="bg-surface rounded-(--radius-panel) shadow-(--shadow-raised) w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-line">
-          <h2 className="font-display text-lg font-semibold text-ink">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="text-ink-3 hover:text-ink text-xl leading-none"
-          >
+          <h2 className="font-display m-0 text-lg text-ink">{title}</h2>
+          <button type="button" onClick={onClose} aria-label="Close" className="text-ink-3 hover:text-ink text-xl leading-none">
             &times;
           </button>
         </div>
@@ -197,14 +293,9 @@ export function DynamicForm({ fields, initialValues = {}, onSubmit, submitLabel 
     })
     return defaults
   })
-
-  function handleChange(name, value) {
-    setValues((v) => ({ ...v, [name]: value }))
-  }
-
+  const set = (name, value) => setValues((v) => ({ ...v, [name]: value }))
   const inputClass =
-    "border border-line rounded-xl px-3.5 py-2.5 bg-surface text-ink transition-shadow focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/25"
-
+    "border border-line-2 rounded-(--radius-control) px-3.5 py-2.5 bg-field text-ink focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
   return (
     <form
       className="flex flex-col gap-4"
@@ -215,13 +306,9 @@ export function DynamicForm({ fields, initialValues = {}, onSubmit, submitLabel 
     >
       {fields.map((field) => (
         <label key={field.name} className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-ink-2">{field.label}</span>
+          <span className="text-[12.5px] text-ink-2">{field.label}</span>
           {field.type === "select" ? (
-            <select
-              className={inputClass}
-              value={values[field.name]}
-              onChange={(e) => handleChange(field.name, e.target.value)}
-            >
+            <select className={inputClass} value={values[field.name]} onChange={(e) => set(field.name, e.target.value)}>
               {field.options.map((opt) => (
                 <option key={opt} value={opt}>
                   {field.optionLabels ? field.optionLabels[opt] : opt}
@@ -229,38 +316,20 @@ export function DynamicForm({ fields, initialValues = {}, onSubmit, submitLabel 
               ))}
             </select>
           ) : field.type === "textarea" ? (
-            <textarea
-              className={inputClass}
-              rows={3}
-              value={values[field.name]}
-              onChange={(e) => handleChange(field.name, e.target.value)}
-            />
+            <textarea className={inputClass} rows={3} value={values[field.name]} onChange={(e) => set(field.name, e.target.value)} />
           ) : (
             <input
-              type={
-                field.type === "number"
-                  ? "number"
-                  : field.type === "date"
-                    ? "date"
-                    : "text"
-              }
+              type={field.type === "number" ? "number" : field.type === "date" ? "date" : "text"}
               className={inputClass}
               value={values[field.name]}
-              onChange={(e) =>
-                handleChange(
-                  field.name,
-                  field.type === "number" ? Number(e.target.value) : e.target.value
-                )
-              }
+              onChange={(e) => set(field.name, field.type === "number" ? Number(e.target.value) : e.target.value)}
               placeholder={field.placeholder}
             />
           )}
         </label>
       ))}
       <div className="flex justify-end gap-2 pt-2">
-        <Button type="submit" variant="primary">
-          {submitLabel}
-        </Button>
+        <Button type="submit">{submitLabel}</Button>
       </div>
     </form>
   )

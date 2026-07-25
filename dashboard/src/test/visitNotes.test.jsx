@@ -23,7 +23,7 @@ describe("composeVisitNote", () => {
     expect(note).toContain("Capacitor replacement (June 24, 2026) — $310")
     expect(note).not.toContain("Old thing") // outside the 21-day window
     expect(note).toContain("Gutter guards — July 12, 2026")
-    expect(note).toContain("Sally & Paddy")
+    expect(note).toContain("Sally & Patrick")
   })
 
   it("falls back to the last few completed jobs when nothing is recent", () => {
@@ -65,7 +65,8 @@ describe("visit note flow", () => {
       sentOn: "July 3, 2026",
     })
     renderPage(<Overview />, { uid: "prop-ridge", user: ALTON })
-    expect(await screen.findByText(/A note from your team · July 3, 2026/)).toBeInTheDocument()
+    // 2a: the note's words become the page's lede; the team block dates it.
+    expect(await screen.findByText(/Last note from your team · July 3, 2026/)).toBeInTheDocument()
     expect(screen.getByText(/heat pump serviced and humming/)).toBeInTheDocument()
   })
 })
