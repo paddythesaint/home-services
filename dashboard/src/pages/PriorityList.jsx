@@ -10,6 +10,8 @@ import { suggestRequirements } from "../requirementSuggestions"
 import { groupByTrade, tradeForItem } from "../trades"
 import { findDuplicates } from "../issuePlaybook"
 import IssueInsights from "../IssueInsights"
+
+const W4C = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"]
 import {
   RESOLUTION_PATHS,
   PATH_META,
@@ -33,6 +35,7 @@ import {
   Button,
   Modal,
   DynamicForm,
+  Detail,
 } from "../components"
 
 const fields = [
@@ -497,24 +500,69 @@ export default function PriorityList() {
     <div>
       <PlanTabs />
       <PageHeader
-        title="90-Day Priorities"
-        subtitle="Ranked recommendations — and for each one, what's needed to close it out and how it gets done."
+        title={
+          openItems.filter((i) => i.urgency === "high").length > 0
+            ? `${W4C[openItems.filter((i) => i.urgency === "high").length] || openItems.filter((i) => i.urgency === "high").length} thing${openItems.filter((i) => i.urgency === "high").length === 1 ? "" : "s"} this week.`
+            : "Nothing urgent this week."
+        }
+        clause={
+          openItems.length > 0
+            ? "No decision is needed from you — we bring each one when it's ready."
+            : "The list is clear."
+        }
+        subtitle="What we're lining up for this home, in the order it matters. Anything here can be asked about in the assistant; nothing moves without you seeing it."
         action={<Button onClick={() => setEditing("new")}>+ Add item</Button>}
       />
 
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        <StatTile label="Open" value={counts.open} sub="Next 90 days" />
-        <StatTile
-          label="Ready to action"
-          value={counts.ready}
-          sub="Nothing missing to close"
-        />
-        <StatTile
-          label="Next visit closes"
-          value={counts.nextVisit}
-          sub="Batched on the subscription"
-        />
-      </div>
+      {/* 4c: three horizons, headed by rules — this week / 30 days / radar. */}
+      {openItems.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6 mb-10">
+          {[
+            ["This week", openItems.filter((i) => i.urgency === "high")],
+            ["Next 30 days", openItems.filter((i) => (i.urgency || "medium") === "medium")],
+            ["On our radar", openItems.filter((i) => i.urgency === "low")],
+          ].map(([label, list], idx) => (
+            <div key={label} className={`pt-2.5 border-t ${idx === 0 ? "border-rule" : "border-line-2"}`}>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-[13px] font-medium text-ink">{label}</span>
+                <span className="numeric text-[11px] text-ink-3">{list.length}</span>
+              </div>
+              <ul className="m-0 mt-3 p-0 list-none flex flex-col gap-3.5">
+                {list.length === 0 && <li className="text-[12.5px] text-ink-4">Nothing here.</li>}
+                {list.map((i) => (
+                  <li key={`c4-${i.id}`}>
+                    <span className="flex items-start gap-2">
+                      <span
+                        className="w-[7px] h-[7px] rounded-full mt-[5px] shrink-0"
+                        style={{
+                          background:
+                            i.urgency === "high"
+                              ? "var(--color-status-critical)"
+                              : i.urgency === "low"
+                                ? "var(--color-status-good)"
+                                : "var(--color-status-warn)",
+                        }}
+                        aria-hidden="true"
+                      />
+                      <span className="text-sm font-medium text-ink leading-tight">{i.title}</span>
+                    </span>
+                    {i.reason && (
+                      <p className="m-0 mt-1 ml-[15px] text-[13px] leading-[1.55] text-ink-2">
+                        {i.reason}
+                      </p>
+                    )}
+                    <Detail>
+                      <p className="numeric m-0 mt-1 ml-[15px] text-[10.5px] text-ink-3">
+                        {[i.estCost, i.category].filter(Boolean).join(" · ") || "no estimate yet"}
+                      </p>
+                    </Detail>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
 
       {viewFor(user?.email).staff &&
         (() => {

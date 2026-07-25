@@ -156,13 +156,18 @@ describe("doors and lenses", () => {
     renderPage(<PriorityList />)
     // The low-urgency caulk item lives only in the main list (not the visit
     // manifest or a quote bundle), so it's an unambiguous probe.
-    expect(await screen.findByText("Re-caulk master bath shower")).toBeInTheDocument()
+    // The caulk item renders in the 4c horizon columns AND the working list.
+    const caulkCount = (await screen.findAllByText("Re-caulk master bath shower")).length
     fireEvent.click(screen.getByRole("button", { name: /^High/ }))
+    // Filtering to High drops it from the working list; the "On our radar"
+    // horizon column deliberately keeps showing every horizon.
     await waitFor(() =>
-      expect(screen.queryByText("Re-caulk master bath shower")).not.toBeInTheDocument()
+      expect(screen.getAllByText("Re-caulk master bath shower").length).toBeLessThan(caulkCount)
     )
     fireEvent.click(screen.getByRole("button", { name: /^Low/ }))
-    expect(await screen.findByText("Re-caulk master bath shower")).toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.getAllByText("Re-caulk master bath shower").length).toBe(caulkCount)
+    )
   })
 
   it("Job History groups by system on demand", async () => {
