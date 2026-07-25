@@ -92,6 +92,17 @@ merge Forecast into Home Report; benchmark-default verification cadences;
 seed care calendar from the seasonal playbook. Census page moved off
 Tools nav → Command Center card (7/24, founder-only back office).
 
+## Slice 79 — UX cleanups 3: work-order drawer tabs (7/25/26)
+The drawer restructure flagged since quote pack v2 made it three scrolls
+long: two tabs now separate the read from the doing — **Overview** (age,
+the client's words, AI briefing, workflow status) and **Quotes** (request
+pack with photos/print/copy/combine + received-quote comparison, with a
+count badge on the tab). Tab resets to Overview when switching orders.
+All quote-flow tests updated with a tab click; suite 305 green; verified
+on a 390px viewport.
+
+This closes the five approved opportunistic UX cleanups (Slices 77–79).
+
 ## Slice 78 — UX cleanups 2: configuration becomes defaults (7/25/26)
 The "near-zero settings surface" pair from the customer-surface review:
 - **Cadence defaults from benchmarks**: `defaultVerifyMonths(system)` in

@@ -195,10 +195,15 @@ describe("Work order detail drawer", () => {
     expect(linked).toHaveAttribute("href", "/contractor-network/net-blueridge")
   })
 
+  // The quote machinery lives on the drawer's Quotes tab since Slice 79.
+  const openQuotesTab = async () =>
+    fireEvent.click(await screen.findByRole("tab", { name: /Quotes/ }))
+
   it("offers a quote-request pack with the trade-matched contractor pre-filled", async () => {
     renderPage(<WorkOrders />)
     // The gutter order is Exterior; Blue Ridge Gutter is the matching trade.
     fireEvent.click(await screen.findByText("Gutter guards on rear roofline"))
+    await openQuotesTab()
     expect(await screen.findByText(/^Request a quote/)).toBeInTheDocument()
     const draft = (await screen.findAllByText(/Draft/))
       .map((el) => el.closest("a"))
@@ -210,6 +215,7 @@ describe("Work order detail drawer", () => {
   it("logs received quotes on an order and picks a winner", async () => {
     renderPage(<WorkOrders />)
     fireEvent.click(await screen.findByText("Gutter guards on rear roofline"))
+    await openQuotesTab()
     await screen.findByText(/Quotes received/)
     fireEvent.change(screen.getByPlaceholderText("Contractor"), { target: { value: "Blue Ridge" } })
     fireEvent.change(screen.getByPlaceholderText("$ amount"), { target: { value: "$1,800" } })
@@ -230,6 +236,7 @@ describe("Work order detail drawer", () => {
   it("offers filed photos to attach and logs the outbound send", async () => {
     renderPage(<WorkOrders />)
     fireEvent.click(await screen.findByText("Gutter guards on rear roofline"))
+    await openQuotesTab()
     // The seeded water-pump nameplate photo is offered as an attachment.
     expect(await screen.findByText(/pump-nameplate.jpg/)).toBeInTheDocument()
     // Copying the request stamps the outbound log and flips quote → requested…
@@ -259,6 +266,7 @@ describe("Work order detail drawer", () => {
     })
     renderPage(<WorkOrders />)
     fireEvent.click(await screen.findByText("Replace hall bath fan motor"))
+    await openQuotesTab()
 
     // The combine selector offers the same-trade priority as a suggestion.
     expect(await screen.findByText("Service the return-air filter")).toBeInTheDocument()

@@ -60,6 +60,9 @@ function WorkOrderDrawer({
   onAdvance,
 }) {
   const [briefing, setBriefing] = useState("idle") // idle | loading | error
+  // The drawer grew past one scroll with quote pack v2 — two tabs keep the
+  // read (what/why/status) apart from the doing (quotes in and out).
+  const [tab, setTab] = useState("overview") // overview | quotes
   const [copied, setCopied] = useState(false)
   const [priorities, setPriorities] = useState([])
   const [documents, setDocuments] = useState([])
@@ -100,6 +103,7 @@ function WorkOrderDrawer({
     let active = true
     setPicked(new Set())
     setPickedPhotos(new Set())
+    setTab("overview")
     fetchItems(w.propertyId, "priorityList")
       .then((list) => active && setPriorities(list))
       .catch(() => {})
@@ -230,7 +234,31 @@ function WorkOrderDrawer({
           </button>
         </div>
 
+        <div className="shrink-0 flex gap-1 px-5 border-b border-line" role="tablist">
+          {[
+            ["overview", "Overview"],
+            ["quotes", `Quotes${quotes.length > 0 ? ` (${quotes.length})` : ""}`],
+          ].map(([k, label]) => (
+            <button
+              key={k}
+              type="button"
+              role="tab"
+              aria-selected={tab === k}
+              onClick={() => setTab(k)}
+              className={`px-3 py-2.5 text-sm font-medium border-b-2 -mb-px ${
+                tab === k
+                  ? "border-brand-600 text-ink"
+                  : "border-transparent text-ink-3 hover:text-ink"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-5">
+          {tab === "overview" && (
+            <>
           <p className="text-xs text-ink-2">{ageSummary(w)}</p>
 
           <section>
@@ -292,7 +320,11 @@ function WorkOrderDrawer({
               </div>
             )}
           </section>
+            </>
+          )}
 
+          {tab === "quotes" && (
+            <>
           <section>
             <div className="flex items-center justify-between gap-2 mb-1.5">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-3">
@@ -513,7 +545,10 @@ function WorkOrderDrawer({
               </button>
             </div>
           </section>
+            </>
+          )}
 
+          {tab === "overview" && (
           <section>
             <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-3 mb-1.5">
               Workflow
@@ -553,6 +588,7 @@ function WorkOrderDrawer({
               )}
             </dl>
           </section>
+          )}
         </div>
 
         <div className="shrink-0 border-t border-line px-5 py-3 flex items-center gap-3">
