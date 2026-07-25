@@ -1,0 +1,99 @@
+@import "@fontsource-variable/newsreader";
+@import "@fontsource-variable/instrument-sans";
+@import "@fontsource/jetbrains-mono";
+@import "tailwindcss";
+
+/* Redesign theme — replaces the previous Inter/Fraunces + white-card system.
+   Aesthetic: warm paper, deep forest ink, hairline rules instead of cards.
+   npm i @fontsource-variable/newsreader @fontsource-variable/instrument-sans @fontsource/jetbrains-mono */
+
+@theme {
+  --font-sans: "Instrument Sans Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Newsreader Variable", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Surfaces — warm paper, not white */
+  --color-plane: #eae7de;   /* app background */
+  --color-surface: #fcfbf7; /* panel / page surface */
+  --color-sunk: #f2f0e7;    /* rails, tinted blocks */
+  --color-sunk-2: #f7f5ee;  /* footers, ask bar */
+  --color-field: #ffffff;   /* inputs */
+
+  /* Ink */
+  --color-ink: #1c1e18;
+  --color-ink-2: #5a5e50;
+  --color-ink-3: #8d9081;
+  --color-ink-4: #a8a79a;   /* de-emphasised clause inside a headline */
+
+  /* Rules — two weights only: hairline and emphasis */
+  --color-line: #efebe0;    /* row hairline */
+  --color-line-2: #e0dcd0;  /* panel border, table hairline */
+  --color-rule: #1c1e18;    /* first column of a figure row */
+
+  /* Brand greens — chrome and identity only, never data */
+  --color-brand-900: #1a291f;
+  --color-brand-700: #24382b;
+  --color-brand-500: #3f6b4a;
+  --color-brand-100: #e9ede4;
+
+  /* Status — dot + label always, never colour alone */
+  --color-status-good: #4a7a55;
+  --color-status-warn: #a8701f;
+  --color-status-critical: #9e3b2c;
+  --color-status-idle: #c9c6b8;
+
+  /* Elevation — one card shadow, one raised. Panels mostly rely on borders. */
+  --shadow-card: 0 1px 2px rgba(28, 30, 24, 0.04), 0 12px 32px -18px rgba(28, 30, 24, 0.18);
+  --shadow-raised: 0 2px 4px rgba(28, 30, 24, 0.06), 0 16px 40px -16px rgba(28, 30, 24, 0.22);
+  --shadow-pill: 0 1px 2px rgba(28, 30, 24, 0.08);
+
+  --radius-panel: 18px;
+  --radius-block: 14px;
+  --radius-control: 12px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--color-plane);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Display: Newsreader at a moderate optical size, near-book weight.
+   Headlines are NOT bold in this system — size and serif carry them. */
+.font-display {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 32;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Section eyebrow: the only place uppercase tracking is used. */
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+/* Data figures and timestamps take the mono face at 10.5–11.5px. */
+.numeric {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+a {
+  color: var(--color-brand-700);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--color-brand-500);
+}

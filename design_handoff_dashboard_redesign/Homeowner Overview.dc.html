@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #EAE7DE; font-family: "Instrument Sans", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  * { box-sizing: border-box; }
+  a { color: #24382B; text-decoration: none; }
+  a:hover { color: #3F6B4A; }
+  button { font: inherit; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 14px 56px; background: rgba(234,231,222,0.92); backdrop-filter: blur(8px); border-bottom: 1px solid #DCD8CB">
+  <div style="display: flex; align-items: center; gap: 16px">
+    <span style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #8D9081">Viewing as</span>
+    <div style="display: flex; padding: 2px; background: #F0EDE4; border-radius: 999px; border: 1px solid #E0DCD0">
+      <button onClick="{{ viewFounder }}" style="{{ vSegFounder }}">Founder</button>
+      <button onClick="{{ viewOwner }}" style="{{ vSegOwner }}">Homeowner</button>
+    </div>
+    <span style="font-size: 12.5px; color: #8D9081">{{ viewerNote }}</span>
+  </div>
+  <span style="font-size: 12px; color: #A8A79A">Explorations from turn 1 stay below, unfiltered</span>
+</div>
+
+<section style="padding: 56px 56px 40px; display: flex; flex-direction: column; gap: 40px">
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 40px">
+    <div style="max-width: 720px; display: flex; flex-direction: column; gap: 10px">
+      <p style="margin: 0; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #8D9081">Turn 4 · The remaining pages</p>
+      <h1 style="margin: 0; font-family: Newsreader, serif; font-size: 38px; font-weight: 400; color: #1C1E18; line-height: 1.15">Health, Calendar, Priorities, History</h1>
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #5A5E50; text-wrap: pretty">The same system carried across the four remaining homeowner pages: one editorial sentence at the top, hairline rows, mono for dates and data, money only in Detailed. One switch drives all four.</p>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding-bottom: 4px">
+      <span style="font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">Depth</span>
+      <div style="display: flex; padding: 2px; background: #F0EDE4; border-radius: 999px; border: 1px solid #E0DCD0">
+        <button onClick="{{ eSimple }}" style="{{ eSegOff }}">Simple</button>
+        <button onClick="{{ eDetailed }}" style="{{ eSegOn }}">Detailed</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="4a" style="display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 8px; border-radius: 6px; background: #24382B; color: #F5F3ED">4a</span>
+      <h2 style="margin: 0; font-family: Newsreader, serif; font-size: 24px; font-weight: 400; color: #1C1E18">Health of the house</h2>
+      <p style="margin: 0; font-size: 13px; color: #8D9081">Nine systems, each one a sentence you can read in passing.</p>
+    </div>
+    <div style="width: 880px; flex-shrink: 0; background: #FCFBF7; border: 1px solid #E0DCD0; border-radius: 18px; padding: 38px 44px 36px; box-shadow: 0 1px 2px rgba(28,30,24,0.04), 0 12px 32px -18px rgba(28,30,24,0.18)">
+      <h3 style="margin: 0; font-family: Newsreader, serif; font-size: 38px; font-weight: 400; line-height: 1.12; color: #1C1E18">Eight systems are behaving.<span style="color: #A8A79A"> One needs a service contract.</span></h3>
+      <p style="margin: 16px 0 0; font-size: 14.5px; line-height: 1.65; color: #5A5E50; max-width: 600px">Everything here comes from what we've seen with our own eyes, your 2021 closing package, and the March energy audit. Nothing is guessed.</p>
+
+      <div style="margin-top: 28px; max-width: 600px">
+        <div style="display: flex; height: 8px; gap: 2px; border-radius: 999px; overflow: hidden">
+          <div style="flex: 8; background: #4A7A55"></div>
+          <div style="flex: 1; background: #A8701F"></div>
+        </div>
+        <div style="margin-top: 10px; display: flex; gap: 22px">
+          <span style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #5A5E50"><span style="width: 7px; height: 7px; border-radius: 999px; background: #4A7A55"></span>Good · 8</span>
+          <span style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #5A5E50"><span style="width: 7px; height: 7px; border-radius: 999px; background: #A8701F"></span>Attention · 1</span>
+        </div>
+      </div>
+
+      <p style="margin: 36px 0 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">Every system</p>
+      <div style="margin-top: 14px">
+        <div style="display: grid; grid-template-columns: 12px 1fr 118px; align-items: baseline; gap: 16px; padding: 15px 0; border-top: 1px solid #EFEBE0">
+          <span style="width: 8px; height: 8px; border-radius: 999px; background: #A8701F; margin-top: 6px"></span>
+          <div>
+            <p style="margin: 0; font-size: 15px; font-weight: 500; color: #1C1E18">Radon mitigation</p>
+            <p style="margin: 4px 0 0; font-size: 13.5px; line-height: 1.55; color: #5A5E50">Tested 5.7 pCi/L in 2021 and mitigated, but the fan has never been serviced. Quotes with you Friday.</p>
+            <sc-if value="{{ eDetail }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 7px">
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #5A5E50; background: #F0EDE4; border-radius: 6px; padding: 4px 8px">installed 2021</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #5A5E50; background: #F0EDE4; border-radius: 6px; padding: 4px 8px">no warranty on file</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #5A5E50; background: #F0EDE4; border-radius: 6px; padding: 4px 8px">src: closing addendum p.12</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #5A5E50; background: #F0EDE4; border-radius: 6px; padding: 4px 8px">$480/yr est · 18%</span>
+              </div>
+            </sc-if>
+          </div>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #A8701F; text-align: right">never serviced</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 12px 1fr 118px; align-items: baseline; gap: 16px; padding: 15px 0; border-top: 1px solid #EFEBE0">
+          <span style="width: 8px; height: 8px; border-radius: 999px; background: #4A7A55; margin-top: 6px"></span>
+          <div>
+            <p style="margin: 0; font-size: 15px; font-weight: 500; color: #1C1E18">Furnace — propane, two zones</p>
+            <p style="margin: 4px 0 0; font-size: 13.5px; line-height: 1.55; color: #5A5E50">Replaced in 2021 by Monticello Air. Tuned in March; both zones balanced.</p>
+            <sc-if value="{{ eDetail }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 7px">
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #5A5E50; background: #F0EDE4; border-radius: 6px; padding: 4px 8px">Monticello Air · 10yr parts</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #5A5E50; background: #F0EDE4; border-radius: 6px; padding: 4px 8px">warranty to 2031</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #5A5E50; background: #F0EDE4; border-radius: 6px; padding: 4px 8px">next tune Oct 2026</span>
+              </div>
+            </sc-if>
+          </div>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081; text-align: right">Mar 12, 2026</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 12px 1fr 118px; align-items: baseline; gap: 16px; padding: 15px 0; border-top: 1px solid #EFEBE0">
+          <span style="width: 8px; height: 8px; border-radius: 999px; background: #4A7A55; margin-top: 6px"></span>
+          <div>
+            <p style="margin: 0; font-size: 15px; font-weight: 500; color: #1C1E18">Central AC</p>
+            <p style="margin: 4px 0 0; font-size: 13.5px; line-height: 1.55; color: #5A5E50">2011 unit — fifteen years in. Capacitor replaced in June; we're watching it and budgeting for replacement.</p>
+            <sc-if value="{{ eDetail }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 7px">
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #5A5E50; background: #F0EDE4; border-radius: 6px; padding: 4px 8px">15yr age · 3–5yr horizon</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #5A5E50; background: #F0EDE4; border-radius: 6px; padding: 4px 8px">replacement $7–9k</span>
+              </div>
+            </sc-if>
+          </div>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081; text-align: right">Jun 24, 2026</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 12px 1fr 118px; align-items: baseline; gap: 16px; padding: 15px 0; border-top: 1px solid #EFEBE0">
+          <span style="width: 8px; height: 8px; border-radius: 999px; background: #4A7A55; margin-top: 6px"></span>
+          <div>
+            <p style="margin: 0; font-size: 15px; font-weight: 500; color: #1C1E18">Standby generator — 22kW</p>
+            <p style="margin: 4px 0 0; font-size: 13.5px; line-height: 1.55; color: #5A5E50">Serviced in June, load-tested clean. Whole-house coverage on propane.</p>
+          </div>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081; text-align: right">Jun 2, 2026</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 12px 1fr 118px; align-items: baseline; gap: 16px; padding: 15px 0; border-top: 1px solid #EFEBE0">
+          <span style="width: 8px; height: 8px; border-radius: 999px; background: #4A7A55; margin-top: 6px"></span>
+          <div>
+            <p style="margin: 0; font-size: 15px; font-weight: 500; color: #1C1E18">Roof — architectural shingle</p>
+            <p style="margin: 4px 0 0; font-size: 13.5px; line-height: 1.55; color: #5A5E50">Sound. The 2025 storm claim is still open with the adjuster — that's paperwork, not a leak.</p>
+          </div>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081; text-align: right">claim open</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 12px 1fr 118px; align-items: baseline; gap: 16px; padding: 15px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0">
+          <span style="width: 8px; height: 8px; border-radius: 999px; background: #4A7A55; margin-top: 6px"></span>
+          <div>
+            <p style="margin: 0; font-size: 15px; font-weight: 500; color: #1C1E18">Gas-log fireplaces ×2</p>
+            <p style="margin: 4px 0 0; font-size: 13.5px; line-height: 1.55; color: #5A5E50">Flagged at closing, never serviced since. Monticello Air comes Aug 12 — first service under your membership.</p>
+          </div>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081; text-align: right">Aug 12, 2026</span>
+        </div>
+      </div>
+      <button style="margin-top: 22px; border: 1px solid #DCD8CB; background: transparent; color: #5A5E50; border-radius: 999px; padding: 9px 18px; font-size: 13px; font-weight: 500">Show the other three systems</button>
+    </div>
+  </div>
+
+  <div id="4b" style="display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 8px; border-radius: 6px; background: #24382B; color: #F5F3ED">4b</span>
+      <h2 style="margin: 0; font-family: Newsreader, serif; font-size: 24px; font-weight: 400; color: #1C1E18">The year of care</h2>
+      <p style="margin: 0; font-size: 13px; color: #8D9081">Seasons, not a month grid — a homeowner reads rhythm, not cells.</p>
+    </div>
+    <div style="width: 880px; flex-shrink: 0; background: #FCFBF7; border: 1px solid #E0DCD0; border-radius: 18px; padding: 38px 44px 36px; box-shadow: 0 1px 2px rgba(28,30,24,0.04), 0 12px 32px -18px rgba(28,30,24,0.18)">
+      <h3 style="margin: 0; font-family: Newsreader, serif; font-size: 38px; font-weight: 400; line-height: 1.12; color: #1C1E18">Twenty-two visits a year,<span style="color: #A8A79A"> so nothing arrives as a surprise.</span></h3>
+      <p style="margin: 16px 0 0; font-size: 14.5px; line-height: 1.65; color: #5A5E50; max-width: 600px">Four already done, three on the books. We schedule around your calendar — say the word and any of these moves.</p>
+
+      <div style="margin-top: 34px; display: flex; flex-direction: column; gap: 26px">
+        <div style="display: grid; grid-template-columns: 132px 1fr; gap: 24px">
+          <div>
+            <p style="margin: 0; font-family: Newsreader, serif; font-size: 20px; color: #1C1E18">Summer</p>
+            <p style="margin: 4px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #8D9081">JUN — AUG · NOW</p>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; gap: 20px; padding: 11px 0; border-top: 1px solid #EFEBE0">
+              <span style="font-size: 14px; color: #A8A79A; text-decoration: line-through">Generator annual service</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #4A7A55">DONE JUN 2</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; gap: 20px; padding: 11px 0; border-top: 1px solid #EFEBE0">
+              <span style="font-size: 14px; color: #A8A79A; text-decoration: line-through">AC capacitor replacement</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #4A7A55">DONE JUN 24</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; gap: 20px; padding: 11px 0; border-top: 1px solid #EFEBE0">
+              <span style="font-size: 14px; color: #1C1E18; font-weight: 500">Pest control, quarterly · Dodson</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">AUG 4</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; gap: 20px; padding: 11px 0; border-top: 1px solid #EFEBE0">
+              <span style="font-size: 14px; color: #1C1E18; font-weight: 500">Gas-log fireplace service ×2</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">AUG 12</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; gap: 20px; padding: 11px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0">
+              <span style="font-size: 14px; color: #1C1E18; font-weight: 500">Filter changes ×3</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">AUG 6</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 132px 1fr; gap: 24px">
+          <div>
+            <p style="margin: 0; font-family: Newsreader, serif; font-size: 20px; color: #1C1E18">Autumn</p>
+            <p style="margin: 4px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #8D9081">SEP — NOV</p>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; gap: 20px; padding: 11px 0; border-top: 1px solid #EFEBE0">
+              <span style="font-size: 14px; color: #1C1E18">Furnace tune-up before first cold night</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">OCT</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; gap: 20px; padding: 11px 0; border-top: 1px solid #EFEBE0">
+              <span style="font-size: 14px; color: #1C1E18">Gutters cleared, all four elevations</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">NOV</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; gap: 20px; padding: 11px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0">
+              <span style="font-size: 14px; color: #1C1E18">Hose bibs winterized, irrigation blown out</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">NOV</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 132px 1fr; gap: 24px">
+          <div>
+            <p style="margin: 0; font-family: Newsreader, serif; font-size: 20px; color: #1C1E18">Winter</p>
+            <p style="margin: 4px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #8D9081">DEC — FEB</p>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; gap: 20px; padding: 11px 0; border-top: 1px solid #EFEBE0">
+              <span style="font-size: 14px; color: #1C1E18">Radon retest — two years since the last</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">JAN</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; gap: 20px; padding: 11px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0">
+              <span style="font-size: 14px; color: #1C1E18">Attic inspection after the first hard freeze</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">FEB</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 132px 1fr; gap: 24px">
+          <div>
+            <p style="margin: 0; font-family: Newsreader, serif; font-size: 20px; color: #1C1E18">Spring</p>
+            <p style="margin: 4px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #8D9081">MAR — MAY</p>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; gap: 20px; padding: 11px 0; border-top: 1px solid #EFEBE0">
+              <span style="font-size: 14px; color: #1C1E18">Spring HVAC tune-up, both zones</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">MAR</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; gap: 20px; padding: 11px 0; border-top: 1px solid #EFEBE0">
+              <span style="font-size: 14px; color: #1C1E18">Septic pumped — five-year interval</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">APR</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; gap: 20px; padding: 11px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0">
+              <span style="font-size: 14px; color: #1C1E18">Mulch beds, prune back from siding</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">MAY</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <sc-if value="{{ eDetail }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top: 32px; padding: 24px 26px; background: #F3F1E9; border-radius: 14px">
+          <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #6E7264">Operator view · scheduling load</p>
+          <div style="margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px">
+            <div style="border-top: 1px solid #1C1E18; padding-top: 10px">
+              <p style="margin: 0; font-family: Newsreader, serif; font-size: 24px; color: #1C1E18; line-height: 1">22</p>
+              <p style="margin: 4px 0 0; font-size: 11.5px; color: #8D9081">visits planned</p>
+            </div>
+            <div style="border-top: 1px solid #E0DCD0; padding-top: 10px">
+              <p style="margin: 0; font-family: Newsreader, serif; font-size: 24px; color: #1C1E18; line-height: 1">$4,180</p>
+              <p style="margin: 4px 0 0; font-size: 11.5px; color: #8D9081">annual pass-through</p>
+            </div>
+            <div style="border-top: 1px solid #E0DCD0; padding-top: 10px">
+              <p style="margin: 0; font-family: Newsreader, serif; font-size: 24px; color: #1C1E18; line-height: 1">6</p>
+              <p style="margin: 4px 0 0; font-size: 11.5px; color: #8D9081">in-house, 16 subbed</p>
+            </div>
+            <div style="border-top: 1px solid #E0DCD0; padding-top: 10px">
+              <p style="margin: 0; font-family: Newsreader, serif; font-size: 24px; color: #1C1E18; line-height: 1">Nov</p>
+              <p style="margin: 4px 0 0; font-size: 11.5px; color: #8D9081">heaviest month · 5 visits</p>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <div id="4c" style="display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 8px; border-radius: 6px; background: #24382B; color: #F5F3ED">4c</span>
+      <h2 style="margin: 0; font-family: Newsreader, serif; font-size: 24px; font-weight: 400; color: #1C1E18">What's next</h2>
+      <p style="margin: 0; font-size: 13px; color: #8D9081">Three horizons instead of a 90-day list — "now / soon / on our radar".</p>
+    </div>
+    <div style="width: 880px; flex-shrink: 0; background: #FCFBF7; border: 1px solid #E0DCD0; border-radius: 18px; padding: 38px 44px 36px; box-shadow: 0 1px 2px rgba(28,30,24,0.04), 0 12px 32px -18px rgba(28,30,24,0.18)">
+      <h3 style="margin: 0; font-family: Newsreader, serif; font-size: 38px; font-weight: 400; line-height: 1.12; color: #1C1E18">Two things this week.<span style="color: #A8A79A"> Nothing else is urgent.</span></h3>
+      <p style="margin: 16px 0 0; font-size: 14.5px; line-height: 1.65; color: #5A5E50; max-width: 600px">You don't have to decide anything here — we're already moving. This is so you can see the order we're working in.</p>
+
+      <div style="margin-top: 34px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px">
+        <div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; border-top: 1px solid #1C1E18; padding-top: 10px">
+            <span style="font-size: 13px; font-weight: 500; color: #1C1E18">This week</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">2</span>
+          </div>
+          <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 14px">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span style="width: 7px; height: 7px; border-radius: 999px; background: #A8701F"></span>
+                <p style="margin: 0; font-size: 14px; font-weight: 500; color: #1C1E18">Radon service contract</p>
+              </div>
+              <p style="margin: 5px 0 0 15px; font-size: 13px; line-height: 1.55; color: #5A5E50">Quotes with you Friday; we'll recommend one.</p>
+              <sc-if value="{{ eDetail }}" hint-placeholder-val="{{ false }}">
+                <p style="margin: 6px 0 0 15px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #8D9081">$480/yr · 18% · WO-1051</p>
+              </sc-if>
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span style="width: 7px; height: 7px; border-radius: 999px; background: #9E3B2C"></span>
+                <p style="margin: 0; font-size: 14px; font-weight: 500; color: #1C1E18">Roof claim, push the adjuster</p>
+              </div>
+              <p style="margin: 5px 0 0 15px; font-size: 13px; line-height: 1.55; color: #5A5E50">Nine days silent. Escalating Monday if we hear nothing.</p>
+              <sc-if value="{{ eDetail }}" hint-placeholder-val="{{ false }}">
+                <p style="margin: 6px 0 0 15px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #8D9081">claim 2025-26 · Aisle Roofing</p>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; border-top: 1px solid #E0DCD0; padding-top: 10px">
+            <span style="font-size: 13px; font-weight: 500; color: #1C1E18">Next 30 days</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">3</span>
+          </div>
+          <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 14px">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span style="width: 7px; height: 7px; border-radius: 999px; background: #C9C6B8"></span>
+                <p style="margin: 0; font-size: 14px; font-weight: 500; color: #1C1E18">Fireplace service ×2</p>
+              </div>
+              <p style="margin: 5px 0 0 15px; font-size: 13px; line-height: 1.55; color: #5A5E50">Aug 12, 9am. Someone should be home.</p>
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span style="width: 7px; height: 7px; border-radius: 999px; background: #C9C6B8"></span>
+                <p style="margin: 0; font-size: 14px; font-weight: 500; color: #1C1E18">Crawlspace vapor barrier</p>
+              </div>
+              <p style="margin: 5px 0 0 15px; font-size: 13px; line-height: 1.55; color: #5A5E50">Recommended by the March audit. Your call.</p>
+              <sc-if value="{{ eDetail }}" hint-placeholder-val="{{ false }}">
+                <p style="margin: 6px 0 0 15px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #8D9081">$2,150 est · 20% · quoting</p>
+              </sc-if>
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span style="width: 7px; height: 7px; border-radius: 999px; background: #C9C6B8"></span>
+                <p style="margin: 0; font-size: 14px; font-weight: 500; color: #1C1E18">Pest quarterly</p>
+              </div>
+              <p style="margin: 5px 0 0 15px; font-size: 13px; line-height: 1.55; color: #5A5E50">Aug 4, Dodson. No access needed.</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; border-top: 1px solid #E0DCD0; padding-top: 10px">
+            <span style="font-size: 13px; font-weight: 500; color: #1C1E18">On our radar</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">2</span>
+          </div>
+          <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 14px">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span style="width: 7px; height: 7px; border-radius: 999px; background: #C9C6B8"></span>
+                <p style="margin: 0; font-size: 14px; font-weight: 500; color: #1C1E18">AC replacement, 3–5 years</p>
+              </div>
+              <p style="margin: 5px 0 0 15px; font-size: 13px; line-height: 1.55; color: #5A5E50">Fifteen years old. We'll flag it before it fails, not after.</p>
+              <sc-if value="{{ eDetail }}" hint-placeholder-val="{{ false }}">
+                <p style="margin: 6px 0 0 15px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #8D9081">$7–9k · reserve $150/mo</p>
+              </sc-if>
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span style="width: 7px; height: 7px; border-radius: 999px; background: #C9C6B8"></span>
+                <p style="margin: 0; font-size: 14px; font-weight: 500; color: #1C1E18">Deck reseal</p>
+              </div>
+              <p style="margin: 5px 0 0 15px; font-size: 13px; line-height: 1.55; color: #5A5E50">Next dry stretch in spring. Cosmetic for now.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="4d" style="display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 8px; border-radius: 6px; background: #24382B; color: #F5F3ED">4d</span>
+      <h2 style="margin: 0; font-family: Newsreader, serif; font-size: 24px; font-weight: 400; color: #1C1E18">Everything we've done</h2>
+      <p style="margin: 0; font-size: 13px; color: #8D9081">A ledger, dated in mono. Costs appear only in Detailed.</p>
+    </div>
+    <div style="width: 880px; flex-shrink: 0; background: #FCFBF7; border: 1px solid #E0DCD0; border-radius: 18px; padding: 38px 44px 36px; box-shadow: 0 1px 2px rgba(28,30,24,0.04), 0 12px 32px -18px rgba(28,30,24,0.18)">
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 30px">
+        <h3 style="margin: 0; font-family: Newsreader, serif; font-size: 38px; font-weight: 400; line-height: 1.12; color: #1C1E18; max-width: 520px">Twelve jobs since you joined.<span style="color: #A8A79A"> None of them twice.</span></h3>
+        <div style="display: flex; gap: 8px; padding-bottom: 6px">
+          <span style="font-size: 12.5px; color: #1C1E18; border: 1px solid #DCD8CB; border-radius: 999px; padding: 6px 13px">All</span>
+          <span style="font-size: 12.5px; color: #8D9081; padding: 6px 13px">HVAC</span>
+          <span style="font-size: 12.5px; color: #8D9081; padding: 6px 13px">Exterior</span>
+          <span style="font-size: 12.5px; color: #8D9081; padding: 6px 13px">Systems</span>
+        </div>
+      </div>
+
+      <p style="margin: 30px 0 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">2026</p>
+      <div style="margin-top: 12px">
+        <div style="display: grid; grid-template-columns: 78px 1fr 168px 92px; align-items: baseline; gap: 18px; padding: 12px 0; border-top: 1px solid #EFEBE0">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081">JUN 24</span>
+          <span style="font-size: 14px; color: #1C1E18">AC capacitor replaced</span>
+          <span style="font-size: 13px; color: #8D9081">In-house · Patrick</span>
+          <sc-if value="{{ eDetail }}" hint-placeholder-val="{{ false }}"><span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #5A5E50; text-align: right">$185 · 24%</span></sc-if>
+        </div>
+        <div style="display: grid; grid-template-columns: 78px 1fr 168px 92px; align-items: baseline; gap: 18px; padding: 12px 0; border-top: 1px solid #EFEBE0">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081">JUN 02</span>
+          <span style="font-size: 14px; color: #1C1E18">Generator annual service &amp; load test</span>
+          <span style="font-size: 13px; color: #8D9081">Dominion Power Svc</span>
+          <sc-if value="{{ eDetail }}" hint-placeholder-val="{{ false }}"><span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #5A5E50; text-align: right">$310 · 25%</span></sc-if>
+        </div>
+        <div style="display: grid; grid-template-columns: 78px 1fr 168px 92px; align-items: baseline; gap: 18px; padding: 12px 0; border-top: 1px solid #EFEBE0">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081">MAY 08</span>
+          <span style="font-size: 14px; color: #1C1E18">Mulch beds, pruned growth off siding</span>
+          <span style="font-size: 13px; color: #8D9081">Ridge Landscape</span>
+          <sc-if value="{{ eDetail }}" hint-placeholder-val="{{ false }}"><span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #5A5E50; text-align: right">$1,240 · 19%</span></sc-if>
+        </div>
+        <div style="display: grid; grid-template-columns: 78px 1fr 168px 92px; align-items: baseline; gap: 18px; padding: 12px 0; border-top: 1px solid #EFEBE0">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081">APR 19</span>
+          <span style="font-size: 14px; color: #1C1E18">Energy audit follow-through — attic air sealing</span>
+          <span style="font-size: 13px; color: #8D9081">LEAP · Monticello Air</span>
+          <sc-if value="{{ eDetail }}" hint-placeholder-val="{{ false }}"><span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #5A5E50; text-align: right">$2,380 · 16%</span></sc-if>
+        </div>
+        <div style="display: grid; grid-template-columns: 78px 1fr 168px 92px; align-items: baseline; gap: 18px; padding: 12px 0; border-top: 1px solid #EFEBE0">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081">MAR 12</span>
+          <span style="font-size: 14px; color: #1C1E18">Spring HVAC tune-up, both zones</span>
+          <span style="font-size: 13px; color: #8D9081">Monticello Air</span>
+          <sc-if value="{{ eDetail }}" hint-placeholder-val="{{ false }}"><span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #5A5E50; text-align: right">$240 · 22%</span></sc-if>
+        </div>
+        <div style="display: grid; grid-template-columns: 78px 1fr 168px 92px; align-items: baseline; gap: 18px; padding: 12px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081">FEB 03</span>
+          <span style="font-size: 14px; color: #1C1E18">Pest control, quarterly</span>
+          <span style="font-size: 13px; color: #8D9081">Dodson</span>
+          <sc-if value="{{ eDetail }}" hint-placeholder-val="{{ false }}"><span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #5A5E50; text-align: right">$145 · 20%</span></sc-if>
+        </div>
+      </div>
+
+      <p style="margin: 28px 0 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">2025</p>
+      <div style="margin-top: 12px">
+        <div style="display: grid; grid-template-columns: 78px 1fr 168px 92px; align-items: baseline; gap: 18px; padding: 12px 0; border-top: 1px solid #EFEBE0">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081">DEC 14</span>
+          <span style="font-size: 14px; color: #1C1E18">Storm damage assessment, roof &amp; gutters</span>
+          <span style="font-size: 13px; color: #8D9081">Aisle Roofing</span>
+          <sc-if value="{{ eDetail }}" hint-placeholder-val="{{ false }}"><span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #5A5E50; text-align: right">covered</span></sc-if>
+        </div>
+        <div style="display: grid; grid-template-columns: 78px 1fr 168px 92px; align-items: baseline; gap: 18px; padding: 12px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081">NOV 02</span>
+          <span style="font-size: 14px; color: #1C1E18">Gutters cleared, hose bibs winterized</span>
+          <span style="font-size: 13px; color: #8D9081">In-house · Patrick</span>
+          <sc-if value="{{ eDetail }}" hint-placeholder-val="{{ false }}"><span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #5A5E50; text-align: right">$420 · 28%</span></sc-if>
+        </div>
+      </div>
+
+      <sc-if value="{{ eDetail }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top: 26px; padding: 20px 24px; background: #F3F1E9; border-radius: 14px; display: flex; gap: 40px">
+          <div>
+            <p style="margin: 0; font-family: Newsreader, serif; font-size: 24px; color: #1C1E18; line-height: 1">$8,420</p>
+            <p style="margin: 4px 0 0; font-size: 11.5px; color: #8D9081">coordinated, 12 months</p>
+          </div>
+          <div>
+            <p style="margin: 0; font-family: Newsreader, serif; font-size: 24px; color: #1C1E18; line-height: 1">21%</p>
+            <p style="margin: 4px 0 0; font-size: 11.5px; color: #8D9081">blended margin</p>
+          </div>
+          <div>
+            <p style="margin: 0; font-family: Newsreader, serif; font-size: 24px; color: #1C1E18; line-height: 1">4</p>
+            <p style="margin: 4px 0 0; font-size: 11.5px; color: #8D9081">pros used · 1 in-house</p>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</section>
+
+<sc-if value="{{ showFounder }}" hint-placeholder-val="{{ true }}">
+<section style="padding: 56px 56px 40px; display: flex; flex-direction: column; gap: 40px">
+  <div style="max-width: 720px; display: flex; flex-direction: column; gap: 10px">
+    <p style="margin: 0; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #8D9081">Turn 3 · Operator view</p>
+    <h1 style="margin: 0; font-family: Newsreader, serif; font-size: 38px; font-weight: 400; color: #1C1E18; line-height: 1.15">The business end of the same glass</h1>
+    <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #5A5E50; text-wrap: pretty">Simple is settled (<a href="#2a">2a</a>). This is Detailed at full strength: every property, every open order, money and margin, and what's aging. Same paper, same hairlines, same type — but dense, scannable, and sorted by what's at risk rather than what's pretty. Desktop-first by design; the phone version of this is a triage list, not a board.</p>
+  </div>
+
+  <div id="3a" style="display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 8px; border-radius: 6px; background: #24382B; color: #F5F3ED">3a</span>
+      <h2 style="margin: 0; font-family: Newsreader, serif; font-size: 26px; font-weight: 400; color: #1C1E18">Command — portfolio, pipeline, money</h2>
+    </div>
+
+    <div style="width: 1320px; background: #FCFBF7; border: 1px solid #E0DCD0; border-radius: 18px; overflow: hidden; display: flex; box-shadow: 0 1px 2px rgba(28,30,24,0.04), 0 12px 32px -18px rgba(28,30,24,0.18)">
+      <div style="width: 214px; flex-shrink: 0; background: #F2F0E7; border-right: 1px solid #E7E3D7; padding: 20px 14px; display: flex; flex-direction: column; gap: 22px">
+        <p style="margin: 0; font-family: Newsreader, serif; font-size: 16px; color: #24382B; line-height: 1.25">Charlottesville<br>Home &amp; Property</p>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <p style="margin: 0 0 6px 12px; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #9A9C8E">Run the business</p>
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 10px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(28,30,24,0.05)">
+            <span style="font-size: 13.5px; font-weight: 500; color: #1C1E18">Command</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #A8701F">4</span>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 10px" style-hover="background: #EAE7DC">
+            <span style="font-size: 13.5px; color: #5A5E50">Work orders</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #9A9C8E">12</span>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 10px" style-hover="background: #EAE7DC">
+            <span style="font-size: 13.5px; color: #5A5E50">Properties</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #9A9C8E">5</span>
+          </div>
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 10px" style-hover="background: #EAE7DC">
+            <span style="font-size: 13.5px; color: #5A5E50">Contractor bench</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #9A9C8E">18</span>
+          </div>
+          <div style="display: flex; align-items: center; padding: 8px 12px; border-radius: 10px" style-hover="background: #EAE7DC">
+            <span style="font-size: 13.5px; color: #5A5E50">Conversations</span>
+          </div>
+          <div style="display: flex; align-items: center; padding: 8px 12px; border-radius: 10px" style-hover="background: #EAE7DC">
+            <span style="font-size: 13.5px; color: #5A5E50">Intake &amp; imports</span>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <p style="margin: 0 0 6px 12px; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #9A9C8E">Viewing as</p>
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-radius: 10px; border: 1px solid #E0DCD0; background: #FBFAF5">
+            <span style="font-size: 13px; color: #1C1E18">Founder</span>
+            <span style="font-size: 11px; color: #9A9C8E">switch</span>
+          </div>
+          <p style="margin: 8px 12px 0; font-size: 11.5px; line-height: 1.5; color: #9A9C8E">Preview any homeowner's Simple view without signing out.</p>
+        </div>
+        <div style="margin-top: auto; padding-top: 16px; border-top: 1px solid #E4E0D4">
+          <p style="margin: 0; font-size: 12px; color: #5A5E50">Patrick Herron</p>
+          <p style="margin: 3px 0 0; font-size: 11.5px; color: #A8A79A">Founder · all properties</p>
+        </div>
+      </div>
+
+      <div style="flex: 1; min-width: 0">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 26px; border-bottom: 1px solid #EFEBE0">
+          <div style="display: flex; align-items: center; gap: 10px; flex: 1; max-width: 340px; padding: 7px 12px; background: #F4F2EA; border-radius: 10px">
+            <span style="width: 6px; height: 6px; border-radius: 999px; background: #C9C6B8"></span>
+            <span style="font-size: 13px; color: #9A9C8E">Search properties, orders, pros…</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 22px">
+            <span style="font-size: 12.5px; color: #5A5E50">Fri, Jul 24</span>
+            <span style="font-size: 12.5px; color: #5A5E50">Invoicing runs Aug 1</span>
+            <button style="border: 0; background: #24382B; color: #F5F3ED; border-radius: 10px; padding: 9px 16px; font-size: 13px; font-weight: 500">New work order</button>
+          </div>
+        </div>
+
+        <div style="padding: 24px 26px 30px; display: flex; flex-direction: column; gap: 28px">
+
+          <div>
+            <div style="display: flex; align-items: baseline; justify-content: space-between">
+              <h3 style="margin: 0; font-family: Newsreader, serif; font-size: 27px; font-weight: 400; color: #1C1E18">Four things need you today.</h3>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">sorted by age</span>
+            </div>
+            <div style="margin-top: 14px">
+              <div style="display: grid; grid-template-columns: 12px 1.9fr 1fr 82px 96px; align-items: center; gap: 14px; padding: 11px 0; border-top: 1px solid #EFEBE0">
+                <span style="width: 8px; height: 8px; border-radius: 999px; background: #9E3B2C"></span>
+                <span style="font-size: 14px; color: #1C1E18; font-weight: 500">Roof adjuster hasn't responded — claim 2025-26</span>
+                <span style="font-size: 12.5px; color: #8D9081">895 Old Ballard · Herron</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #9E3B2C">9d</span>
+                <span style="font-size: 12.5px; color: #5A5E50; text-align: right">Escalate</span>
+              </div>
+              <div style="display: grid; grid-template-columns: 12px 1.9fr 1fr 82px 96px; align-items: center; gap: 14px; padding: 11px 0; border-top: 1px solid #EFEBE0">
+                <span style="width: 8px; height: 8px; border-radius: 999px; background: #A8701F"></span>
+                <span style="font-size: 14px; color: #1C1E18; font-weight: 500">Radon quotes promised Friday — one pro silent</span>
+                <span style="font-size: 12.5px; color: #8D9081">895 Old Ballard · Herron</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #A8701F">3d</span>
+                <span style="font-size: 12.5px; color: #5A5E50; text-align: right">Chase</span>
+              </div>
+              <div style="display: grid; grid-template-columns: 12px 1.9fr 1fr 82px 96px; align-items: center; gap: 14px; padding: 11px 0; border-top: 1px solid #EFEBE0">
+                <span style="width: 8px; height: 8px; border-radius: 999px; background: #A8701F"></span>
+                <span style="font-size: 14px; color: #1C1E18; font-weight: 500">Filter change overdue — upstairs air handler</span>
+                <span style="font-size: 12.5px; color: #8D9081">412 Ridgeview · Boyd</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #A8701F">12d</span>
+                <span style="font-size: 12.5px; color: #5A5E50; text-align: right">Schedule</span>
+              </div>
+              <div style="display: grid; grid-template-columns: 12px 1.9fr 1fr 82px 96px; align-items: center; gap: 14px; padding: 11px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0">
+                <span style="width: 8px; height: 8px; border-radius: 999px; background: #4A7A55"></span>
+                <span style="font-size: 14px; color: #1C1E18; font-weight: 500">New request: "disposal hums but won't spin"</span>
+                <span style="font-size: 12.5px; color: #8D9081">1120 Rugby Rd · Nakamura</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #5A5E50">2h</span>
+                <span style="font-size: 12.5px; color: #5A5E50; text-align: right">Triage</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px">
+            <div style="border-top: 1px solid #1C1E18; padding-top: 11px">
+              <p style="margin: 0; font-family: Newsreader, serif; font-size: 28px; color: #1C1E18; line-height: 1; white-space: nowrap">$1,046</p>
+              <p style="margin: 5px 0 0; font-size: 11.5px; color: #8D9081">recurring monthly</p>
+            </div>
+            <div style="border-top: 1px solid #E0DCD0; padding-top: 11px">
+              <p style="margin: 0; font-family: Newsreader, serif; font-size: 28px; color: #1C1E18; line-height: 1; white-space: nowrap">$12.4k</p>
+              <p style="margin: 5px 0 0; font-size: 11.5px; color: #8D9081">work coordinated, MTD</p>
+            </div>
+            <div style="border-top: 1px solid #E0DCD0; padding-top: 11px">
+              <p style="margin: 0; font-family: Newsreader, serif; font-size: 28px; color: #1C1E18; line-height: 1; white-space: nowrap">21%</p>
+              <p style="margin: 5px 0 0; font-size: 11.5px; color: #8D9081">blended margin</p>
+            </div>
+            <div style="border-top: 1px solid #E0DCD0; padding-top: 11px">
+              <p style="margin: 0; font-family: Newsreader, serif; font-size: 28px; color: #1C1E18; line-height: 1; white-space: nowrap">12</p>
+              <p style="margin: 5px 0 0; font-size: 11.5px; color: #8D9081">open orders</p>
+            </div>
+            <div style="border-top: 1px solid #E0DCD0; padding-top: 11px">
+              <p style="margin: 0; font-family: Newsreader, serif; font-size: 28px; color: #1C1E18; line-height: 1; white-space: nowrap">2.4d</p>
+              <p style="margin: 5px 0 0; font-size: 11.5px; color: #8D9081">median time to schedule</p>
+            </div>
+          </div>
+
+          <div>
+            <div style="display: flex; align-items: baseline; justify-content: space-between">
+              <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">Pipeline</p>
+              <span style="font-size: 12.5px; color: #8D9081">12 orders · 3 waiting on someone else</span>
+            </div>
+            <div style="margin-top: 14px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px">
+
+              <div style="border-top: 1px solid #1C1E18; padding-top: 10px">
+                <div style="display: flex; justify-content: space-between; align-items: baseline">
+                  <span style="font-size: 12.5px; font-weight: 500; color: #1C1E18">Triage</span>
+                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">2</span>
+                </div>
+                <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px">
+                  <div style="padding-bottom: 10px; border-bottom: 1px solid #EFEBE0">
+                    <p style="margin: 0; font-size: 12.5px; color: #1C1E18; line-height: 1.4">Disposal jammed</p>
+                    <p style="margin: 3px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #9A9C8E">1120 Rugby · 2h</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0; font-size: 12.5px; color: #1C1E18; line-height: 1.4">Gutter overflow, NE corner</p>
+                    <p style="margin: 3px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #9A9C8E">412 Ridgeview · 1d</p>
+                  </div>
+                </div>
+              </div>
+
+              <div style="border-top: 1px solid #E0DCD0; padding-top: 10px">
+                <div style="display: flex; justify-content: space-between; align-items: baseline">
+                  <span style="font-size: 12.5px; font-weight: 500; color: #1C1E18">Quoting</span>
+                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">3</span>
+                </div>
+                <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px">
+                  <div style="padding-bottom: 10px; border-bottom: 1px solid #EFEBE0">
+                    <p style="margin: 0; font-size: 12.5px; color: #1C1E18; line-height: 1.4">Radon service contract</p>
+                    <p style="margin: 3px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #A8701F">2 of 3 quotes in · 3d</p>
+                  </div>
+                  <div style="padding-bottom: 10px; border-bottom: 1px solid #EFEBE0">
+                    <p style="margin: 0; font-size: 12.5px; color: #1C1E18; line-height: 1.4">Crawlspace vapor barrier</p>
+                    <p style="margin: 3px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #9A9C8E">$2,150 est · 4d</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0; font-size: 12.5px; color: #1C1E18; line-height: 1.4">Deck reseal, 480 sqft</p>
+                    <p style="margin: 3px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #9A9C8E">$1,400 est · 6d</p>
+                  </div>
+                </div>
+              </div>
+
+              <div style="border-top: 1px solid #E0DCD0; padding-top: 10px">
+                <div style="display: flex; justify-content: space-between; align-items: baseline">
+                  <span style="font-size: 12.5px; font-weight: 500; color: #1C1E18">Scheduled</span>
+                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">4</span>
+                </div>
+                <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px">
+                  <div style="padding-bottom: 10px; border-bottom: 1px solid #EFEBE0">
+                    <p style="margin: 0; font-size: 12.5px; color: #1C1E18; line-height: 1.4">Fireplace service ×2</p>
+                    <p style="margin: 3px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #9A9C8E">Aug 12, 9:00 · Monticello</p>
+                  </div>
+                  <div style="padding-bottom: 10px; border-bottom: 1px solid #EFEBE0">
+                    <p style="margin: 0; font-size: 12.5px; color: #1C1E18; line-height: 1.4">Generator load test</p>
+                    <p style="margin: 3px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #9A9C8E">Jul 24, 14:00 · 1120</p>
+                  </div>
+                  <div style="padding-bottom: 10px; border-bottom: 1px solid #EFEBE0">
+                    <p style="margin: 0; font-size: 12.5px; color: #1C1E18; line-height: 1.4">Pest quarterly</p>
+                    <p style="margin: 3px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #9A9C8E">Aug 4 · Dodson</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0; font-size: 12.5px; color: #1C1E18; line-height: 1.4">Filter change ×3</p>
+                    <p style="margin: 3px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #9A9C8E">Aug 6 · in-house</p>
+                  </div>
+                </div>
+              </div>
+
+              <div style="border-top: 1px solid #E0DCD0; padding-top: 10px">
+                <div style="display: flex; justify-content: space-between; align-items: baseline">
+                  <span style="font-size: 12.5px; font-weight: 500; color: #1C1E18">In progress</span>
+                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">1</span>
+                </div>
+                <div style="margin-top: 10px">
+                  <p style="margin: 0; font-size: 12.5px; color: #1C1E18; line-height: 1.4">Roof claim follow-up</p>
+                  <p style="margin: 3px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #9E3B2C">blocked · adjuster 9d</p>
+                </div>
+              </div>
+
+              <div style="border-top: 1px solid #E0DCD0; padding-top: 10px">
+                <div style="display: flex; justify-content: space-between; align-items: baseline">
+                  <span style="font-size: 12.5px; font-weight: 500; color: #1C1E18">To invoice</span>
+                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">2</span>
+                </div>
+                <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px">
+                  <div style="padding-bottom: 10px; border-bottom: 1px solid #EFEBE0">
+                    <p style="margin: 0; font-size: 12.5px; color: #1C1E18; line-height: 1.4">Capacitor replacement</p>
+                    <p style="margin: 3px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #9A9C8E">$185 · 24% · Jun 24</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0; font-size: 12.5px; color: #1C1E18; line-height: 1.4">Generator annual</p>
+                    <p style="margin: 3px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #9A9C8E">$310 · 25% · Jun 2</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 34px">
+            <div>
+              <div style="display: flex; align-items: baseline; justify-content: space-between">
+                <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">Portfolio</p>
+                <span style="font-size: 12.5px; color: #8D9081">5 properties · 1 onboarding</span>
+              </div>
+              <div style="margin-top: 12px; display: grid; grid-template-columns: 1.7fr 1fr 0.85fr 0.7fr 0.85fr; gap: 0 16px; font-size: 12.5px">
+                <span style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 8px">Property</span>
+                <span style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 8px">Member</span>
+                <span style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 8px">Plan</span>
+                <span style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 8px">Open</span>
+                <span style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 8px">Health</span>
+
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #1C1E18">895 Old Ballard Farm Ln</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">Herron</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">Standard</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">4</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #5A5E50; display: flex; align-items: center; gap: 7px"><span style="width: 7px; height: 7px; border-radius: 999px; background: #A8701F"></span>1 flagged</span>
+
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #1C1E18">412 Ridgeview Dr</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">Boyd</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">Premium</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">5</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #5A5E50; display: flex; align-items: center; gap: 7px"><span style="width: 7px; height: 7px; border-radius: 999px; background: #9E3B2C"></span>3 flagged</span>
+
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #1C1E18">1120 Rugby Rd</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">Nakamura</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">Standard</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">2</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #5A5E50; display: flex; align-items: center; gap: 7px"><span style="width: 7px; height: 7px; border-radius: 999px; background: #4A7A55"></span>all good</span>
+
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #1C1E18">78 Wintergreen Ln</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">Alvarez</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">Standard</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">1</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; color: #5A5E50; display: flex; align-items: center; gap: 7px"><span style="width: 7px; height: 7px; border-radius: 999px; background: #4A7A55"></span>all good</span>
+
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0; color: #1C1E18">2201 Farmington Dr</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0; color: #5A5E50">Whitlock</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0; color: #8D9081">Onboarding</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0; color: #5A5E50">—</span>
+                <span style="padding: 9px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0; color: #8D9081; display: flex; align-items: center; gap: 7px"><span style="width: 7px; height: 7px; border-radius: 999px; background: #C9C6B8"></span>walkthrough due</span>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 26px">
+              <div>
+                <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">Today</p>
+                <div style="margin-top: 12px; display: flex; flex-direction: column">
+                  <div style="display: grid; grid-template-columns: 58px 1fr; gap: 12px; padding: 10px 0; border-top: 1px solid #EFEBE0">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081">09:00</span>
+                    <div>
+                      <p style="margin: 0; font-size: 13px; color: #1C1E18">Fireplace prep call · Monticello Air</p>
+                      <p style="margin: 2px 0 0; font-size: 12px; color: #8D9081">895 Old Ballard</p>
+                    </div>
+                  </div>
+                  <div style="display: grid; grid-template-columns: 58px 1fr; gap: 12px; padding: 10px 0; border-top: 1px solid #EFEBE0">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081">11:30</span>
+                    <div>
+                      <p style="margin: 0; font-size: 13px; color: #1C1E18">Sally walkthrough</p>
+                      <p style="margin: 2px 0 0; font-size: 12px; color: #8D9081">412 Ridgeview · note due after</p>
+                    </div>
+                  </div>
+                  <div style="display: grid; grid-template-columns: 58px 1fr; gap: 12px; padding: 10px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081">14:00</span>
+                    <div>
+                      <p style="margin: 0; font-size: 13px; color: #1C1E18">Generator load test</p>
+                      <p style="margin: 2px 0 0; font-size: 12px; color: #8D9081">1120 Rugby Rd</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">Bench · by response time</p>
+                <div style="margin-top: 12px; display: grid; grid-template-columns: 1.5fr 0.8fr 0.6fr; gap: 0 14px; font-size: 12.5px">
+                  <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #1C1E18">Monticello Air</span>
+                  <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">HVAC · 14 jobs</span>
+                  <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #4A7A55; text-align: right">4h</span>
+                  <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #1C1E18">Dodson Pest</span>
+                  <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">Pest · 9 jobs</span>
+                  <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #4A7A55; text-align: right">6h</span>
+                  <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #1C1E18">Aisle Roofing</span>
+                  <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">Roof · 3 jobs</span>
+                  <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #A8701F; text-align: right">2d</span>
+                  <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0; color: #1C1E18">Blue Ridge Radon</span>
+                  <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0; color: #5A5E50">Radon · 1 job</span>
+                  <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0; color: #9E3B2C; text-align: right">3d</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</sc-if>
+
+<sc-if value="{{ showOwner }}" hint-placeholder-val="{{ false }}">
+<section style="padding: 16px 56px 40px; display: flex; flex-direction: column; gap: 40px; border-top: 1px solid #DCD8CB">
+  <div style="max-width: 720px; display: flex; flex-direction: column; gap: 10px">
+    <p style="margin: 0; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #8D9081">Turn 2 · Merged direction</p>
+    <h1 style="margin: 0; font-family: Newsreader, serif; font-size: 38px; font-weight: 400; color: #1C1E18; line-height: 1.15">1a's voice, 1b's substance</h1>
+    <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #5A5E50; text-wrap: pretty">The editorial letter keeps its hairlines and open request field, and now carries the console's information: condition meter, open work with plain-language status, your team, recent care. Every dollar figure is gone from the homeowner surface — the figures now count care given, not money spent. Cost only appears in <strong style="font-weight: 600">Detailed</strong>, which is your side of the glass.</p>
+  </div>
+
+  <div id="2a" style="display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 8px; border-radius: 6px; background: #24382B; color: #F5F3ED">2a</span>
+      <h2 style="margin: 0; font-family: Newsreader, serif; font-size: 26px; font-weight: 400; color: #1C1E18">The Quiet Report, fully stocked</h2>
+    </div>
+
+    <div style="display: flex; gap: 20px; align-items: flex-start">
+      <div style="width: 880px; flex-shrink: 0; background: #FCFBF7; border: 1px solid #E0DCD0; border-radius: 18px; overflow: hidden; box-shadow: 0 1px 2px rgba(28,30,24,0.04), 0 12px 32px -18px rgba(28,30,24,0.18)">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; border-bottom: 1px solid #EFEBE0">
+          <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">895 Old Ballard Farm Ln · Charlottesville · 5.01 acres · built 1992</p>
+          <div style="display: flex; align-items: center; gap: 14px">
+            <div style="display: flex; padding: 2px; background: #F0EDE4; border-radius: 999px">
+              <button onClick="{{ dSimple }}" style="{{ dSegOff }}">Simple</button>
+              <button onClick="{{ dDetailed }}" style="{{ dSegOn }}">Detailed</button>
+            </div>
+            <span style="width: 28px; height: 28px; border-radius: 999px; background: #24382B; color: #F5F3ED; font-size: 12px; font-weight: 500; display: grid; place-items: center">H</span>
+          </div>
+        </div>
+
+        <div style="padding: 40px 44px 36px">
+          <h3 style="margin: 0; font-family: Newsreader, serif; font-size: 44px; font-weight: 400; line-height: 1.1; color: #1C1E18; letter-spacing: -0.01em">Your home is in good shape.<span style="color: #A8A79A"> One item sits on our watch list.</span></h3>
+          <p style="margin: 18px 0 0; font-size: 14.5px; line-height: 1.65; color: #5A5E50; max-width: 620px; text-wrap: pretty">Sally was out June 24 — replaced the AC capacitor and walked the crawlspace. The radon mitigation fan still isn't on a service contract; we're getting you two quotes this week.</p>
+
+          <div style="margin-top: 30px; max-width: 620px">
+            <div style="display: flex; height: 8px; gap: 2px; border-radius: 999px; overflow: hidden">
+              <div style="flex: 8; background: #4A7A55"></div>
+              <div style="flex: 1; background: #A8701F"></div>
+            </div>
+            <div style="margin-top: 10px; display: flex; gap: 22px">
+              <span style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #5A5E50"><span style="width: 7px; height: 7px; border-radius: 999px; background: #4A7A55"></span>Good · 8 systems</span>
+              <span style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #5A5E50"><span style="width: 7px; height: 7px; border-radius: 999px; background: #A8701F"></span>Attention · 1</span>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; margin-top: 36px">
+            <div style="border-top: 1px solid #1C1E18; padding-top: 12px">
+              <p style="margin: 0; font-family: Newsreader, serif; font-size: 32px; color: #1C1E18; line-height: 1">12</p>
+              <p style="margin: 6px 0 0; font-size: 12px; color: #8D9081">tasks handled for you</p>
+            </div>
+            <div style="border-top: 1px solid #E0DCD0; padding-top: 12px">
+              <p style="margin: 0; font-family: Newsreader, serif; font-size: 32px; color: #1C1E18; line-height: 1">9</p>
+              <p style="margin: 6px 0 0; font-size: 12px; color: #8D9081">systems on record</p>
+            </div>
+            <div style="border-top: 1px solid #E0DCD0; padding-top: 12px">
+              <p style="margin: 0; font-family: Newsreader, serif; font-size: 32px; color: #1C1E18; line-height: 1">4</p>
+              <p style="margin: 6px 0 0; font-size: 12px; color: #8D9081">trusted pros on call</p>
+            </div>
+            <div style="border-top: 1px solid #E0DCD0; padding-top: 12px">
+              <p style="margin: 0; font-family: Newsreader, serif; font-size: 32px; color: #1C1E18; line-height: 1; white-space: nowrap">Aug 12</p>
+              <p style="margin: 6px 0 0; font-size: 12px; color: #8D9081">next visit · Monticello Air</p>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1.55fr 1fr; gap: 40px; margin-top: 44px">
+            <div>
+              <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">In motion</p>
+              <div style="margin-top: 14px">
+                <div style="display: flex; justify-content: space-between; gap: 20px; padding: 14px 0; border-top: 1px solid #EFEBE0">
+                  <div>
+                    <p style="margin: 0; font-size: 14.5px; font-weight: 500; color: #1C1E18">Radon mitigation service</p>
+                    <p style="margin: 3px 0 0; font-size: 12.5px; color: #8D9081">quotes out to two pros</p>
+                  </div>
+                  <span style="font-size: 12.5px; color: #A8701F; white-space: nowrap; padding-top: 2px">Attention</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; gap: 20px; padding: 14px 0; border-top: 1px solid #EFEBE0">
+                  <div>
+                    <p style="margin: 0; font-size: 14.5px; font-weight: 500; color: #1C1E18">Gas-log fireplaces ×2</p>
+                    <p style="margin: 3px 0 0; font-size: 12.5px; color: #8D9081">Monticello Air · Aug 12, 9am</p>
+                  </div>
+                  <span style="font-size: 12.5px; color: #5A5E50; white-space: nowrap; padding-top: 2px">Scheduled</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; gap: 20px; padding: 14px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0">
+                  <div>
+                    <p style="margin: 0; font-size: 14.5px; font-weight: 500; color: #1C1E18">Roof claim 2025–26</p>
+                    <p style="margin: 3px 0 0; font-size: 12.5px; color: #8D9081">with the adjuster</p>
+                  </div>
+                  <span style="font-size: 12.5px; color: #5A5E50; white-space: nowrap; padding-top: 2px">Waiting</span>
+                </div>
+              </div>
+
+              <p style="margin: 30px 0 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">Recent care</p>
+              <div style="margin-top: 14px">
+                <div style="display: flex; justify-content: space-between; gap: 20px; padding: 12px 0; border-top: 1px solid #EFEBE0">
+                  <span style="font-size: 14px; color: #1C1E18">AC capacitor replaced</span>
+                  <span style="font-size: 12.5px; color: #8D9081">Jun 24</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; gap: 20px; padding: 12px 0; border-top: 1px solid #EFEBE0">
+                  <span style="font-size: 14px; color: #1C1E18">Generator annual service</span>
+                  <span style="font-size: 12.5px; color: #8D9081">Jun 2</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; gap: 20px; padding: 12px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0">
+                  <span style="font-size: 14px; color: #1C1E18">Spring HVAC tune-up</span>
+                  <span style="font-size: 12.5px; color: #8D9081">Mar 12</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 22px">
+              <div style="padding: 20px; background: #F2F0E7; border-radius: 14px">
+                <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #6E7264">Your team</p>
+                <p style="margin: 14px 0 0; font-size: 14px; font-weight: 500; color: #1C1E18">Sally Whitfield</p>
+                <p style="margin: 2px 0 0; font-size: 12.5px; color: #8D9081">Relationship manager</p>
+                <p style="margin: 12px 0 0; font-size: 14px; font-weight: 500; color: #1C1E18">Patrick Herron</p>
+                <p style="margin: 2px 0 0; font-size: 12.5px; color: #8D9081">Property &amp; systems</p>
+                <p style="margin: 14px 0 0; padding-top: 14px; border-top: 1px solid #E4E0D4; font-size: 12.5px; line-height: 1.55; color: #8D9081">Anything urgent, call or text — we see the box below right away.</p>
+              </div>
+              <div>
+                <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">Membership</p>
+                <p style="margin: 10px 0 0; font-size: 14px; color: #1C1E18">Standard · renews monthly</p>
+                <p style="margin: 3px 0 0; font-size: 12.5px; color: #8D9081">Nothing due — next statement Aug 1</p>
+              </div>
+            </div>
+          </div>
+
+          <sc-if value="{{ dDetail }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top: 40px; padding: 26px 28px; background: #F3F1E9; border-radius: 14px">
+              <div style="display: flex; align-items: baseline; justify-content: space-between">
+                <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #6E7264">Operator view · not shown to the homeowner</p>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">9 systems · 3 open orders</span>
+              </div>
+              <div style="margin-top: 18px; display: grid; grid-template-columns: 1.5fr 1fr 0.8fr 0.7fr 0.7fr; gap: 0 18px; font-size: 12.5px">
+                <span style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 8px">Work order</span>
+                <span style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 8px">Pro</span>
+                <span style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 8px">Quote</span>
+                <span style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 8px">Margin</span>
+                <span style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 8px">Lane</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #1C1E18">Radon service contract</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">Blue Ridge Radon</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">$480/yr</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">18%</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">Quoting</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #1C1E18">Fireplace service ×2</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">Monticello Air</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">$390</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">22%</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">Scheduled</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #1C1E18">Roof claim follow-up</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">Aisle Roofing</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">—</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">—</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">Blocked</span>
+              </div>
+              <div style="margin-top: 20px; display: grid; grid-template-columns: 1.6fr 1fr 1fr 0.8fr; gap: 0 20px; font-size: 12.5px">
+                <span style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 8px">System</span>
+                <span style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 8px">Installed</span>
+                <span style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 8px">Last serviced</span>
+                <span style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 8px">State</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #1C1E18">Furnace — propane</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">2021</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">Mar 12, 2026</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50; display: flex; align-items: center; gap: 7px"><span style="width: 7px; height: 7px; border-radius: 999px; background: #4A7A55"></span>Good</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #1C1E18">Radon mitigation — 5.7 pCi/L</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">2021</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">never</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50; display: flex; align-items: center; gap: 7px"><span style="width: 7px; height: 7px; border-radius: 999px; background: #A8701F"></span>Attention</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #1C1E18">Standby generator — 22kW</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">2021</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">Jun 2, 2026</span>
+                <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50; display: flex; align-items: center; gap: 7px"><span style="width: 7px; height: 7px; border-radius: 999px; background: #4A7A55"></span>Good</span>
+              </div>
+            </div>
+          </sc-if>
+
+          <div style="margin-top: 40px; display: flex; align-items: center; gap: 14px; padding: 8px 8px 8px 20px; background: #FFFFFF; border: 1px solid #DCD8CB; border-radius: 16px">
+            <span style="width: 8px; height: 8px; border-radius: 999px; background: #4A7A55; flex-shrink: 0"></span>
+            <span style="flex: 1; font-size: 14.5px; color: #9A9C8E">Something need attention? Tell Sally — she reads these directly.</span>
+            <button style="border: 0; background: #24382B; color: #F5F3ED; border-radius: 12px; padding: 11px 20px; font-size: 13.5px; font-weight: 500">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="width: 390px; flex-shrink: 0; background: #FCFBF7; border: 1px solid #E0DCD0; border-radius: 30px; overflow: hidden; box-shadow: 0 1px 2px rgba(28,30,24,0.04), 0 12px 32px -18px rgba(28,30,24,0.18); display: flex; flex-direction: column">
+        <div style="padding: 22px 22px 0; display: flex; align-items: center; justify-content: space-between">
+          <p style="margin: 0; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">895 Old Ballard Farm</p>
+          <span style="width: 30px; height: 30px; border-radius: 999px; background: #24382B; color: #F5F3ED; font-size: 12px; display: grid; place-items: center">H</span>
+        </div>
+        <div style="padding: 18px 22px 24px; flex: 1">
+          <h3 style="margin: 0; font-family: Newsreader, serif; font-size: 29px; font-weight: 400; line-height: 1.15; color: #1C1E18">Your home is in good shape.<span style="color: #A8A79A"> One item on our watch list.</span></h3>
+          <p style="margin: 14px 0 0; font-size: 14px; line-height: 1.6; color: #5A5E50">Sally was out June 24 — capacitor replaced, crawlspace clear.</p>
+
+          <div style="margin-top: 22px">
+            <div style="display: flex; height: 8px; gap: 2px; border-radius: 999px; overflow: hidden">
+              <div style="flex: 8; background: #4A7A55"></div>
+              <div style="flex: 1; background: #A8701F"></div>
+            </div>
+            <div style="margin-top: 9px; display: flex; gap: 18px">
+              <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #5A5E50"><span style="width: 7px; height: 7px; border-radius: 999px; background: #4A7A55"></span>Good · 8</span>
+              <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #5A5E50"><span style="width: 7px; height: 7px; border-radius: 999px; background: #A8701F"></span>Attention · 1</span>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px 18px; margin-top: 24px">
+            <div style="border-top: 1px solid #1C1E18; padding-top: 10px">
+              <p style="margin: 0; font-family: Newsreader, serif; font-size: 25px; color: #1C1E18; line-height: 1">12</p>
+              <p style="margin: 4px 0 0; font-size: 11.5px; color: #8D9081">tasks handled</p>
+            </div>
+            <div style="border-top: 1px solid #E0DCD0; padding-top: 10px">
+              <p style="margin: 0; font-family: Newsreader, serif; font-size: 25px; color: #1C1E18; line-height: 1">Aug 12</p>
+              <p style="margin: 4px 0 0; font-size: 11.5px; color: #8D9081">next visit</p>
+            </div>
+          </div>
+
+          <p style="margin: 26px 0 0; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">In motion</p>
+          <div style="margin-top: 10px">
+            <div style="padding: 13px 0; border-top: 1px solid #EFEBE0; display: flex; justify-content: space-between; gap: 12px">
+              <div><p style="margin: 0; font-size: 14px; font-weight: 500; color: #1C1E18">Radon mitigation</p><p style="margin: 3px 0 0; font-size: 12.5px; color: #8D9081">quotes out</p></div>
+              <span style="font-size: 11.5px; color: #A8701F">Attention</span>
+            </div>
+            <div style="padding: 13px 0; border-top: 1px solid #EFEBE0; display: flex; justify-content: space-between; gap: 12px">
+              <div><p style="margin: 0; font-size: 14px; font-weight: 500; color: #1C1E18">Fireplaces ×2</p><p style="margin: 3px 0 0; font-size: 12.5px; color: #8D9081">Aug 12, 9am</p></div>
+              <span style="font-size: 11.5px; color: #5A5E50">Scheduled</span>
+            </div>
+            <div style="padding: 13px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0; display: flex; justify-content: space-between; gap: 12px">
+              <div><p style="margin: 0; font-size: 14px; font-weight: 500; color: #1C1E18">Roof claim</p><p style="margin: 3px 0 0; font-size: 12.5px; color: #8D9081">with the adjuster</p></div>
+              <span style="font-size: 11.5px; color: #5A5E50">Waiting</span>
+            </div>
+          </div>
+
+          <p style="margin: 24px 0 0; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">Your team</p>
+          <p style="margin: 10px 0 0; font-size: 14px; color: #1C1E18"><span style="font-weight: 500">Sally Whitfield</span> · relationship manager</p>
+          <p style="margin: 4px 0 0; font-size: 14px; color: #1C1E18"><span style="font-weight: 500">Patrick Herron</span> · property &amp; systems</p>
+        </div>
+        <div style="padding: 14px 18px 22px; border-top: 1px solid #EFEBE0; background: #F7F5EE; display: flex; gap: 10px; align-items: center">
+          <span style="flex: 1; font-size: 14px; color: #9A9C8E; padding-left: 6px">Ask for anything…</span>
+          <button style="border: 0; background: #24382B; color: #F5F3ED; border-radius: 12px; padding: 12px 18px; font-size: 13.5px; font-weight: 500; min-height: 44px">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</sc-if>
+
+<section style="padding: 16px 56px 96px; display: flex; flex-direction: column; gap: 40px; border-top: 1px solid #DCD8CB">
+  <div style="max-width: 720px; display: flex; flex-direction: column; gap: 10px">
+    <p style="margin: 0; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #8D9081">Turn 1 · Homeowner Overview</p>
+    <h1 style="margin: 0; font-family: Newsreader, serif; font-size: 38px; font-weight: 400; color: #1C1E18; line-height: 1.15">Three ways out of the box grid</h1>
+    <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #5A5E50; text-wrap: pretty">Same data, same routes — no cards-in-a-column, no modal dialogs. Each direction carries a <strong style="font-weight: 600">Simple / Detailed</strong> switch: Simple is what a homeowner sees, Detailed is the operator's depth on the same surface. Every option shows desktop and phone. Reference them in chat as <a href="#1a">1a</a>, <a href="#1b">1b</a>, <a href="#1c">1c</a>.</p>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 64px; align-items: flex-start">
+
+    <div id="1a" style="display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; align-items: baseline; gap: 12px">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 8px; border-radius: 6px; background: #24382B; color: #F5F3ED">1a</span>
+        <h2 style="margin: 0; font-family: Newsreader, serif; font-size: 26px; font-weight: 400; color: #1C1E18">The Quiet Report</h2>
+        <p style="margin: 0; font-size: 13px; color: #8D9081; max-width: 420px">Editorial letter, not a dashboard. Hairlines instead of cards; the request box is always open — no dialog.</p>
+      </div>
+
+      <div style="display: flex; gap: 20px; align-items: flex-start">
+        <div style="width: 880px; background: #FCFBF7; border: 1px solid #E0DCD0; border-radius: 18px; overflow: hidden; box-shadow: 0 1px 2px rgba(28,30,24,0.04), 0 12px 32px -18px rgba(28,30,24,0.18)">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; border-bottom: 1px solid #EFEBE0">
+            <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">895 Old Ballard Farm Ln · Charlottesville</p>
+            <div style="display: flex; align-items: center; gap: 14px">
+              <div style="display: flex; padding: 2px; background: #F0EDE4; border-radius: 999px">
+                <button onClick="{{ aSimple }}" style="{{ aSegOff }}">Simple</button>
+                <button onClick="{{ aDetailed }}" style="{{ aSegOn }}">Detailed</button>
+              </div>
+              <span style="width: 28px; height: 28px; border-radius: 999px; background: #24382B; color: #F5F3ED; font-size: 12px; font-weight: 500; display: grid; place-items: center">H</span>
+            </div>
+          </div>
+
+          <div style="padding: 40px 44px 36px">
+            <h3 style="margin: 0; font-family: Newsreader, serif; font-size: 44px; font-weight: 400; line-height: 1.1; color: #1C1E18; letter-spacing: -0.01em">Your home is in good shape.<span style="color: #A8A79A"> One item sits on our watch list.</span></h3>
+            <p style="margin: 18px 0 0; font-size: 14.5px; line-height: 1.65; color: #5A5E50; max-width: 620px; text-wrap: pretty">Sally was out June 24 — replaced the AC capacitor and walked the crawlspace. The radon mitigation system still isn't on a service contract; we're getting you two quotes this week.</p>
+
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; margin-top: 38px">
+              <div style="border-top: 1px solid #1C1E18; padding-top: 12px">
+                <p style="margin: 0; font-family: Newsreader, serif; font-size: 32px; color: #1C1E18; line-height: 1">12</p>
+                <p style="margin: 6px 0 0; font-size: 12px; color: #8D9081">tasks completed</p>
+              </div>
+              <div style="border-top: 1px solid #E0DCD0; padding-top: 12px">
+                <p style="margin: 0; font-family: Newsreader, serif; font-size: 32px; color: #1C1E18; line-height: 1">4</p>
+                <p style="margin: 6px 0 0; font-size: 12px; color: #8D9081">trusted pros used</p>
+              </div>
+              <div style="border-top: 1px solid #E0DCD0; padding-top: 12px">
+                <p style="margin: 0; font-family: Newsreader, serif; font-size: 32px; color: #1C1E18; line-height: 1">$8.4k</p>
+                <p style="margin: 6px 0 0; font-size: 12px; color: #8D9081">work coordinated</p>
+              </div>
+              <div style="border-top: 1px solid #E0DCD0; padding-top: 12px">
+                <p style="margin: 0; font-family: Newsreader, serif; font-size: 32px; color: #1C1E18; line-height: 1">Aug 1</p>
+                <p style="margin: 6px 0 0; font-size: 12px; color: #8D9081">next invoice · $199</p>
+              </div>
+            </div>
+
+            <p style="margin: 42px 0 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">In motion</p>
+            <div style="margin-top: 14px; display: flex; flex-direction: column">
+              <div style="display: flex; justify-content: space-between; gap: 24px; padding: 14px 0; border-top: 1px solid #EFEBE0">
+                <span style="font-size: 14.5px; color: #1C1E18; font-weight: 500">Radon mitigation service contract</span>
+                <span style="font-size: 13px; color: #8D9081">two quotes coming Friday</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; gap: 24px; padding: 14px 0; border-top: 1px solid #EFEBE0">
+                <span style="font-size: 14.5px; color: #1C1E18; font-weight: 500">Gas-log fireplaces — service both</span>
+                <span style="font-size: 13px; color: #8D9081">scheduled Aug 12, Monticello Air</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; gap: 24px; padding: 14px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0">
+                <span style="font-size: 14.5px; color: #1C1E18; font-weight: 500">Roof insurance claim follow-up</span>
+                <span style="font-size: 13px; color: #8D9081">waiting on adjuster</span>
+              </div>
+            </div>
+
+            <sc-if value="{{ aDetail }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top: 40px; padding: 26px 28px; background: #F3F1E9; border-radius: 14px">
+                <div style="display: flex; align-items: baseline; justify-content: space-between">
+                  <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #6E7264">Systems of record</p>
+                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081">9 tracked · 1 flagged</span>
+                </div>
+                <div style="margin-top: 16px; display: grid; grid-template-columns: 1.6fr 1fr 1fr 0.8fr; gap: 4px 20px; font-size: 13px">
+                  <span style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 8px">System</span>
+                  <span style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 8px">Installed</span>
+                  <span style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 8px">Last serviced</span>
+                  <span style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 8px">State</span>
+
+                  <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #1C1E18">Furnace — propane</span>
+                  <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">2021</span>
+                  <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">Mar 12, 2026</span>
+                  <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50; display: flex; align-items: center; gap: 7px"><span style="width: 7px; height: 7px; border-radius: 999px; background: #4A7A55"></span>Good</span>
+
+                  <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #1C1E18">Radon mitigation — 5.7 pCi/L</span>
+                  <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">2021</span>
+                  <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">never</span>
+                  <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50; display: flex; align-items: center; gap: 7px"><span style="width: 7px; height: 7px; border-radius: 999px; background: #A8701F"></span>Attention</span>
+
+                  <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #1C1E18">Standby generator — 22kW</span>
+                  <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">2021</span>
+                  <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">Jun 2026</span>
+                  <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50; display: flex; align-items: center; gap: 7px"><span style="width: 7px; height: 7px; border-radius: 999px; background: #4A7A55"></span>Good</span>
+
+                  <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #1C1E18">Central AC — capacitor replaced</span>
+                  <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">2011</span>
+                  <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50">Jun 24, 2026</span>
+                  <span style="padding: 9px 0; border-top: 1px solid #E4E0D4; color: #5A5E50; display: flex; align-items: center; gap: 7px"><span style="width: 7px; height: 7px; border-radius: 999px; background: #4A7A55"></span>Good</span>
+                </div>
+              </div>
+            </sc-if>
+
+            <div style="margin-top: 40px; display: flex; align-items: center; gap: 14px; padding: 8px 8px 8px 20px; background: #FFFFFF; border: 1px solid #DCD8CB; border-radius: 16px; box-shadow: 0 1px 0 rgba(28,30,24,0.03)">
+              <span style="width: 8px; height: 8px; border-radius: 999px; background: #4A7A55; flex-shrink: 0"></span>
+              <span style="flex: 1; font-size: 14.5px; color: #9A9C8E">Something need attention? Tell Sally — she reads these directly.</span>
+              <button style="border: 0; background: #24382B; color: #F5F3ED; border-radius: 12px; padding: 11px 20px; font-size: 13.5px; font-weight: 500">Send</button>
+            </div>
+            <p style="margin: 12px 2px 0; font-size: 12px; color: #A8A79A">Sally Whitfield, relationship manager · Patrick Herron, property &amp; systems · urgent, just call</p>
+          </div>
+        </div>
+
+        <div style="width: 390px; background: #FCFBF7; border: 1px solid #E0DCD0; border-radius: 30px; overflow: hidden; box-shadow: 0 1px 2px rgba(28,30,24,0.04), 0 12px 32px -18px rgba(28,30,24,0.18)">
+          <div style="padding: 22px 22px 0; display: flex; align-items: center; justify-content: space-between">
+            <p style="margin: 0; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">895 Old Ballard Farm</p>
+            <span style="width: 30px; height: 30px; border-radius: 999px; background: #24382B; color: #F5F3ED; font-size: 12px; display: grid; place-items: center">H</span>
+          </div>
+          <div style="padding: 20px 22px 26px">
+            <h3 style="margin: 0; font-family: Newsreader, serif; font-size: 30px; font-weight: 400; line-height: 1.15; color: #1C1E18">Your home is in good shape.<span style="color: #A8A79A"> One item on our watch list.</span></h3>
+            <p style="margin: 14px 0 0; font-size: 14px; line-height: 1.6; color: #5A5E50">Sally was out June 24 — capacitor replaced, crawlspace clear.</p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 26px">
+              <div style="border-top: 1px solid #1C1E18; padding-top: 10px">
+                <p style="margin: 0; font-family: Newsreader, serif; font-size: 26px; color: #1C1E18; line-height: 1">12</p>
+                <p style="margin: 4px 0 0; font-size: 11.5px; color: #8D9081">tasks completed</p>
+              </div>
+              <div style="border-top: 1px solid #E0DCD0; padding-top: 10px">
+                <p style="margin: 0; font-family: Newsreader, serif; font-size: 26px; color: #1C1E18; line-height: 1">$8.4k</p>
+                <p style="margin: 4px 0 0; font-size: 11.5px; color: #8D9081">coordinated</p>
+              </div>
+            </div>
+
+            <p style="margin: 28px 0 0; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">In motion</p>
+            <div style="margin-top: 10px">
+              <div style="padding: 13px 0; border-top: 1px solid #EFEBE0">
+                <p style="margin: 0; font-size: 14.5px; color: #1C1E18; font-weight: 500">Radon service contract</p>
+                <p style="margin: 3px 0 0; font-size: 12.5px; color: #8D9081">two quotes coming Friday</p>
+              </div>
+              <div style="padding: 13px 0; border-top: 1px solid #EFEBE0">
+                <p style="margin: 0; font-size: 14.5px; color: #1C1E18; font-weight: 500">Fireplace service ×2</p>
+                <p style="margin: 3px 0 0; font-size: 12.5px; color: #8D9081">Aug 12 · Monticello Air</p>
+              </div>
+              <div style="padding: 13px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0">
+                <p style="margin: 0; font-size: 14.5px; color: #1C1E18; font-weight: 500">Roof claim follow-up</p>
+                <p style="margin: 3px 0 0; font-size: 12.5px; color: #8D9081">waiting on adjuster</p>
+              </div>
+            </div>
+          </div>
+          <div style="padding: 14px 18px 22px; border-top: 1px solid #EFEBE0; background: #F7F5EE; display: flex; gap: 10px; align-items: center">
+            <span style="flex: 1; font-size: 14px; color: #9A9C8E; padding-left: 6px">Ask for anything…</span>
+            <button style="border: 0; background: #24382B; color: #F5F3ED; border-radius: 12px; padding: 12px 18px; font-size: 13.5px; font-weight: 500; min-height: 44px">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="1b" style="display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; align-items: baseline; gap: 12px">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 8px; border-radius: 6px; background: #24382B; color: #F5F3ED">1b</span>
+        <h2 style="margin: 0; font-family: Newsreader, serif; font-size: 26px; font-weight: 400; color: #1C1E18">The House Console</h2>
+        <p style="margin: 0; font-size: 13px; color: #8D9081; max-width: 420px">Keeps a rail, but light and role-aware — five doors for homeowners. Detailed mode is where the business depth lives.</p>
+      </div>
+
+      <div style="display: flex; gap: 20px; align-items: flex-start">
+        <div style="width: 880px; background: #FCFBF7; border: 1px solid #E0DCD0; border-radius: 18px; overflow: hidden; display: flex; box-shadow: 0 1px 2px rgba(28,30,24,0.04), 0 12px 32px -18px rgba(28,30,24,0.18)">
+          <div style="width: 232px; background: #F2F0E7; border-right: 1px solid #E7E3D7; padding: 22px 16px; display: flex; flex-direction: column; gap: 26px">
+            <div>
+              <p style="margin: 0; font-family: Newsreader, serif; font-size: 17px; color: #24382B; line-height: 1.25">Charlottesville<br>Home &amp; Property</p>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <div style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(28,30,24,0.05)">
+                <span style="width: 6px; height: 6px; border-radius: 999px; background: #24382B"></span>
+                <span style="font-size: 13.5px; font-weight: 500; color: #1C1E18">Home</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px" style-hover="background: #EAE7DC">
+                <span style="width: 6px; height: 6px; border-radius: 999px; background: #C9C6B8"></span>
+                <span style="font-size: 13.5px; color: #5A5E50">Health of the house</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px" style-hover="background: #EAE7DC">
+                <span style="width: 6px; height: 6px; border-radius: 999px; background: #C9C6B8"></span>
+                <span style="font-size: 13.5px; color: #5A5E50">Year of care</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px" style-hover="background: #EAE7DC">
+                <span style="width: 6px; height: 6px; border-radius: 999px; background: #C9C6B8"></span>
+                <span style="font-size: 13.5px; color: #5A5E50">What's next</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px" style-hover="background: #EAE7DC">
+                <span style="width: 6px; height: 6px; border-radius: 999px; background: #C9C6B8"></span>
+                <span style="font-size: 13.5px; color: #5A5E50">Everything we've done</span>
+              </div>
+            </div>
+            <sc-if value="{{ bDetail }}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; flex-direction: column; gap: 2px">
+                <p style="margin: 0 0 6px 12px; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #9A9C8E">Business</p>
+                <div style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px" style-hover="background: #EAE7DC">
+                  <span style="width: 6px; height: 6px; border-radius: 999px; background: #C9C6B8"></span>
+                  <span style="font-size: 13.5px; color: #5A5E50">Command center</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px" style-hover="background: #EAE7DC">
+                  <span style="width: 6px; height: 6px; border-radius: 999px; background: #C9C6B8"></span>
+                  <span style="font-size: 13.5px; color: #5A5E50">Work orders</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px" style-hover="background: #EAE7DC">
+                  <span style="width: 6px; height: 6px; border-radius: 999px; background: #C9C6B8"></span>
+                  <span style="font-size: 13.5px; color: #5A5E50">Contractor network</span>
+                </div>
+              </div>
+            </sc-if>
+            <div style="margin-top: auto; padding-top: 18px; border-top: 1px solid #E4E0D4">
+              <p style="margin: 0; font-size: 12px; color: #8D9081">Standard membership</p>
+              <p style="margin: 3px 0 0; font-size: 12px; color: #A8A79A">Next invoice Aug 1 · $199</p>
+            </div>
+          </div>
+
+          <div style="flex: 1; min-width: 0">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 26px; border-bottom: 1px solid #EFEBE0">
+              <p style="margin: 0; font-size: 15px; font-weight: 500; color: #1C1E18">895 Old Ballard Farm Ln <span style="color: #A8A79A; font-weight: 400">· 5.01 acres · built 1992</span></p>
+              <div style="display: flex; padding: 2px; background: #F0EDE4; border-radius: 999px">
+                <button onClick="{{ bSimple }}" style="{{ bSegOff }}">Simple</button>
+                <button onClick="{{ bDetailed }}" style="{{ bSegOn }}">Detailed</button>
+              </div>
+            </div>
+
+            <div style="padding: 28px 26px 30px; display: flex; flex-direction: column; gap: 26px">
+              <div>
+                <h3 style="margin: 0; font-family: Newsreader, serif; font-size: 30px; font-weight: 400; color: #1C1E18; line-height: 1.2">Healthy overall — one item we're chasing.</h3>
+                <div style="margin-top: 18px; display: flex; height: 8px; gap: 2px; border-radius: 999px; overflow: hidden">
+                  <div style="flex: 8; background: #4A7A55"></div>
+                  <div style="flex: 1; background: #A8701F"></div>
+                </div>
+                <div style="margin-top: 10px; display: flex; gap: 20px">
+                  <span style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #5A5E50"><span style="width: 7px; height: 7px; border-radius: 999px; background: #4A7A55"></span>Good · 8</span>
+                  <span style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #5A5E50"><span style="width: 7px; height: 7px; border-radius: 999px; background: #A8701F"></span>Attention · 1</span>
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1.35fr 1fr; gap: 26px">
+                <div>
+                  <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">Open work</p>
+                  <div style="margin-top: 12px; display: flex; flex-direction: column">
+                    <div style="padding: 12px 0; border-top: 1px solid #EFEBE0; display: flex; justify-content: space-between; gap: 16px">
+                      <div>
+                        <p style="margin: 0; font-size: 14px; font-weight: 500; color: #1C1E18">Radon mitigation service</p>
+                        <p style="margin: 3px 0 0; font-size: 12.5px; color: #8D9081">quotes out to 2 pros</p>
+                      </div>
+                      <span style="font-size: 12px; color: #A8701F; white-space: nowrap; padding-top: 2px">Attention</span>
+                    </div>
+                    <div style="padding: 12px 0; border-top: 1px solid #EFEBE0; display: flex; justify-content: space-between; gap: 16px">
+                      <div>
+                        <p style="margin: 0; font-size: 14px; font-weight: 500; color: #1C1E18">Gas-log fireplaces ×2</p>
+                        <p style="margin: 3px 0 0; font-size: 12.5px; color: #8D9081">Monticello Air · Aug 12, 9am</p>
+                      </div>
+                      <span style="font-size: 12px; color: #5A5E50; white-space: nowrap; padding-top: 2px">Scheduled</span>
+                    </div>
+                    <div style="padding: 12px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0; display: flex; justify-content: space-between; gap: 16px">
+                      <div>
+                        <p style="margin: 0; font-size: 14px; font-weight: 500; color: #1C1E18">Roof claim 2025–26</p>
+                        <p style="margin: 3px 0 0; font-size: 12.5px; color: #8D9081">adjuster review</p>
+                      </div>
+                      <span style="font-size: 12px; color: #5A5E50; white-space: nowrap; padding-top: 2px">Waiting</span>
+                    </div>
+                  </div>
+
+                  <sc-if value="{{ bDetail }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top: 24px">
+                      <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">Pipeline detail</p>
+                      <div style="margin-top: 12px; display: grid; grid-template-columns: 1.5fr 1fr 0.9fr 0.7fr; gap: 0 16px; font-size: 12.5px">
+                        <span style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 7px">Job</span>
+                        <span style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 7px">Pro</span>
+                        <span style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 7px">Quote</span>
+                        <span style="font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9C8E; padding-bottom: 7px">Margin</span>
+                        <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #1C1E18">Radon service contract</span>
+                        <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">Blue Ridge Radon</span>
+                        <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">$480/yr</span>
+                        <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">18%</span>
+                        <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #1C1E18">Fireplace service ×2</span>
+                        <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">Monticello Air</span>
+                        <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">$390</span>
+                        <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">22%</span>
+                        <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #1C1E18">Generator annual</span>
+                        <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">Dominion Power Svc</span>
+                        <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">$310</span>
+                        <span style="padding: 8px 0; border-top: 1px solid #EFEBE0; color: #5A5E50">25%</span>
+                      </div>
+                    </div>
+                  </sc-if>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 22px">
+                  <div style="padding: 18px; background: #F2F0E7; border-radius: 14px">
+                    <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #6E7264">Your team</p>
+                    <p style="margin: 12px 0 0; font-size: 14px; font-weight: 500; color: #1C1E18">Sally Whitfield</p>
+                    <p style="margin: 2px 0 0; font-size: 12.5px; color: #8D9081">Relationship manager</p>
+                    <p style="margin: 10px 0 0; font-size: 14px; font-weight: 500; color: #1C1E18">Patrick Herron</p>
+                    <p style="margin: 2px 0 0; font-size: 12.5px; color: #8D9081">Property &amp; systems</p>
+                    <button style="margin-top: 16px; width: 100%; border: 0; background: #24382B; color: #F5F3ED; border-radius: 11px; padding: 11px 16px; font-size: 13.5px; font-weight: 500">Ask for something</button>
+                  </div>
+                  <div>
+                    <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">Recent care</p>
+                    <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 9px">
+                      <p style="margin: 0; font-size: 13px; color: #5A5E50"><span style="color: #1C1E18; font-weight: 500">Capacitor replaced</span> · Jun 24</p>
+                      <p style="margin: 0; font-size: 13px; color: #5A5E50"><span style="color: #1C1E18; font-weight: 500">Spring HVAC tune-up</span> · Mar 12</p>
+                      <p style="margin: 0; font-size: 13px; color: #5A5E50"><span style="color: #1C1E18; font-weight: 500">Generator service</span> · Jun 2</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="width: 390px; background: #FCFBF7; border: 1px solid #E0DCD0; border-radius: 30px; overflow: hidden; box-shadow: 0 1px 2px rgba(28,30,24,0.04), 0 12px 32px -18px rgba(28,30,24,0.18); display: flex; flex-direction: column">
+          <div style="padding: 20px 20px 0; display: flex; align-items: center; justify-content: space-between">
+            <p style="margin: 0; font-family: Newsreader, serif; font-size: 16px; color: #24382B">895 Old Ballard Farm</p>
+            <div style="display: flex; padding: 2px; background: #F0EDE4; border-radius: 999px">
+              <span style="border-radius: 999px; padding: 5px 11px; font-size: 11.5px; font-weight: 500; background: #FFFFFF; color: #1C1E18">Simple</span>
+              <span style="border-radius: 999px; padding: 5px 11px; font-size: 11.5px; color: #8D9081">Detail</span>
+            </div>
+          </div>
+          <div style="padding: 18px 20px 24px; flex: 1">
+            <h3 style="margin: 0; font-family: Newsreader, serif; font-size: 26px; font-weight: 400; color: #1C1E18; line-height: 1.2">Healthy overall — one item we're chasing.</h3>
+            <div style="margin-top: 16px; display: flex; height: 8px; gap: 2px; border-radius: 999px; overflow: hidden">
+              <div style="flex: 8; background: #4A7A55"></div>
+              <div style="flex: 1; background: #A8701F"></div>
+            </div>
+            <div style="margin-top: 9px; display: flex; gap: 18px">
+              <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #5A5E50"><span style="width: 7px; height: 7px; border-radius: 999px; background: #4A7A55"></span>Good · 8</span>
+              <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #5A5E50"><span style="width: 7px; height: 7px; border-radius: 999px; background: #A8701F"></span>Attention · 1</span>
+            </div>
+            <p style="margin: 26px 0 0; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">Open work</p>
+            <div style="margin-top: 10px">
+              <div style="padding: 13px 0; border-top: 1px solid #EFEBE0; display: flex; justify-content: space-between; gap: 12px">
+                <div><p style="margin: 0; font-size: 14px; font-weight: 500; color: #1C1E18">Radon mitigation</p><p style="margin: 3px 0 0; font-size: 12.5px; color: #8D9081">quotes out</p></div>
+                <span style="font-size: 11.5px; color: #A8701F">Attention</span>
+              </div>
+              <div style="padding: 13px 0; border-top: 1px solid #EFEBE0; display: flex; justify-content: space-between; gap: 12px">
+                <div><p style="margin: 0; font-size: 14px; font-weight: 500; color: #1C1E18">Fireplaces ×2</p><p style="margin: 3px 0 0; font-size: 12.5px; color: #8D9081">Aug 12, 9am</p></div>
+                <span style="font-size: 11.5px; color: #5A5E50">Scheduled</span>
+              </div>
+              <div style="padding: 13px 0; border-top: 1px solid #EFEBE0; border-bottom: 1px solid #EFEBE0; display: flex; justify-content: space-between; gap: 12px">
+                <div><p style="margin: 0; font-size: 14px; font-weight: 500; color: #1C1E18">Roof claim</p><p style="margin: 3px 0 0; font-size: 12.5px; color: #8D9081">adjuster review</p></div>
+                <span style="font-size: 11.5px; color: #5A5E50">Waiting</span>
+              </div>
+            </div>
+            <button style="margin-top: 22px; width: 100%; border: 0; background: #24382B; color: #F5F3ED; border-radius: 13px; padding: 14px 16px; font-size: 14px; font-weight: 500; min-height: 48px">Ask for something</button>
+          </div>
+          <div style="display: flex; border-top: 1px solid #EFEBE0; background: #F7F5EE">
+            <div style="flex: 1; padding: 12px 0 16px; text-align: center; min-height: 56px">
+              <span style="display: block; width: 7px; height: 7px; border-radius: 999px; background: #24382B; margin: 0 auto 7px"></span>
+              <span style="font-size: 11px; color: #1C1E18; font-weight: 500">Home</span>
+            </div>
+            <div style="flex: 1; padding: 12px 0 16px; text-align: center; min-height: 56px">
+              <span style="display: block; width: 7px; height: 7px; border-radius: 999px; background: #C9C6B8; margin: 0 auto 7px"></span>
+              <span style="font-size: 11px; color: #8D9081">Health</span>
+            </div>
+            <div style="flex: 1; padding: 12px 0 16px; text-align: center; min-height: 56px">
+              <span style="display: block; width: 7px; height: 7px; border-radius: 999px; background: #C9C6B8; margin: 0 auto 7px"></span>
+              <span style="font-size: 11px; color: #8D9081">Year</span>
+            </div>
+            <div style="flex: 1; padding: 12px 0 16px; text-align: center; min-height: 56px">
+              <span style="display: block; width: 7px; height: 7px; border-radius: 999px; background: #C9C6B8; margin: 0 auto 7px"></span>
+              <span style="font-size: 11px; color: #8D9081">Ask</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="1c" style="display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; align-items: baseline; gap: 12px">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 8px; border-radius: 6px; background: #24382B; color: #F5F3ED">1c</span>
+        <h2 style="margin: 0; font-family: Newsreader, serif; font-size: 26px; font-weight: 400; color: #1C1E18">The Care Record</h2>
+        <p style="margin: 0; font-size: 13px; color: #8D9081; max-width: 420px">The house as one continuous story on a dated spine. Photo-led, zero tables in Simple; Detailed hangs cost and pro data off each entry.</p>
+      </div>
+
+      <div style="display: flex; gap: 20px; align-items: flex-start">
+        <div style="width: 880px; background: #FCFBF7; border: 1px solid #E0DCD0; border-radius: 18px; overflow: hidden; box-shadow: 0 1px 2px rgba(28,30,24,0.04), 0 12px 32px -18px rgba(28,30,24,0.18)">
+          <div style="position: relative; height: 260px; overflow: hidden">
+            <img src="docs/design-assets/895-old-ballard-aerial-front.jpg" alt="895 Old Ballard Farm Ln" style="width: 100%; height: 100%; object-fit: cover; display: block">
+            <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(20,26,20,0.82) 0%, rgba(20,26,20,0.15) 55%, rgba(20,26,20,0.28) 100%)"></div>
+            <div style="position: absolute; top: 18px; left: 26px; right: 22px; display: flex; align-items: center; justify-content: space-between">
+              <p style="margin: 0; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.82)">Charlottesville Home &amp; Property</p>
+              <div style="display: flex; padding: 2px; background: rgba(255,255,255,0.18); border-radius: 999px; backdrop-filter: blur(6px)">
+                <button onClick="{{ cSimple }}" style="{{ cSegOff }}">Simple</button>
+                <button onClick="{{ cDetailed }}" style="{{ cSegOn }}">Detailed</button>
+              </div>
+            </div>
+            <div style="position: absolute; bottom: 24px; left: 26px; right: 26px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+              <div>
+                <h3 style="margin: 0; font-family: Newsreader, serif; font-size: 38px; font-weight: 400; color: #FFFFFF; line-height: 1.1">895 Old Ballard Farm Ln</h3>
+                <p style="margin: 8px 0 0; font-size: 14px; color: rgba(255,255,255,0.86)">In good shape · one item on the watch list · last visit Jun 24</p>
+              </div>
+              <button style="border: 0; background: #FCFBF7; color: #1C1E18; border-radius: 12px; padding: 12px 18px; font-size: 13.5px; font-weight: 500; white-space: nowrap">Ask for something</button>
+            </div>
+          </div>
+
+          <div style="padding: 30px 34px 36px">
+            <div style="display: flex; gap: 34px">
+              <div style="flex: 1; min-width: 0">
+                <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">The record</p>
+                <div style="margin-top: 18px; display: flex; flex-direction: column">
+
+                  <div style="display: grid; grid-template-columns: 96px 1fr; gap: 20px; padding-bottom: 22px; position: relative">
+                    <div style="text-align: right">
+                      <p style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081">NOW</p>
+                    </div>
+                    <div style="border-left: 1px solid #E0DCD0; padding-left: 22px; position: relative">
+                      <span style="position: absolute; left: -4.5px; top: 5px; width: 8px; height: 8px; border-radius: 999px; background: #A8701F"></span>
+                      <p style="margin: 0; font-size: 15.5px; font-weight: 500; color: #1C1E18">Radon mitigation has no service contract</p>
+                      <p style="margin: 5px 0 0; font-size: 13.5px; line-height: 1.6; color: #5A5E50">Tested at 5.7 pCi/L in 2021 and mitigated, but nobody has serviced the fan since. Two quotes land Friday.</p>
+                      <sc-if value="{{ cDetail }}" hint-placeholder-val="{{ false }}">
+                        <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px">
+                          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #5A5E50; background: #F0EDE4; border-radius: 6px; padding: 4px 8px">Blue Ridge Radon · $480/yr</span>
+                          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #5A5E50; background: #F0EDE4; border-radius: 6px; padding: 4px 8px">margin 18%</span>
+                          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #5A5E50; background: #F0EDE4; border-radius: 6px; padding: 4px 8px">source: 2021 closing addendum</span>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: 96px 1fr; gap: 20px; padding-bottom: 22px">
+                    <div style="text-align: right">
+                      <p style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081">AUG 12</p>
+                    </div>
+                    <div style="border-left: 1px solid #E0DCD0; padding-left: 22px; position: relative">
+                      <span style="position: absolute; left: -4.5px; top: 5px; width: 8px; height: 8px; border-radius: 999px; background: #C9C6B8"></span>
+                      <p style="margin: 0; font-size: 15.5px; font-weight: 500; color: #1C1E18">Both gas-log fireplaces serviced</p>
+                      <p style="margin: 5px 0 0; font-size: 13.5px; line-height: 1.6; color: #5A5E50">Monticello Air, 9am. Flagged in the closing inspection; first service under your membership.</p>
+                      <sc-if value="{{ cDetail }}" hint-placeholder-val="{{ false }}">
+                        <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px">
+                          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #5A5E50; background: #F0EDE4; border-radius: 6px; padding: 4px 8px">$390 quoted · accepted</span>
+                          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #5A5E50; background: #F0EDE4; border-radius: 6px; padding: 4px 8px">WO-1042</span>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: 96px 1fr; gap: 20px; padding-bottom: 22px">
+                    <div style="text-align: right">
+                      <p style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081">JUN 24</p>
+                    </div>
+                    <div style="border-left: 1px solid #E0DCD0; padding-left: 22px; position: relative">
+                      <span style="position: absolute; left: -4.5px; top: 5px; width: 8px; height: 8px; border-radius: 999px; background: #4A7A55"></span>
+                      <p style="margin: 0; font-size: 15.5px; font-weight: 500; color: #1C1E18">AC capacitor replaced — cooling restored</p>
+                      <p style="margin: 5px 0 0; font-size: 13.5px; line-height: 1.6; color: #5A5E50">Sally caught it on the walkthrough before you noticed the house running warm.</p>
+                      <sc-if value="{{ cDetail }}" hint-placeholder-val="{{ false }}">
+                        <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px">
+                          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #5A5E50; background: #F0EDE4; border-radius: 6px; padding: 4px 8px">$185 · in-house</span>
+                          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #5A5E50; background: #F0EDE4; border-radius: 6px; padding: 4px 8px">unit 2011 · 15yr</span>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: 96px 1fr; gap: 20px">
+                    <div style="text-align: right">
+                      <p style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #8D9081">MAR 12</p>
+                    </div>
+                    <div style="padding-left: 22px; border-left: 1px solid transparent; position: relative">
+                      <span style="position: absolute; left: -4.5px; top: 5px; width: 8px; height: 8px; border-radius: 999px; background: #4A7A55"></span>
+                      <p style="margin: 0; font-size: 15.5px; font-weight: 500; color: #1C1E18">Spring HVAC tune-up</p>
+                      <p style="margin: 5px 0 0; font-size: 13.5px; line-height: 1.6; color: #5A5E50">Propane furnace (2021) and both zones checked ahead of the season.</p>
+                    </div>
+                  </div>
+                </div>
+                <button style="margin-top: 22px; border: 1px solid #DCD8CB; background: transparent; color: #5A5E50; border-radius: 999px; padding: 9px 18px; font-size: 13px; font-weight: 500">See all 12 entries</button>
+              </div>
+
+              <div style="width: 232px; flex-shrink: 0; display: flex; flex-direction: column; gap: 24px">
+                <div>
+                  <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">This year</p>
+                  <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 12px">
+                    <div style="border-top: 1px solid #1C1E18; padding-top: 9px">
+                      <p style="margin: 0; font-family: Newsreader, serif; font-size: 26px; color: #1C1E18; line-height: 1">$8.4k</p>
+                      <p style="margin: 4px 0 0; font-size: 12px; color: #8D9081">work coordinated</p>
+                    </div>
+                    <div style="border-top: 1px solid #E0DCD0; padding-top: 9px">
+                      <p style="margin: 0; font-family: Newsreader, serif; font-size: 26px; color: #1C1E18; line-height: 1">12</p>
+                      <p style="margin: 4px 0 0; font-size: 12px; color: #8D9081">tasks completed</p>
+                    </div>
+                  </div>
+                </div>
+                <div style="padding: 16px 18px; background: #F2F0E7; border-radius: 14px">
+                  <p style="margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #6E7264">Reach us</p>
+                  <p style="margin: 10px 0 0; font-size: 13.5px; font-weight: 500; color: #1C1E18">Sally Whitfield</p>
+                  <p style="margin: 2px 0 0; font-size: 12px; color: #8D9081">Relationship manager</p>
+                  <p style="margin: 10px 0 0; font-size: 13.5px; font-weight: 500; color: #1C1E18">Patrick Herron</p>
+                  <p style="margin: 2px 0 0; font-size: 12px; color: #8D9081">Property &amp; systems</p>
+                  <p style="margin: 12px 0 0; padding-top: 12px; border-top: 1px solid #E4E0D4; font-size: 12px; color: #8D9081">Membership Standard · next invoice Aug 1, $199</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="width: 390px; background: #FCFBF7; border: 1px solid #E0DCD0; border-radius: 30px; overflow: hidden; box-shadow: 0 1px 2px rgba(28,30,24,0.04), 0 12px 32px -18px rgba(28,30,24,0.18); display: flex; flex-direction: column">
+          <div style="position: relative; height: 200px">
+            <img src="docs/design-assets/895-old-ballard-aerial-front.jpg" alt="895 Old Ballard Farm Ln" style="width: 100%; height: 100%; object-fit: cover; display: block">
+            <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(20,26,20,0.85) 0%, rgba(20,26,20,0.1) 65%)"></div>
+            <div style="position: absolute; bottom: 18px; left: 20px; right: 20px">
+              <h3 style="margin: 0; font-family: Newsreader, serif; font-size: 26px; font-weight: 400; color: #FFFFFF; line-height: 1.15">895 Old Ballard Farm Ln</h3>
+              <p style="margin: 6px 0 0; font-size: 13px; color: rgba(255,255,255,0.85)">Good shape · 1 on the watch list</p>
+            </div>
+          </div>
+          <div style="padding: 22px 20px 16px; flex: 1">
+            <p style="margin: 0; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #8D9081">The record</p>
+            <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 18px">
+              <div style="display: grid; grid-template-columns: 54px 1fr; gap: 12px">
+                <p style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081; text-align: right">NOW</p>
+                <div style="border-left: 1px solid #E0DCD0; padding-left: 16px; position: relative">
+                  <span style="position: absolute; left: -4.5px; top: 4px; width: 8px; height: 8px; border-radius: 999px; background: #A8701F"></span>
+                  <p style="margin: 0; font-size: 14.5px; font-weight: 500; color: #1C1E18">Radon service contract</p>
+                  <p style="margin: 4px 0 0; font-size: 13px; line-height: 1.55; color: #5A5E50">Two quotes land Friday.</p>
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 54px 1fr; gap: 12px">
+                <p style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081; text-align: right">AUG 12</p>
+                <div style="border-left: 1px solid #E0DCD0; padding-left: 16px; position: relative">
+                  <span style="position: absolute; left: -4.5px; top: 4px; width: 8px; height: 8px; border-radius: 999px; background: #C9C6B8"></span>
+                  <p style="margin: 0; font-size: 14.5px; font-weight: 500; color: #1C1E18">Fireplaces serviced ×2</p>
+                  <p style="margin: 4px 0 0; font-size: 13px; line-height: 1.55; color: #5A5E50">Monticello Air, 9am.</p>
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 54px 1fr; gap: 12px">
+                <p style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8D9081; text-align: right">JUN 24</p>
+                <div style="padding-left: 16px; position: relative">
+                  <span style="position: absolute; left: -4.5px; top: 4px; width: 8px; height: 8px; border-radius: 999px; background: #4A7A55"></span>
+                  <p style="margin: 0; font-size: 14.5px; font-weight: 500; color: #1C1E18">AC capacitor replaced</p>
+                  <p style="margin: 4px 0 0; font-size: 13px; line-height: 1.55; color: #5A5E50">Caught on the walkthrough.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="padding: 14px 18px 20px; border-top: 1px solid #EFEBE0; background: #F7F5EE; display: flex; gap: 10px; align-items: center">
+            <span style="flex: 1; font-size: 14px; color: #9A9C8E; padding-left: 6px">Ask for anything…</span>
+            <button style="border: 0; background: #24382B; color: #F5F3ED; border-radius: 12px; padding: 12px 18px; font-size: 13.5px; font-weight: 500; min-height: 44px">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { a: false, b: false, c: false, d: false, e: false, viewer: "founder" }
+  vseg(active) {
+    return "border: 0; border-radius: 999px; padding: 6px 15px; font-size: 12.5px; font-weight: 500; transition: background 120ms, color 120ms; " +
+      (active ? "background: #24382B; color: #F5F3ED;" : "background: transparent; color: #5A5E50;")
+  }
+  seg(active, onPhoto) {
+    const base = "border: 0; border-radius: 999px; padding: 5px 13px; font-size: 12px; font-weight: 500; transition: background 120ms, color 120ms; "
+    if (onPhoto)
+      return base + (active
+        ? "background: #FCFBF7; color: #1C1E18;"
+        : "background: transparent; color: rgba(255,255,255,0.8);")
+    return base + (active
+      ? "background: #FFFFFF; color: #1C1E18; box-shadow: 0 1px 2px rgba(28,30,24,0.08);"
+      : "background: transparent; color: #8D9081;")
+  }
+  renderVals() {
+    return {
+      aSegOff: this.seg(!this.state.a), aSegOn: this.seg(this.state.a),
+      bSegOff: this.seg(!this.state.b), bSegOn: this.seg(this.state.b),
+      cSegOff: this.seg(!this.state.c, true), cSegOn: this.seg(this.state.c, true),
+      eDetail: this.state.e,
+      eSegOff: this.seg(!this.state.e), eSegOn: this.seg(this.state.e),
+      eSimple: () => this.setState({ e: false }),
+      eDetailed: () => this.setState({ e: true }),
+      showFounder: this.state.viewer === "founder",
+      showOwner: this.state.viewer === "owner",
+      viewFounder: () => this.setState({ viewer: "founder" }),
+      viewOwner: () => this.setState({ viewer: "owner" }),
+      vSegFounder: this.vseg(this.state.viewer === "founder"),
+      vSegOwner: this.vseg(this.state.viewer === "owner"),
+      viewerNote: this.state.viewer === "founder"
+        ? "3a — everything, sorted by what's at risk"
+        : "2a — what the Herrons see when they sign in",
+      dSegOff: this.seg(!this.state.d), dSegOn: this.seg(this.state.d),
+      dDetail: this.state.d,
+      dSimple: () => this.setState({ d: false }),
+      dDetailed: () => this.setState({ d: true }),
+      aDetail: this.state.a,
+      bDetail: this.state.b,
+      cDetail: this.state.c,
+      aSimple: () => this.setState({ a: false }),
+      aDetailed: () => this.setState({ a: true }),
+      bSimple: () => this.setState({ b: false }),
+      bDetailed: () => this.setState({ b: true }),
+      cSimple: () => this.setState({ c: false }),
+      cDetailed: () => this.setState({ c: true }),
+    }
+  }
+}
+</script>
+</body>
+</html>
