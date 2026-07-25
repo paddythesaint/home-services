@@ -304,13 +304,13 @@ export default function Layout({ user }) {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="md:hidden bg-brand-900 text-brand-50">
+        <header className="md:hidden bg-sunk border-b border-line-2">
           <div className="px-4 py-3 flex items-center gap-3">
             <button
               type="button"
               aria-label="Open menu"
               onClick={() => setMenuOpen(true)}
-              className="p-1 -ml-1 text-brand-50"
+              className="p-1 -ml-1 text-ink"
             >
               <svg
                 width="22"
@@ -325,7 +325,7 @@ export default function Layout({ user }) {
                 <path d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <p className="font-display text-sm font-semibold flex-1">
+            <p className="font-display text-sm font-semibold flex-1 text-brand-700">
               Home &amp; Property Services
             </p>
           </div>
@@ -335,17 +335,15 @@ export default function Layout({ user }) {
         {menuOpen && (
           <div className="md:hidden fixed inset-0 z-50">
             <div
-              className="absolute inset-0 bg-brand-950/50"
+              className="absolute inset-0 bg-ink/40"
               aria-hidden="true"
               onClick={() => setMenuOpen(false)}
             />
-            <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] bg-brand-900 text-brand-50 p-5 overflow-y-auto shadow-(--shadow-raised)">
+            <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] bg-sunk text-ink p-5 overflow-y-auto shadow-(--shadow-raised)">
               <div className="mb-6 flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-brand-200">
-                    Charlottesville
-                  </p>
-                  <p className="font-display text-lg font-semibold leading-snug">
+                  <p className="eyebrow m-0">Charlottesville</p>
+                  <p className="font-display m-0 mt-0.5 text-lg leading-snug text-brand-700">
                     Home &amp; Property Services
                   </p>
                 </div>
@@ -353,20 +351,18 @@ export default function Layout({ user }) {
                   type="button"
                   aria-label="Close menu"
                   onClick={() => setMenuOpen(false)}
-                  className="text-brand-200 hover:text-white text-2xl leading-none"
+                  className="text-ink-3 hover:text-ink text-2xl leading-none"
                 >
                   &times;
                 </button>
               </div>
               {founder && (portfolio?.length ?? 0) > 1 && (
                 <label className="block mb-4">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-300">
-                    Viewing property
-                  </span>
+                  <span className="eyebrow">Viewing property</span>
                   <select
                     value={activePropertyId || ""}
                     onChange={(e) => setActiveProperty(e.target.value)}
-                    className="mt-1.5 w-full bg-brand-800 text-brand-50 text-sm rounded-md px-2 py-1.5 border border-brand-700"
+                    className="mt-1.5 w-full bg-field text-ink text-sm rounded-(--radius-control) px-2 py-1.5 border border-line-2"
                   >
                     {portfolio.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -380,7 +376,7 @@ export default function Layout({ user }) {
                 <select
                   value={viewAs}
                   onChange={(e) => changeViewAs(e.target.value)}
-                  className="mb-4 w-full bg-brand-800 text-brand-50 text-xs rounded-md px-2 py-1.5 border border-brand-700"
+                  className="mb-4 w-full bg-field text-ink text-xs rounded-(--radius-control) px-2 py-1.5 border border-line-2"
                   aria-label="View as"
                 >
                   {Object.entries(ROLE_LABELS).map(([role, label]) => (
@@ -393,19 +389,17 @@ export default function Layout({ user }) {
               <nav className="flex flex-col gap-4">
                 {navSections.map((section) => (
                   <div key={section.heading} className="flex flex-col gap-0.5">
-                    <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-300">
-                      {section.heading}
-                    </p>
+                    <p className="eyebrow px-3 pb-1 m-0">{section.heading}</p>
                     {section.items.map((item) => (
                       <NavLink
                         key={item.to}
                         to={item.to}
                         end={item.end}
                         onClick={() => setMenuOpen(false)}
-                        className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors ${
+                        className={`flex items-center gap-2.5 rounded-(--radius-control) px-3 py-2 text-sm transition-colors ${
                           navActive(item, pathname)
-                            ? "bg-brand-50 text-brand-900 font-medium"
-                            : "text-brand-100 hover:bg-brand-800"
+                            ? "bg-white text-ink font-medium shadow-(--shadow-pill)"
+                            : "text-ink-2 hover:text-ink hover:bg-ink/[0.04]"
                         }`}
                       >
                         <NavIcon name={item.icon} />
@@ -418,7 +412,7 @@ export default function Layout({ user }) {
               <button
                 type="button"
                 onClick={() => signOut(auth)}
-                className="mt-8 text-sm text-brand-200 hover:text-white underline underline-offset-2"
+                className="mt-8 text-sm text-ink-3 hover:text-ink underline underline-offset-2"
               >
                 Sign out
               </button>
