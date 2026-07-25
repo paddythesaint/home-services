@@ -6,8 +6,16 @@ import { viewFor } from "../roles"
 import VisitNoteCard from "../VisitNoteCard"
 import { RecordTabs } from "../HubTabs"
 import { groupByTrade, tradeForItem } from "../trades"
-import { byDateDesc, byMonth, tradeJobRollup } from "../jobHistoryView"
-import { Card, PageHeader, StatusBadge, Button, Modal, DynamicForm } from "../components"
+import { byDateDesc, byMonth, tradeJobRollup, jobTime } from "../jobHistoryView"
+import {
+  Card,
+  PageHeader,
+  StatusBadge,
+  Button,
+  Modal,
+  DynamicForm,
+  useViewMode,
+} from "../components"
 
 const baseFields = [
   { name: "date", label: "Date", type: "text", placeholder: "e.g. June 24, 2026" },
@@ -27,6 +35,7 @@ const baseFields = [
 
 export default function JobHistory() {
   const { uid, user, profile } = useOutletContext()
+  const { mode } = useViewMode()
   const { items, add, update, remove } = useItems(uid, "jobHistory")
   const [editing, setEditing] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -92,14 +101,66 @@ export default function JobHistory() {
     setEditing(null)
   }
 
+  // 4d derivations: completed work grouped under year eyebrows.
+  const completed4d = byDateDesc(items).filter((j) => (j.status || "completed") === "completed")
+  const yearsSeen = []
+  for (const j of completed4d) {
+    const t = jobTime(j)
+    const y = Number.isNaN(t) ? "Undated" : String(new Date(t).getFullYear())
+    if (!yearsSeen.includes(y)) yearsSeen.push(y)
+  }
+  const NUMS4D = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"]
+  const monthDay = (j) => {
+    const t = jobTime(j)
+    return Number.isNaN(t)
+      ? "—"
+      : new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+  }
+
   return (
     <div>
       <RecordTabs />
       <PageHeader
-        title="Job History"
-        subtitle="A complete record of every job dispatched on your property."
+        title={`${NUMS4D[completed4d.length] || completed4d.length} job${completed4d.length === 1 ? "" : "s"} on the record.`}
+        clause="Every one with a name attached."
+        subtitle="Everything we've done on this home — who did it and when. The full dispatch record lives below."
         action={<Button onClick={() => setEditing("new")}>+ Add job</Button>}
       />
+
+      {/* 4d: year-grouped entries. The cost column exists only in Detailed —
+          in Simple the grid column is dropped, not blanked. */}
+      {completed4d.length > 0 && (
+        <div className="mb-10">
+          {yearsSeen.map((year) => (
+            <div key={year} className="mb-5">
+              <p className="eyebrow m-0 mb-1">{year}</p>
+              <ul className="m-0 p-0 list-none">
+                {completed4d
+                  .filter((j) => {
+                    const t = jobTime(j)
+                    const y = Number.isNaN(t) ? "Undated" : String(new Date(t).getFullYear())
+                    return y === year
+                  })
+                  .map((j) => (
+                    <li
+                      key={`y4d-${j.id}`}
+                      className={`grid ${mode === "detailed" ? "grid-cols-[78px_1fr_168px_92px]" : "grid-cols-[78px_1fr_168px]"} gap-3 items-baseline py-2.5 border-t border-line last:border-b`}
+                    >
+                      <span className="numeric text-[11px] text-ink-3">{monthDay(j)}</span>
+                      <span className="text-sm text-ink min-w-0 truncate">{j.title}</span>
+                      <span className="text-[13px] text-ink-3 truncate">{j.sub || "—"}</span>
+                      {mode === "detailed" && (
+                        <span className="numeric text-[10.5px] text-ink-3 text-right">
+                          {j.cost || "—"}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
 
       {founder && <VisitNoteCard uid={uid} profile={profile} jobs={items} />}
 

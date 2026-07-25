@@ -71,7 +71,7 @@ describe("contractor profile page", () => {
 describe("job history cross-links", () => {
   it("links a linked job's contractor name to the profile for founders", async () => {
     renderPage(<JobHistory />)
-    const name = await screen.findByText("Monticello Air")
+    const name = (await screen.findAllByText("Monticello Air")).find((el) => el.closest("a"))
     expect(name.closest("a")).toHaveAttribute(
       "href",
       "/contractor-network/net-monticello"

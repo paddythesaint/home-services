@@ -55,7 +55,7 @@ describe("visit note flow", () => {
 
   it("homeowners never see the composer", async () => {
     renderPage(<JobHistory />, { uid: "prop-ridge", user: ALTON })
-    await screen.findByText("Heat pump service")
+    await screen.findAllByText("Heat pump service")
     expect(screen.queryByText("Compose visit note")).not.toBeInTheDocument()
   })
 

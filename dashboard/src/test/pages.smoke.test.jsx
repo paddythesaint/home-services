@@ -64,7 +64,7 @@ describe("page smoke tests (mock data layer)", () => {
 
   it("Job History lists jobs", async () => {
     renderPage(<JobHistory />)
-    expect(await screen.findByText("Spring HVAC tune-up")).toBeInTheDocument()
+    expect((await screen.findAllByText("Spring HVAC tune-up")).length).toBeGreaterThan(0)
   })
 
   it("Contractors shows the property-local roster", async () => {
