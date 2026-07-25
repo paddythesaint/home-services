@@ -957,7 +957,9 @@ export default function PriorityList() {
                 </div>
                 <div className="text-right shrink-0 flex flex-col items-end gap-2">
                   <UrgencyBadge urgency={item.urgency} />
-                  <p className="text-sm text-ink-2">{item.estCost}</p>
+                  <Detail>
+                    <p className="text-sm text-ink-2">{item.estCost}</p>
+                  </Detail>
                   {index !== null && urgency === "all" && (
                   <div className="flex gap-1">
                     <button

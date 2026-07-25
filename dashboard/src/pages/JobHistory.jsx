@@ -15,6 +15,7 @@ import {
   Modal,
   DynamicForm,
   useViewMode,
+  Detail,
 } from "../components"
 
 const baseFields = [
@@ -223,7 +224,9 @@ export default function JobHistory() {
                 </div>
                 <div className="text-right shrink-0">
                   <StatusBadge status={job.status} />
-                  <p className="text-sm text-ink-2 mt-2">{job.cost}</p>
+                  <Detail>
+                    <p className="text-sm text-ink-2 mt-2">{job.cost}</p>
+                  </Detail>
                 </div>
               </div>
             </Card>
