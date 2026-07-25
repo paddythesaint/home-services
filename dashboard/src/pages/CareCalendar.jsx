@@ -5,8 +5,26 @@ import { useItems } from "../useItems"
 import { addItem } from "../firestoreApi"
 import { todayLabel } from "../dates"
 import { tradeForItem } from "../trades"
-import { starterCalendar } from "../maintenanceIntelligence"
-import { Card, PageHeader, Button, Modal, DynamicForm } from "../components"
+import { starterCalendar, seasonFor, SEASON_LABEL } from "../maintenanceIntelligence"
+import { climateFor } from "../climate"
+import {
+  Card,
+  PageHeader,
+  Button,
+  Modal,
+  DynamicForm,
+  Detail,
+  Figure,
+  FigureRow,
+} from "../components"
+
+const SEASON_ORDER = ["spring", "summer", "fall", "winter"]
+const NUM_WORDS = [
+  "No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+  "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
+  "Seventeen", "Eighteen", "Nineteen", "Twenty", "Twenty-one", "Twenty-two",
+  "Twenty-three", "Twenty-four", "Twenty-five",
+]
 
 const THIS_YEAR = new Date().getFullYear()
 export const isDoneThisYear = (item) => item.doneYear === THIS_YEAR
@@ -55,12 +73,29 @@ export default function CareCalendar() {
     setLoggingJob(item)
   }
 
+  // 4b derivations: the year bucketed by this home's climate seasons.
+  const region = climateFor(profile)
+  const currentSeason = seasonFor(new Date(), region)
+  const doneCount = items.filter(isDoneThisYear).length
+  const heaviestMonth = MONTHS.reduce(
+    (best, m) => {
+      const c = items.filter((i) => i.month === m).length
+      return c > best.count ? { month: m, count: c } : best
+    },
+    { month: "", count: 0 }
+  ).month
+
   return (
     <div>
       <PlanTabs />
       <PageHeader
-        title="Annual Care Calendar"
-        subtitle="Your seasonal maintenance schedule — add tasks month by month."
+        title={`${NUM_WORDS[items.length] || items.length} visit${items.length === 1 ? "" : "s"} a year,`}
+        clause={
+          doneCount > 0
+            ? `${doneCount} already handled in ${THIS_YEAR}.`
+            : "each in its season."
+        }
+        subtitle="The rhythm of care for this home — seasons carry it, not a wall of months. Mark things done as they happen; each one can flow into the job history."
         action={<Button onClick={() => setEditing("new")}>+ Add task</Button>}
       />
       {items.length === 0 && (
@@ -74,46 +109,61 @@ export default function CareCalendar() {
           </Button>
         </Card>
       )}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {MONTHS.map((month) => {
-          const monthItems = items.filter((i) => i.month === month)
+
+      {/* 4b: four season blocks, hairline task pairs, no month grid. */}
+      <div className="flex flex-col gap-7">
+        {SEASON_ORDER.map((season) => {
+          // Start the range where the season actually starts — winter wraps
+          // the year (DEC–FEB), so begin at the month whose predecessor is
+          // outside the season.
+          const inSeason = (i) => region.seasonByMonth[((i % 12) + 12) % 12] === season
+          const startIdx = MONTHS.findIndex((_, i) => inSeason(i) && !inSeason(i - 1))
+          const monthsIn = []
+          for (let i = startIdx; startIdx >= 0 && inSeason(i); i++) monthsIn.push(MONTHS[((i % 12) + 12) % 12])
+          const seasonItems = items
+            .filter((i) => region.seasonByMonth[MONTHS.indexOf(i.month)] === season)
+            .sort((a, b) => MONTHS.indexOf(a.month) - MONTHS.indexOf(b.month) || (a.order || 0) - (b.order || 0))
+          const range = monthsIn.length
+            ? `${monthsIn[0].slice(0, 3)}–${monthsIn[monthsIn.length - 1].slice(0, 3)}`.toUpperCase()
+            : ""
+          const now = season === currentSeason
           return (
-            <Card
-              key={month}
-              className={month === CURRENT_MONTH ? "border-brand-400 ring-1 ring-brand-400" : ""}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-semibold text-ink">{month}</p>
-                {month === CURRENT_MONTH && (
-                  <span className="text-xs font-medium text-ink-2">This month</span>
-                )}
+            <div key={season} className="grid grid-cols-1 md:grid-cols-[132px_1fr] gap-x-6 gap-y-2">
+              <div>
+                <p className="font-display m-0 text-[20px] text-ink capitalize">{SEASON_LABEL[season] || season}</p>
+                <p className="numeric m-0 mt-0.5 text-[10.5px] text-ink-3">
+                  {range}
+                  {now && <span className="text-status-good"> · NOW</span>}
+                </p>
               </div>
-              {monthItems.length === 0 ? (
-                <p className="text-sm text-ink-3">No tasks yet</p>
-              ) : (
-                <ul className="text-sm text-ink-2 space-y-1.5">
-                  {monthItems.map((item) => (
-                    <li key={item.id} className="flex items-start justify-between gap-2">
-                      <span className={isDoneThisYear(item) ? "text-ink-3" : ""}>
-                        {isDoneThisYear(item) ? (
-                          <span className="text-status-good font-medium" aria-hidden="true">
-                            ✓{" "}
-                          </span>
-                        ) : (
-                          <>&bull; </>
-                        )}
+              <ul className="m-0 p-0 list-none">
+                {seasonItems.length === 0 && (
+                  <li className="text-[12.5px] text-ink-4 py-3 border-t border-line">
+                    Nothing scheduled.
+                  </li>
+                )}
+                {seasonItems.map((item) => {
+                  const done = isDoneThisYear(item)
+                  return (
+                    <li
+                      key={item.id}
+                      className="flex items-baseline justify-between gap-4 py-3 border-t border-line last:border-b group"
+                    >
+                      <span className={`text-sm ${done ? "text-ink-4 line-through" : "font-medium text-ink"}`}>
                         <Link
                           to={`/health-report#trade-${tradeForItem(item).key}`}
                           className="hover:text-brand-700"
                         >
                           {item.task}
                         </Link>
-                        {isDoneThisYear(item) && (
-                          <span className="text-xs text-ink-3"> · done {item.doneOn}</span>
+                        {done && (
+                          <span className="numeric no-underline uppercase text-[10.5px] text-status-good ml-2 tracking-wide">
+                            · done {item.doneOn}
+                          </span>
                         )}
                       </span>
-                      <span className="flex gap-2 shrink-0">
-                        {!isDoneThisYear(item) && (
+                      <span className="shrink-0 flex items-baseline gap-3">
+                        {!done && (
                           <button
                             type="button"
                             className="text-brand-600 hover:text-brand-800 text-xs font-medium"
@@ -124,27 +174,40 @@ export default function CareCalendar() {
                         )}
                         <button
                           type="button"
-                          className="text-ink-3 hover:text-ink-2 text-xs"
+                          className="text-ink-3 hover:text-ink text-xs opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => setEditing(item)}
                         >
                           edit
                         </button>
                         <button
                           type="button"
-                          className="text-red-500 hover:text-red-800 text-xs"
+                          className="text-status-critical/70 hover:text-status-critical text-xs opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => setConfirmDelete(item)}
                         >
                           delete
                         </button>
+                        <span className="numeric text-[11px] text-ink-3 w-20 text-right">{item.month.slice(0, 3)}</span>
                       </span>
                     </li>
-                  ))}
-                </ul>
-              )}
-            </Card>
+                  )
+                })}
+              </ul>
+            </div>
           )
         })}
       </div>
+
+      {/* Operator depth: the year's shape in figures. */}
+      <Detail>
+        <div className="mt-9 bg-sunk rounded-(--radius-block) p-5">
+          <FigureRow cols={4}>
+            <Figure lead value={items.length} label="visits planned" />
+            <Figure value={doneCount} label={`handled in ${THIS_YEAR}`} />
+            <Figure value={items.length - doneCount} label="still ahead" />
+            <Figure value={heaviestMonth || "—"} label="heaviest month" />
+          </FigureRow>
+        </div>
+      </Detail>
 
       {editing && (
         <Modal title={editing === "new" ? "Add task" : "Edit task"} onClose={() => setEditing(null)}>
