@@ -141,6 +141,34 @@ export const SYSTEM_BENCHMARKS = [
   },
 ]
 
+// Typical verification cadence (months) per benchmark key — the default a
+// system inherits when nobody set a recurring check by hand (7/25 UX
+// cleanup: white-glove means near-zero settings, so cadence defaults from
+// what the system is).
+const VERIFY_MONTHS = {
+  "water-heater-tankless": 12,
+  "water-heater": 12,
+  "heat-pump": 6,
+  furnace: 12,
+  "central-ac": 12,
+  hvac: 6,
+  roof: 12,
+  well: 12,
+  septic: 36,
+  radon: 24,
+  sump: 12,
+  generator: 6,
+  gutter: 6,
+  garage: 12,
+  softener: 6,
+  electrical: 24,
+}
+
+export function defaultVerifyMonths(system) {
+  const b = benchmarkFor(system)
+  return (b && VERIFY_MONTHS[b.key]) || 0
+}
+
 export function benchmarkFor(system) {
   const hay = `${system.category || ""} ${system.detail || ""}`
   return SYSTEM_BENCHMARKS.find((b) => b.match.test(hay)) || null

@@ -35,6 +35,17 @@ describe("createProperty", () => {
     expect(created.address).toBe("9 New Place Ct")
     expect(created.memberEmails).toEqual([MOCK_FOUNDER.email])
   })
+
+  it("seeds a new home's care calendar from the seasonal playbook", async () => {
+    const { __getItems } = await import("../mocks/firestoreApi")
+    const id = await createProperty(
+      { address: "12 Seeded Way", areaLabel: "Charlottesville, VA 22901" },
+      MOCK_FOUNDER
+    )
+    const calendar = __getItems(id, "careCalendar")
+    expect(calendar.length).toBeGreaterThan(12)
+    expect(calendar.some((t) => t.month === "October")).toBe(true)
+  })
 })
 
 describe("founder property switcher", () => {

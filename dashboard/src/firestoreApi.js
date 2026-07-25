@@ -83,6 +83,10 @@ export async function createProperty(data, user) {
     members: [{ email, name: user.displayName || "", role: "owner" }],
     memberEmails: [email],
   })
+  // Every new home starts with a year of seasonal rhythm, tailored to its
+  // climate region — the owner authors no calendar (7/25 UX cleanup).
+  const { starterCalendar } = await import("./maintenanceIntelligence")
+  for (const t of starterCalendar(data)) await addItem(ref.id, "careCalendar", t)
   return ref.id
 }
 
