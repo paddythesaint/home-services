@@ -45,7 +45,15 @@ const rank = (u) => (u === "high" ? 3 : u === "medium" ? 2 : 1)
 // One property's live rollup. Reports metrics + attention items up so the
 // command center can aggregate across the portfolio, and renders its own
 // actionable queue.
-function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractors, onOpen }) {
+function OpsProperty({
+  propertyId,
+  profile,
+  onMetrics,
+  onAttention,
+  onContractors,
+  onOrders = () => {},
+  onOpen,
+}) {
   const priorityApi = useItems(propertyId, "priorityList")
   const { items: systems } = useItems(propertyId, "healthReport")
   const { items: jobs } = useItems(propertyId, "jobHistory")
@@ -161,6 +169,16 @@ function OpsProperty({ propertyId, profile, onMetrics, onAttention, onContractor
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propertyId, priorityApi.items, systems, warranties, workOrders, profile.address])
 
+  // Lift the raw orders too — the 3a pipeline reads lanes across the
+  // whole portfolio. Same stable-array dependency rule as above.
+  useEffect(() => {
+    onOrders(
+      propertyId,
+      workOrders.map((w) => ({ ...w, property: profile.address }))
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propertyId, workOrders, profile.address])
+
   useEffect(() => {
     const names = [
       ...new Set(
@@ -271,6 +289,7 @@ export default function Ops() {
   const [metrics, setMetrics] = useState({})
   const [attention, setAttention] = useState({})
   const [contractors, setContractors] = useState({})
+  const [orders, setOrders] = useState({})
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState("")
   const [deleting, setDeleting] = useState(null) // property pending delete confirmation
@@ -499,6 +518,64 @@ export default function Ops() {
             </Card>
           </div>
 
+          {/* 3a pipeline: five headed hairline lists, no card chrome. The
+              lanes read across the whole portfolio; rows link to the board. */}
+          {(() => {
+            const allOrders = Object.values(orders).flat()
+            const LANES = [
+              ["triage", "Triage"],
+              ["quote", "Quoting"],
+              ["scheduled", "Scheduled"],
+              ["in-progress", "In progress"],
+              ["done", "Recently done"],
+            ]
+            if (allOrders.length === 0) return null
+            return (
+              <div className="mb-8">
+                <p className="eyebrow m-0 mb-3.5">Pipeline</p>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-x-6 gap-y-5">
+                  {LANES.map(([lane, label], i) => {
+                    const list =
+                      lane === "done"
+                        ? allOrders.filter((w) => w.lane === "done").slice(-4).reverse()
+                        : allOrders.filter((w) => w.lane === lane)
+                    return (
+                      <div key={lane} className={`pt-2.5 border-t ${i === 0 ? "border-rule" : "border-line-2"}`}>
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="text-[12.5px] font-medium text-ink">{label}</span>
+                          <span className="numeric text-[11px] text-ink-3">{list.length}</span>
+                        </div>
+                        <ul className="m-0 mt-2 p-0 list-none">
+                          {list.map((w) => (
+                            <li key={`${w.propertyId || w.property}-${w.id}`} className="border-b border-line py-2">
+                              <Link to="/work-orders" className="block group">
+                                <span className="block text-[12.5px] text-ink leading-snug group-hover:text-brand-700">
+                                  {w.title}
+                                </span>
+                                <span className="numeric block text-[10.5px] text-ink-3 mt-0.5">
+                                  {[
+                                    (w.property || "").split(" ")[0],
+                                    w.quoteAmount || null,
+                                    w.scheduledFor || null,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(" · ") || "—"}
+                                </span>
+                              </Link>
+                            </li>
+                          ))}
+                          {list.length === 0 && (
+                            <li className="text-[11px] text-ink-4 py-2">empty</li>
+                          )}
+                        </ul>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })()}
+
           <h2 className="text-sm font-semibold text-ink-2 mb-2">By property</h2>
           <div className="flex flex-col gap-4">
             {state.list.map((p) => (
@@ -509,6 +586,7 @@ export default function Ops() {
                 onMetrics={(id, m) => setMetrics((prev) => ({ ...prev, [id]: m }))}
                 onAttention={(id, items) => setAttention((prev) => ({ ...prev, [id]: items }))}
                 onContractors={(id, names) => setContractors((prev) => ({ ...prev, [id]: names }))}
+                onOrders={(id, list) => setOrders((prev) => ({ ...prev, [id]: list }))}
                 onOpen={founder ? openProperty : undefined}
               />
             ))}
