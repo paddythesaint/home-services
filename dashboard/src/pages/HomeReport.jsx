@@ -5,6 +5,7 @@ import { useItems } from "../useItems"
 import { jobTime } from "../jobHistoryView"
 import { annualReport, fmtDollars } from "../spendInsights"
 import { coverageStatus } from "../warranties"
+import ForecastSection from "../ForecastSection"
 import { Card, PageHeader, StatTile } from "../components"
 
 // The annual "state of your home" report: what the household invested in the
@@ -175,6 +176,8 @@ export default function HomeReport() {
           )}
         </>
       )}
+
+      <ForecastSection uid={uid} />
     </div>
   )
 }

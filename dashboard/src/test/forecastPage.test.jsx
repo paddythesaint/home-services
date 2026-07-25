@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest"
 import { screen, fireEvent, waitFor } from "@testing-library/react"
 import { renderPage } from "./renderPage"
-import Forecast from "../pages/Forecast"
+import HomeReport from "../pages/HomeReport"
 import HealthReport from "../pages/HealthReport"
 import PriorityList from "../pages/PriorityList"
 
-describe("Cost Forecast page", () => {
+describe("forecast section on the Home Report (merged 7/24)", () => {
   it("shows the outlook table and year buckets from fixture data", async () => {
-    renderPage(<Forecast />)
-    expect(await screen.findByText("3-Year Cost Forecast")).toBeInTheDocument()
+    renderPage(<HomeReport />)
+    expect(await screen.findByText("Looking ahead — the 3-year forecast")).toBeInTheDocument()
     // Ballard fixtures: HVAC 2016 (window 2028–2033) + Water Heater 2019
     // (window 2027–2031) both have lifespan reads.
     expect(screen.getByText("Systems outlook")).toBeInTheDocument()

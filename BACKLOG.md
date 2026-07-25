@@ -92,6 +92,21 @@ merge Forecast into Home Report; benchmark-default verification cadences;
 seed care calendar from the seasonal playbook. Census page moved off
 Tools nav → Command Center card (7/24, founder-only back office).
 
+## Slice 77 — UX cleanups 1: banners off Home, one money page (7/25/26)
+First two of the approved opportunistic UX cleanups (the customer-surface
+review's demotions):
+- The four one-time document-insight banners (closing docs, records
+  index, energy audit, 2026 service records) left the Home screen — they
+  were operator instruments squatting above the fold on mobile — and now
+  live on **Import Records** as `PendingInsights.jsx` (same apply
+  machinery, same profile flags, still seed-property-gated).
+- **One money page**: the 3-Year Cost Forecast folded into "Your Home,
+  in Review" as a "Looking ahead" section (`ForecastSection.jsx`);
+  the standalone page and its Plan tab are gone, `/forecast` redirects
+  to `/home-report` for old links. Hub highlight now also matches
+  /coverage and /home-report.
+- Suite 302 green (three tests updated to the new homes of things).
+
 ## Slice 75 — live-record census instrument (7/24/26)
 Phase 0 of the grounded roadmap: a founder-only **Record Census** page
 (Tools nav, /census) that audits the ACTUAL registry — not fixtures.

@@ -1,5 +1,5 @@
 import { lazy } from "react"
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import AuthGate from "./AuthGate"
 import Layout from "./Layout"
 
@@ -13,7 +13,6 @@ const Ops = lazy(() => import("./pages/Ops"))
 const HealthReport = lazy(() => import("./pages/HealthReport"))
 const CareCalendar = lazy(() => import("./pages/CareCalendar"))
 const PriorityList = lazy(() => import("./pages/PriorityList"))
-const Forecast = lazy(() => import("./pages/Forecast"))
 const HomeReport = lazy(() => import("./pages/HomeReport"))
 const JobHistory = lazy(() => import("./pages/JobHistory"))
 const Warranties = lazy(() => import("./pages/Warranties"))
@@ -43,7 +42,9 @@ export default function App() {
               <Route path="health-report" element={<HealthReport />} />
               <Route path="care-calendar" element={<CareCalendar />} />
               <Route path="priority-list" element={<PriorityList />} />
-              <Route path="forecast" element={<Forecast />} />
+              {/* Forecast folded into the Home Report (7/24 UX cleanup);
+                  the old address keeps working for bookmarks and old links. */}
+              <Route path="forecast" element={<Navigate to="/home-report" replace />} />
               <Route path="home-report" element={<HomeReport />} />
               <Route path="job-history" element={<JobHistory />} />
               <Route path="coverage" element={<Warranties />} />

@@ -61,18 +61,25 @@ describe("founder property switcher", () => {
 })
 
 describe("seed/insights banners stay on the source property", () => {
-  it("offers document insights on the original property only", async () => {
-    const { unmount } = renderPage(<Overview />)
+  it("offers document insights on Import Records, original property only (moved off Home 7/24)", async () => {
+    const { default: ImportBundle } = await import("../pages/ImportBundle")
+    const { unmount } = renderPage(<ImportBundle />)
     expect(
       await screen.findByText("Apply insights from your closing documents?")
     ).toBeInTheDocument()
     unmount()
 
-    renderPage(<Overview />, { uid: "prop-ridge" })
-    expect(await screen.findByText("42 Ridgeview Rd")).toBeInTheDocument()
+    const second = renderPage(<ImportBundle />, { uid: "prop-ridge" })
+    expect(await screen.findByText("Import a Bundle")).toBeInTheDocument()
     expect(
       screen.queryByText("Apply insights from your closing documents?")
     ).not.toBeInTheDocument()
+    second.unmount()
+
+    // The Home screen no longer carries the banners at all, and the seed
+    // offer never leaks onto another property.
+    renderPage(<Overview />, { uid: "prop-ridge" })
+    expect(await screen.findByText("42 Ridgeview Rd")).toBeInTheDocument()
     expect(screen.queryByText("Start with a pre-filled profile?")).not.toBeInTheDocument()
   })
 })
