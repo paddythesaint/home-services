@@ -6,6 +6,7 @@ import { todayLabel } from "./dates"
 import { isUnderway, isOpenWorkOrder } from "./workOrders"
 import { buildRecap } from "./valueRecap"
 import { businessRole } from "./roles"
+import { DESIGNATED_PROS } from "./designations"
 import { TEAM } from "./team"
 import {
   Section,
@@ -44,6 +45,13 @@ function happeningRight(w, systems) {
   return { word: "Waiting", tone: "muted" }
 }
 
+// "June 24, 2026" → "Jun 24" — figure values stay one line at 32px.
+function shortDate(label) {
+  const t = Date.parse(label || "")
+  if (Number.isNaN(t)) return ""
+  return new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+}
+
 // The headline's two clauses: the assurance in ink, the caveat de-emphasised.
 function headlineFor(systems) {
   if (systems.length === 0)
@@ -70,7 +78,6 @@ export default function HomeownerHome() {
   const { items: jobs } = useItems(uid, "jobHistory")
   const { items: visitNotes } = useItems(uid, "visitNotes")
   const { items: priorities } = useItems(uid, "priorityList")
-  const { items: contractors } = useItems(uid, "contractors")
   const latestNote = visitNotes[visitNotes.length - 1]
   const recap = buildRecap({ jobs, priorities })
 
@@ -99,18 +106,17 @@ export default function HomeownerHome() {
     ? `${noteSentence} We're keeping an eye on the ${watching.category.toLowerCase()}.`
     : noteSentence
 
-  // Next visit figure: the nearest scheduled work order, if any.
-  const nextVisit = workOrders.find((w) => w.lane === "scheduled" && w.scheduledFor)
-  const nextVisitValue = nextVisit
-    ? nextVisit.scheduledFor
-    : profile.nextInvoiceDate
-      ? "On call"
-      : "On call"
-  const nextVisitLabel = nextVisit
-    ? `next visit${nextVisit.contractorName ? ` · ${nextVisit.contractorName}` : ""}`
-    : "no visit needed — we'll reach out"
-
-  const prosOnCall = contractors.length || TEAM.length
+  // Last-visit figure (founder call, 7/25): the most recent care that
+  // actually happened, not a promised future date.
+  const lastJob = recentCare[0]
+  const lastVisitValue = lastJob
+    ? shortDate(lastJob.date) || lastJob.date || "—"
+    : latestNote?.sentOn
+      ? shortDate(latestNote.sentOn) || latestNote.sentOn
+      : "—"
+  const lastVisitLabel = lastJob
+    ? `last visit${lastJob.sub ? ` · ${lastJob.sub.split("—")[0].trim()}` : ""}`
+    : "last note from your team"
 
   // The ask bar writes exactly what the old modal wrote.
   async function sendRequest() {
@@ -171,8 +177,8 @@ export default function HomeownerHome() {
           <FigureRow>
             <Figure lead value={recap.tasksDone} label="tasks handled for you" />
             <Figure value={systems.length} label="systems on record" />
-            <Figure value={prosOnCall} label="trusted pros on call" />
-            <Figure value={nextVisitValue} label={nextVisitLabel} />
+            <Figure value={DESIGNATED_PROS.length} label="trusted pros on call" />
+            <Figure value={lastVisitValue} label={lastVisitLabel} />
           </FigureRow>
         </div>
 
