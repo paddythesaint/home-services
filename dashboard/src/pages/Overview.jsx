@@ -3,7 +3,6 @@ import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import SeedBanner from "../SeedBanner"
 import OnboardingChecklist from "../OnboardingChecklist"
-import InsightsBanner from "../InsightsBanner"
 import Members from "../Members"
 import { seedAddressHint } from "../seedData"
 import { viewFor } from "../roles"
@@ -13,10 +12,6 @@ import RelationshipCard from "../RelationshipCard"
 import SystemsGlance from "../SystemsGlance"
 import { tradeForText } from "../trades"
 import hero895 from "../assets/hero-895.jpg"
-import { closingDocsInsights } from "../documentInsights"
-import { recordsIndexInsights } from "../recordsIndexInsights"
-import { energyAuditInsights } from "../energyAuditInsights"
-import { serviceRecordsInsights } from "../serviceRecordsInsights"
 import { todayISO, isoToLabel } from "../dates"
 import { resolutionCounts } from "../resolution"
 import {
@@ -146,69 +141,6 @@ function FullOverview() {
 
       {!isSeedProperty && viewFor(user?.email).staff && (
         <OnboardingChecklist profile={profile} systems={healthItems} jobs={jobItems} />
-      )}
-
-      {!dashboardEmpty && isSeedProperty && !profile.insightsAppliedOn && (
-        <InsightsBanner
-          title="Apply insights from your closing documents?"
-          description="We reviewed the 2021 closing package — inspection addendum, certified radon report, appraisal, paint schedule, and the 2023 kitchen renovation estimate. This updates your systems with what they revealed (furnace replaced 2021, propane fuel, radon at 5.7 pCi/L with an unserviced mitigation system, two gas-log fireplaces flagged for service), adds a paint-color reference, and backfills your job history. Everything stays editable; mortgage details were excluded."
-          buttonLabel="Apply document insights"
-          flagField="insightsAppliedOn"
-          insights={closingDocsInsights}
-          healthApi={healthApi}
-          priorityApi={priorityApi}
-          jobApi={jobApi}
-          saveProfile={saveProfile}
-          uid={uid}
-        />
-      )}
-
-      {!dashboardEmpty && isSeedProperty && !profile.recordsIndexAppliedOn && (
-        <InsightsBanner
-          title="Apply insights from your Home Records Index?"
-          description="We reviewed the records index compiled from your Gmail and Drive. This adds your 22kW standby generator (installed 2021, serviced June 2026) and Dodson pest-control service, records the furnace's installer and warranty (Monticello Air, 2021), flags the 2025–26 roof insurance claim for follow-up, backfills six jobs, and adds priorities for the missing homeowner's-insurance policy and email-only documents worth saving."
-          buttonLabel="Apply records-index insights"
-          flagField="recordsIndexAppliedOn"
-          insights={recordsIndexInsights}
-          healthApi={healthApi}
-          priorityApi={priorityApi}
-          jobApi={jobApi}
-          calendarApi={calendarApi}
-          saveProfile={saveProfile}
-          uid={uid}
-        />
-      )}
-
-      {!dashboardEmpty && isSeedProperty && !profile.energyAuditAppliedOn && (
-        <InsightsBanner
-          title="Apply insights from your March 2026 energy audit?"
-          description="We read the full 40-page LEAP energy audit (report #387364, March 10, 2026). Two safety findings lead: the water heaters failed the gas-leak screen (burner corrosion, loose exhaust gasket) and the auditor was blunt about the basement stove — 'fix it or get rid of it'. This also adds windows (mold in four rooms), ventilation (three bath fans at 0 CFM), attic insulation, and drainage as systems, logs the audit as a job, and queues the ~$687/yr weatherization package as a priority."
-          buttonLabel="Apply energy-audit insights"
-          flagField="energyAuditAppliedOn"
-          insights={energyAuditInsights}
-          healthApi={healthApi}
-          priorityApi={priorityApi}
-          jobApi={jobApi}
-          calendarApi={calendarApi}
-          saveProfile={saveProfile}
-          uid={uid}
-        />
-      )}
-
-      {!dashboardEmpty && isSeedProperty && !profile.serviceRecords2026AppliedOn && (
-        <InsightsBanner
-          title="Apply your 2026 service records from Gmail?"
-          description="We swept every label from January 1, 2026 onward. This adds nine service visits to your job history — Monticello Air's April upstairs-HVAC repair ($327.15, reversing-valve wire) and June maintenance visit ($285.21 with refrigerant), Dodson's February and April visits, Bartlett's spring tree treatment, Jimmie Mills' spring cleanup & mulch ($650) and latest mow, and two Fitch Services entries — plus four systems the record was missing (the upstairs Carrier system, the mini-split, and your Ting and Airthings monitors), the lapsed Generac coverage as a priority, and two calendar tasks. Amounts and contacts come straight from the receipts; nothing already on the record is duplicated."
-          buttonLabel="Apply service records"
-          flagField="serviceRecords2026AppliedOn"
-          insights={serviceRecordsInsights}
-          healthApi={healthApi}
-          priorityApi={priorityApi}
-          jobApi={jobApi}
-          calendarApi={calendarApi}
-          saveProfile={saveProfile}
-          uid={uid}
-        />
       )}
 
       {workOrders.filter(isUnderway).length > 0 && (

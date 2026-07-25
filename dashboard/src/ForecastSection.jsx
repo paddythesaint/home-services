@@ -1,9 +1,12 @@
-import { useOutletContext, Link } from "react-router-dom"
-import { PlanTabs } from "../HubTabs"
-import { useItems } from "../useItems"
-import { replacementHorizon, fmtMoneyRange } from "../benchmarks"
-import { buildForecast } from "../forecast"
-import { Card, PageHeader, StatTile } from "../components"
+import { Link } from "react-router-dom"
+import { useItems } from "./useItems"
+import { replacementHorizon, fmtMoneyRange } from "./benchmarks"
+import { buildForecast } from "./forecast"
+import { Card, StatTile } from "./components"
+
+// The 3-year cost outlook, formerly its own Plan tab (pages/Forecast.jsx),
+// folded into the Home Report with the 7/24 UX cleanups — one money page,
+// not two. Same computation, same tiles and tables.
 
 const STATUS_META = {
   past: { label: "Beyond typical life", color: "var(--color-status-critical)" },
@@ -26,8 +29,7 @@ function StatusChip({ status }) {
   )
 }
 
-export default function Forecast() {
-  const { uid } = useOutletContext()
+export default function ForecastSection({ uid }) {
   const { items: systems, loading } = useItems(uid, "healthReport")
   const { items: priorities } = useItems(uid, "priorityList")
 
@@ -39,15 +41,17 @@ export default function Forecast() {
   const flagged = outlook.filter((x) => x.horizon.status !== "healthy")
   const missingYear = systems.filter((s) => !s.installYear).length
 
-  if (loading) return <p className="text-ink-2">Loading forecast…</p>
+  if (loading) return null
 
   return (
-    <div>
-      <PlanTabs />
-      <PageHeader
-        title="3-Year Cost Forecast"
-        subtitle="Planning ranges computed from each system's age against typical lifespans, plus open priorities with cost estimates. Typical figures — not quotes."
-      />
+    <div className="mt-8">
+      <h2 className="font-display text-xl font-semibold text-ink mb-1">
+        Looking ahead — the 3-year forecast
+      </h2>
+      <p className="text-sm text-ink-3 mb-4">
+        Planning ranges computed from each system's age against typical lifespans, plus open
+        priorities with cost estimates. Typical figures — not quotes.
+      </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
         <StatTile
@@ -149,8 +153,8 @@ export default function Forecast() {
         )}
         {missingYear > 0 && outlook.length > 0 && (
           <p className="text-xs text-ink-3 mt-3">
-            {missingYear} system{missingYear === 1 ? "" : "s"} missing an install year —
-            add one on the Health Report and it joins this outlook.
+            {missingYear} system{missingYear === 1 ? "" : "s"} missing an install year — add one
+            on the Health Report and it joins this outlook.
           </p>
         )}
       </Card>

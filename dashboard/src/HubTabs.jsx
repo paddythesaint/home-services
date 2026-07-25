@@ -18,7 +18,6 @@ const PLAN = [
   { key: "next", to: "/whats-next", label: "What's Next" },
   { key: "calendar", to: "/care-calendar", label: "Care Calendar" },
   { key: "priorities", to: "/priority-list", label: "90-Day Priorities" },
-  { key: "forecast", to: "/forecast", label: "Cost Forecast" },
   { key: "report", to: "/home-report", label: "Year in Review" },
 ]
 

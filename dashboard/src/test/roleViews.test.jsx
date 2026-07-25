@@ -130,12 +130,13 @@ describe("hub tab gating", () => {
     expect(screen.queryByText("Cost Forecast")).not.toBeInTheDocument()
   })
 
-  it("homeowners get all four plan tabs including Cost Forecast", async () => {
+  it("homeowners get the Year in Review tab (forecast lives inside it since 7/24)", async () => {
     const { renderPage } = await import("./renderPage")
     const { default: CareCalendar } = await import("../pages/CareCalendar")
     renderPage(<CareCalendar />, { user: ALTON })
-    const tab = await screen.findByText("Cost Forecast")
-    expect(tab.closest("a")).toHaveAttribute("href", "/forecast")
+    const tab = await screen.findByText("Year in Review")
+    expect(tab.closest("a")).toHaveAttribute("href", "/home-report")
+    expect(screen.queryByText("Cost Forecast")).not.toBeInTheDocument()
   })
 })
 

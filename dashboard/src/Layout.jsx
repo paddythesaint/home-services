@@ -58,14 +58,14 @@ const PROPERTY_NAV = [
     to: "/health-report",
     label: "Property Record",
     icon: "health",
-    match: ["/health-report", "/job-history", "/contractors", "/system/"],
+    match: ["/health-report", "/job-history", "/coverage", "/contractors", "/system/"],
   },
   {
     key: "plan",
     to: "/whats-next",
     label: "The Plan",
     icon: "calendar",
-    match: ["/whats-next", "/care-calendar", "/priority-list", "/forecast"],
+    match: ["/whats-next", "/care-calendar", "/priority-list", "/home-report"],
   },
 ]
 

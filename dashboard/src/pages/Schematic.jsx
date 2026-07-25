@@ -61,7 +61,7 @@ const NODES = [
   { id: "s_next", band: "surface", title: "What's Next", tech: "Plan", desc: "In-flight work, this month's care, recurrence flags, seasonal checklist.", fields: ["homeowner"], reads: ["calendar", "priorities", "workorders"] },
   { id: "s_calendar", band: "surface", title: "Care Calendar", tech: "Plan", desc: "Recurring care across the year.", fields: ["homeowner"], reads: ["calendar"] },
   { id: "s_priorities", band: "surface", title: "90-Day Priorities", tech: "Plan", desc: "Ranked list with readiness, urgency filter, and issue bundling.", fields: ["homeowner"], reads: ["priorities"] },
-  { id: "s_forecast", band: "surface", title: "Cost Forecast", tech: "Plan", desc: "3-year outlook by system.", fields: ["homeowner"], reads: ["health"] },
+  { id: "s_forecast", band: "surface", title: "Year in Review + Forecast", tech: "Plan", desc: "Annual spend report with the 3-year outlook by system.", fields: ["homeowner"], reads: ["health"] },
   { id: "s_report", band: "surface", title: "Year in Review", tech: "Plan", desc: "Annual spend, care, and coverage in one report.", fields: ["homeowner"], reads: ["jobs"] },
   { id: "s_assistant", band: "surface", title: "Assistant", tech: "chat", desc: "Native chat over the home's record.", fields: ["homeowner"], reads: ["log"] },
   { id: "s_ops", band: "surface", title: "Command Center", tech: "Ops · founder", desc: "Portfolio health, attention feed, escalation & coverage risk.", fields: ["founder"], reads: ["profile", "health", "priorities"] },

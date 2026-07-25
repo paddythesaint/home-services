@@ -5,6 +5,7 @@ import { addItem, addPhoto } from "../firestoreApi"
 import { todayLabel } from "../dates"
 import { logFact, fieldLabel } from "../facts"
 import { Card, PageHeader, Button } from "../components"
+import PendingInsights from "../PendingInsights"
 
 // Loads a locally-provided JSON bundle (photos as data URLs + extracted facts
 // + system mappings) and writes it to the property record as the signed-in
@@ -40,7 +41,7 @@ function findSystem(systems, matches) {
 }
 
 export default function ImportBundle() {
-  const { uid, saveProfile } = useOutletContext()
+  const { uid, profile, saveProfile } = useOutletContext()
   const healthApi = useItems(uid, "healthReport")
   const priorityApi = useItems(uid, "priorityList")
   const [bundle, setBundle] = useState(null)
@@ -175,6 +176,8 @@ export default function ImportBundle() {
         title="Import a Bundle"
         subtitle="Load a prepared data bundle — photos, extracted facts, and system mappings — and apply it to your property record in one step."
       />
+
+      <PendingInsights uid={uid} profile={profile} saveProfile={saveProfile} />
 
       <Card>
         {!bundle ? (

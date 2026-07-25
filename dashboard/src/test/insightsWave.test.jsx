@@ -1,17 +1,18 @@
 // The 2026 service-records wave (Gmail sweep, Slice 45): one click on the
-// Overview banner lands the vendor-email findings as real records — jobs
-// with amounts, the systems the record was missing, the coverage-lapse
-// priority — without duplicating anything already present.
+// banner (on Import Records since the 7/24 UX cleanup) lands the
+// vendor-email findings as real records — jobs with amounts, the systems
+// the record was missing, the coverage-lapse priority — without
+// duplicating anything already present.
 
 import { describe, it, expect } from "vitest"
 import { screen, fireEvent, waitFor } from "@testing-library/react"
 import { renderPage } from "./renderPage"
-import Overview from "../pages/Overview"
+import ImportBundle from "../pages/ImportBundle"
 import { __getItems } from "../mocks/firestoreApi"
 
 describe("service-records insights wave", () => {
   it("applies jobs, systems, priorities, and calendar tasks from the sweep", async () => {
-    renderPage(<Overview />)
+    renderPage(<ImportBundle />)
     fireEvent.click(await screen.findByText("Apply service records"))
 
     await waitFor(() => {
