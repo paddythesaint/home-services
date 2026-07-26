@@ -20,6 +20,7 @@ import {
   Button,
   Modal,
   DynamicForm,
+  Detail,
 } from "../components"
 
 const FREQ_OPTIONS = ["0", "1", "3", "6", "12", "24", "36"]
@@ -152,6 +153,38 @@ export default function HealthReport() {
     return s.condition && s.condition !== "good" && noteBit ? `${base} ${noteBit}` : base
   }
 
+  // The Detailed layer under each row: how we know, how often we check,
+  // and where the system sits in its typical life.
+  const depthFor = (s) => {
+    const bits = []
+    bits.push(
+      s.verified
+        ? `Verified in person${s.verifiedOn ? ` ${s.verifiedOn}` : ""}`
+        : "Not yet verified in person"
+    )
+    const freq = Number(s.verifyFrequencyMonths) || defaultVerifyMonths(s)
+    if (freq > 0) {
+      const cadence = (FREQ_LABELS[freq] || `every ${freq} months`).toLowerCase()
+      bits.push(
+        `${cadence} check${s.nextDue ? ` · next due ${isoToLabel(s.nextDue)}` : ""}`
+      )
+    }
+    const h = replacementHorizon(s)
+    if (h) {
+      bits.push(
+        `year ${h.age} of a typical ${h.benchmark.lifeYears[0]}–${h.benchmark.lifeYears[1]}` +
+          (h.status === "past"
+            ? " — beyond typical life"
+            : h.status === "in-window"
+              ? ` — replacement window now, ~${fmtMoneyRange(h.benchmark.replaceCost, h.benchmark.costUnit)}`
+              : h.status === "approaching"
+                ? ` — window opens ${h.windowStart}`
+                : "")
+      )
+    }
+    return bits.join(" · ")
+  }
+
   return (
     <div>
       <RecordTabs />
@@ -207,6 +240,11 @@ export default function HealthReport() {
                   <span className="block text-[13.5px] leading-[1.55] text-ink-2 mt-0.5">
                     {sentenceFor(s)}
                   </span>
+                  <Detail>
+                    <span className="block text-[12px] leading-[1.6] text-ink-3 mt-1">
+                      {depthFor(s)}
+                    </span>
+                  </Detail>
                 </span>
                 <span
                   className={`numeric text-[11.5px] text-right pt-1 ${

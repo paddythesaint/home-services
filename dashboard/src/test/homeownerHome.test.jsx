@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, beforeEach } from "vitest"
 import { screen, fireEvent, waitFor } from "@testing-library/react"
 import { renderPage } from "./renderPage"
 import Overview from "../pages/Overview"
@@ -6,6 +6,11 @@ import WorkOrders from "../pages/WorkOrders"
 import { __getItems } from "../mocks/firestoreApi"
 
 const ALTON = { email: "alton@example.com", displayName: "Alton", uid: "u-alton" }
+
+beforeEach(() => {
+  // The depth choice persists per device — start each test in Simple.
+  localStorage.removeItem("hpsViewMode")
+})
 
 describe("calm homeowner home screen", () => {
   it("replaces the operational overview for homeowners (2a: ask bar, no modal)", async () => {
@@ -18,8 +23,9 @@ describe("calm homeowner home screen", () => {
     expect(screen.queryByText("Open priorities")).not.toBeInTheDocument()
     expect(screen.queryByText(/Apply insights/)).not.toBeInTheDocument()
     expect(screen.queryByText("Edit property info")).not.toBeInTheDocument()
-    // Homeowner accounts never get the depth control, and no currency shows.
-    expect(screen.queryByText("Detailed")).not.toBeInTheDocument()
+    // Homeowners get the depth control (7/26), but Simple stays free of
+    // currency and machinery until they ask for depth.
+    expect(screen.getByText("Detailed")).toBeInTheDocument()
     expect(screen.queryByText(/\$/)).not.toBeInTheDocument()
   })
 

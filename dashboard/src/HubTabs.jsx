@@ -6,6 +6,7 @@
 
 import { NavLink, useOutletContext } from "react-router-dom"
 import { viewFor } from "./roles"
+import { Segmented } from "./components"
 
 const RECORD = [
   { key: "health", to: "/health-report", label: "Health of the house" },
@@ -20,28 +21,32 @@ const PLAN = [
   { key: "report", to: "/home-report", label: "Year in Review" },
 ]
 
+// The Simple/Detailed depth control rides on every hub page's tab row —
+// the same choice, in the same corner, wherever the record has depth.
 function Tabs({ tabs }) {
   return (
-    <div
-      className="flex gap-1 mb-5 border-b border-line overflow-x-auto"
-      role="tablist"
-    >
-      {tabs.map((t) => (
-        <NavLink
-          key={t.to}
-          to={t.to}
-          end
-          className={({ isActive }) =>
-            `px-3.5 py-2 text-sm whitespace-nowrap border-b-2 -mb-px transition-colors ${
-              isActive
-                ? "border-brand-600 text-brand-800 font-medium"
-                : "border-transparent text-ink-2 hover:text-ink"
-            }`
-          }
-        >
-          {t.label}
-        </NavLink>
-      ))}
+    <div className="flex items-center justify-between gap-3 mb-5 border-b border-line">
+      <div className="flex gap-1 overflow-x-auto" role="tablist">
+        {tabs.map((t) => (
+          <NavLink
+            key={t.to}
+            to={t.to}
+            end
+            className={({ isActive }) =>
+              `px-3.5 py-2 text-sm whitespace-nowrap border-b-2 -mb-px transition-colors ${
+                isActive
+                  ? "border-brand-600 text-brand-800 font-medium"
+                  : "border-transparent text-ink-2 hover:text-ink"
+              }`
+            }
+          >
+            {t.label}
+          </NavLink>
+        ))}
+      </div>
+      <div className="shrink-0 pb-1.5">
+        <Segmented />
+      </div>
     </div>
   )
 }

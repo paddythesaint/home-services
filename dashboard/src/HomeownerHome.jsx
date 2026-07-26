@@ -16,13 +16,16 @@ import {
   AskBar,
   Segmented,
   Detail,
+  useViewMode,
   ConditionMeter,
 } from "./components"
 
 // The homeowner's Overview, redesign spec section 1 (option 2a): one warm
 // surface panel that answers three questions — is my home okay, what's
 // happening, how do I reach you — with no operational machinery visible in
-// Simple. The Detailed depth (founder/staff only) adds the operator band.
+// Simple. Detailed is the homeowner's own expansive layer (founder call,
+// 7/26): the record in depth, costs included. Operator economics stay
+// behind the businessRole gate on top of it.
 // The old "Request service" modal is gone; the ask bar is always open.
 
 const visibleToHomeowner = (w) =>
@@ -73,6 +76,7 @@ function headlineFor(systems) {
 
 export default function HomeownerHome() {
   const { uid, profile, user } = useOutletContext()
+  const { mode } = useViewMode()
   const { items: systems } = useItems(uid, "healthReport")
   const { items: workOrders } = useItems(uid, "workOrders")
   const { items: jobs } = useItems(uid, "jobHistory")
@@ -141,16 +145,16 @@ export default function HomeownerHome() {
     setSent(true)
   }
 
-  // The depth control belongs to founders and staff — a homeowner account
-  // never sees it (spec: Interactions & behavior).
-  const showDepth = Boolean(businessRole(user?.email))
+  // Everyone gets the depth control — Detailed is the homeowner's expansive
+  // view of their own record. Only operator economics stay staff-gated.
+  const staff = Boolean(businessRole(user?.email))
 
   return (
     <div className="bg-surface border border-line-2 rounded-(--radius-panel) shadow-(--shadow-card)">
       {/* Header strip */}
       <div className="flex items-center justify-between gap-4 px-8 py-4 border-b border-line">
         <p className="eyebrow m-0">{profile.address}</p>
-        {showDepth && <Segmented />}
+        <Segmented />
       </div>
 
       <div className="px-5 py-6 md:px-11 md:pt-10 md:pb-9">
@@ -193,11 +197,21 @@ export default function HomeownerHome() {
               ) : (
                 happening.map((w) => {
                   const right = happeningRight(w, systems)
+                  const meta =
+                    mode === "detailed"
+                      ? [
+                          happeningLabel(w),
+                          w.contractorName,
+                          w.quoteAmount && `quote ${w.quoteAmount}`,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")
+                      : happeningLabel(w)
                   return (
                     <Row
                       key={w.id}
                       title={w.title}
-                      meta={happeningLabel(w)}
+                      meta={meta}
                       right={right.word}
                       tone={right.tone}
                     />
@@ -213,7 +227,13 @@ export default function HomeownerHome() {
                 </p>
               ) : (
                 recentCare.map((j) => (
-                  <Row key={j.id} title={j.title} meta={[j.date, j.sub].filter(Boolean).join(" · ")} />
+                  <Row
+                    key={j.id}
+                    title={j.title}
+                    meta={[j.date, j.sub, mode === "detailed" && j.cost]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  />
                 ))
               )}
             </Section>
@@ -248,41 +268,18 @@ export default function HomeownerHome() {
           </div>
         </div>
 
-        {/* 6 · Operator band — never reaches a homeowner */}
+        {/* 6 · The record in depth — the homeowner's own expansive layer.
+            Every system with its dates and state, straight from the record. */}
         <Detail>
           <div className="mt-10 bg-[#F3F1E9] rounded-(--radius-block) px-7 py-6">
             <div className="flex items-baseline justify-between gap-4">
-              <p className="eyebrow m-0">Operator view · not shown to the homeowner</p>
+              <p className="eyebrow m-0">The record in depth</p>
               <span className="numeric text-[11px] text-ink-3">
-                {workOrders.length} orders · {systems.length} systems
+                {systems.length} systems · {jobs.length} jobs logged
               </span>
             </div>
 
             <div className="mt-4 overflow-x-auto">
-              <div className="grid grid-cols-[1.5fr_1fr_.8fr_.7fr_.7fr] min-w-[560px]">
-                {["Order", "Pro", "Quote", "Margin", "Lane"].map((h) => (
-                  <span key={h} className="text-[10.5px] uppercase tracking-wide text-[#9A9C8E] pb-1.5">
-                    {h}
-                  </span>
-                ))}
-                {workOrders
-                  .filter((w) => w.lane !== "done" && w.lane !== "canceled")
-                  .map((w) => (
-                    <RowCells
-                      key={w.id}
-                      cells={[
-                        w.title,
-                        w.contractorName || "—",
-                        w.quoteAmount || "—",
-                        "—",
-                        w.lane,
-                      ]}
-                    />
-                  ))}
-              </div>
-            </div>
-
-            <div className="mt-6 overflow-x-auto">
               <div className="grid grid-cols-[1.6fr_1fr_1fr_.8fr] min-w-[520px]">
                 {["System", "Installed", "Last serviced", "State"].map((h) => (
                   <span key={h} className="text-[10.5px] uppercase tracking-wide text-[#9A9C8E] pb-1.5">
@@ -317,6 +314,43 @@ export default function HomeownerHome() {
               </div>
             </div>
           </div>
+
+          {/* Operator band — economics; never reaches a homeowner even in
+              Detailed. businessRole gates it on top of the depth toggle. */}
+          {staff && (
+            <div className="mt-5 bg-[#F3F1E9] rounded-(--radius-block) px-7 py-6">
+              <div className="flex items-baseline justify-between gap-4">
+                <p className="eyebrow m-0">Operator view · not shown to the homeowner</p>
+                <span className="numeric text-[11px] text-ink-3">
+                  {workOrders.length} order{workOrders.length === 1 ? "" : "s"}
+                </span>
+              </div>
+
+              <div className="mt-4 overflow-x-auto">
+                <div className="grid grid-cols-[1.5fr_1fr_.8fr_.7fr_.7fr] min-w-[560px]">
+                  {["Order", "Pro", "Quote", "Margin", "Lane"].map((h) => (
+                    <span key={h} className="text-[10.5px] uppercase tracking-wide text-[#9A9C8E] pb-1.5">
+                      {h}
+                    </span>
+                  ))}
+                  {workOrders
+                    .filter((w) => w.lane !== "done" && w.lane !== "canceled")
+                    .map((w) => (
+                      <RowCells
+                        key={w.id}
+                        cells={[
+                          w.title,
+                          w.contractorName || "—",
+                          w.quoteAmount || "—",
+                          "—",
+                          w.lane,
+                        ]}
+                      />
+                    ))}
+                </div>
+              </div>
+            </div>
+          )}
         </Detail>
 
         {/* 7 · Ask bar — replaces the Request service modal */}
