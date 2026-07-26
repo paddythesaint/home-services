@@ -1,0 +1,35 @@
+name: Record diagnostic (counts only)
+
+# Manually-triggered production diagnostic: prints per-property record
+# COUNTS (never contents — these logs are public) using the same service
+# account the deploys use. For "the app shows something impossible"
+# moments: is the data there, and on which property?
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install firebase-admin
+        run: npm install firebase-admin@12 --no-save
+
+      - name: Write credentials
+        env:
+          SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: printf '%s' "$SA_JSON" > "$RUNNER_TEMP/gcp-sa.json"
+
+      - name: Run diagnostic
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/gcp-sa.json
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+        run: node scripts/recordDiagnostic.mjs
