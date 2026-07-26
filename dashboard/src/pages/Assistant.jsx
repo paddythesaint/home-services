@@ -131,7 +131,9 @@ export default function Assistant() {
 
   async function send() {
     const text = input.trim()
-    if (!text || sending) return
+    // A photo or document alone is a complete message — snapping a
+    // nameplate mid-walkthrough shouldn't require typing anything.
+    if ((!text && !photo && !doc) || sending) return
     setError("")
     setSending(true)
     const userMsg = { role: "user", text, hadPhoto: Boolean(photo), hadDoc: doc?.file?.name }
@@ -140,14 +142,19 @@ export default function Assistant() {
     setInput("")
     if (composerRef.current) composerRef.current.style.height = "auto"
 
-    let content = text
+    const sentText =
+      text ||
+      (photo
+        ? "Photo only, no note — read what's useful off it (brand, model, serial, install date, condition) and propose what to log."
+        : "Document only, no note — file the useful facts from it.")
+    let content = sentText
     if (photo) {
       content = [
         {
           type: "image",
           source: { type: "base64", media_type: "image/jpeg", data: photo.split(",")[1] },
         },
-        { type: "text", text },
+        { type: "text", text: sentText },
       ]
     } else if (doc) {
       content = [
@@ -155,7 +162,7 @@ export default function Assistant() {
           type: "document",
           source: { type: "base64", media_type: "application/pdf", data: doc.base64 },
         },
-        { type: "text", text },
+        { type: "text", text: sentText },
       ]
     }
     apiHistoryRef.current = [...apiHistoryRef.current, { role: "user", content }]
@@ -399,9 +406,9 @@ export default function Assistant() {
               type="button"
               aria-label="Send"
               onClick={send}
-              disabled={sending || !input.trim()}
+              disabled={sending || (!input.trim() && !photo && !doc)}
               className={`shrink-0 w-9 h-9 mb-0.5 flex items-center justify-center rounded-full text-white transition-colors ${
-                sending || !input.trim()
+                sending || (!input.trim() && !photo && !doc)
                   ? "bg-ink-3/40"
                   : "bg-brand-700 hover:bg-brand-800"
               }`}

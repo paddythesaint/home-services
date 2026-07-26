@@ -66,6 +66,40 @@ function extractBody(payload) {
   return stripped.trim()
 }
 
+// --- Attachments -----------------------------------------------------------
+
+// Attachments worth filing off a message payload: real photos and PDFs.
+// Signature logos and tracking pixels ride along as tiny inline images on
+// most contractor emails — the size floor keeps them out of the record.
+const ATTACHABLE_MIME = /^(image\/(jpeg|png|gif|webp)|application\/pdf)$/i
+const MIN_IMAGE_BYTES = 20 * 1024
+const MAX_ATTACHMENTS = 4
+
+function listAttachments(payload, max = MAX_ATTACHMENTS) {
+  const found = []
+  const walk = (part) => {
+    if (!part) return
+    const body = part.body || {}
+    const mime = (part.mimeType || "").toLowerCase()
+    if (
+      body.attachmentId &&
+      (part.filename || "").length > 0 &&
+      ATTACHABLE_MIME.test(mime) &&
+      (mime === "application/pdf" || (body.size || 0) >= MIN_IMAGE_BYTES)
+    ) {
+      found.push({
+        attachmentId: body.attachmentId,
+        filename: part.filename,
+        mimeType: mime,
+        size: body.size || 0,
+      })
+    }
+    for (const child of part.parts || []) walk(child)
+  }
+  walk(payload)
+  return found.slice(0, max)
+}
+
 // --- Parsing the model's reply --------------------------------------------
 
 // Mirror of dashboard/src/assistant.js parseAssistantReply — duplicated
@@ -109,7 +143,7 @@ Reply with 1-2 sentences saying what the email is, then propose records with the
 <action>{"type":"save_fact","fact":"<one durable sentence, past tense, with dates>","category":"<matching system if any>"}</action>
 <action>{"type":"log_system","title":"<system name>","detail":"<brand/model>","category":"<trade>","installYear":"<4-digit year or empty>"}</action>
 
-Rules: a price quote for pending work → log_quote (never log_job — the work isn't done). An invoice/receipt for completed work → log_job with the cost in the title or note, plus save_fact for durable details (warranty terms, model numbers). Propose nothing you can't ground in the email's text.`
+Rules: a price quote for pending work → log_quote (never log_job — the work isn't done). An invoice/receipt for completed work → log_job with the cost in the title or note, plus save_fact for durable details (warranty terms, model numbers). Attached photos (already filed to the record) count as grounding: read brand, model, serial, and install date off a nameplate into log_system / save_fact — a photo with no body text is a normal capture, not an error. Propose nothing you can't ground in the email's text or its photos.`
 }
 
 // Same date-label format the app writes (dashboard/src/dates.js todayLabel).
@@ -121,4 +155,12 @@ function todayLabel() {
   })
 }
 
-module.exports = { extractTag, routeMessage, extractBody, parseActions, intakePrompt, todayLabel }
+module.exports = {
+  extractTag,
+  routeMessage,
+  extractBody,
+  listAttachments,
+  parseActions,
+  intakePrompt,
+  todayLabel,
+}
