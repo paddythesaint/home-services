@@ -20,6 +20,10 @@ import {
   QUOTE_LABEL,
   nextLane,
   isOpenWorkOrder,
+  isParked,
+  parkPatch,
+  unparkPatch,
+  revisitDue,
   jobFromWorkOrder,
   linkedPriorityIds,
   ageSummary,
@@ -637,6 +641,7 @@ export default function WorkOrders() {
   const [creating, setCreating] = useState(false)
   const [createFor, setCreateFor] = useState("")
   const [completing, setCompleting] = useState(null)
+  const [parking, setParking] = useState(null) // order being parked
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [detailKey, setDetailKey] = useState(null) // {propertyId, id} of open drawer
 
@@ -679,6 +684,7 @@ export default function WorkOrders() {
     .flat()
     .sort((a, b) => (a.order || 0) - (b.order || 0))
   const open = all.filter(isOpenWorkOrder)
+  const parked = all.filter(isParked)
 
   // The drawer tracks the order by key, then reads the live copy from the
   // feed — so a briefing generated inside it (or a lane advance) shows up
@@ -887,6 +893,16 @@ export default function WorkOrders() {
                         >
                           Edit
                         </button>
+                        {(lane === "triage" || lane === "quote") && (
+                          <button
+                            type="button"
+                            className="text-ink-3 hover:text-ink"
+                            title="Homeowner's court — take it off the pipeline until they're ready"
+                            onClick={() => setParking(w)}
+                          >
+                            Park
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="text-ink-3 hover:text-red-600 ml-auto"
@@ -908,6 +924,61 @@ export default function WorkOrders() {
         Raise orders from the 90-Day Priorities page to keep them linked — completing a linked
         order resolves its priority and writes the job to Job History automatically.
       </p>
+
+      {/* Parked projects: off the pipeline entirely. The homeowner said
+          "not now" — the ball is in their court, and nothing here counts
+          as open work or nags anyone until its revisit date arrives. */}
+      {parked.length > 0 && (
+        <div className="mt-8">
+          <p className="eyebrow m-0 mb-2">
+            Parked projects · homeowner's court ({parked.length})
+          </p>
+          <ul className="m-0 p-0 list-none">
+            {parked.map((w) => {
+              const due = revisitDue(w)
+              return (
+                <li
+                  key={`parked-${w.propertyId}-${w.id}`}
+                  className="flex items-baseline gap-3 py-2.5 border-t border-line last:border-b"
+                >
+                  <span className="min-w-0 flex-1">
+                    <button
+                      type="button"
+                      className="text-sm font-medium text-ink hover:text-brand-700 text-left"
+                      onClick={() => setDetailKey({ propertyId: w.propertyId, id: w.id })}
+                    >
+                      {w.title}
+                    </button>
+                    <span className="block text-[12.5px] text-ink-3 mt-0.5">
+                      {w.propertyLabel}
+                      {w.waitingOn && ` · waiting on ${w.waitingOn}`}
+                      {w.parkedOn && ` · parked ${w.parkedOn}`}
+                    </span>
+                  </span>
+                  <span
+                    className={`numeric text-[11px] shrink-0 ${due ? "text-status-warn" : "text-ink-3"}`}
+                  >
+                    {w.revisitOn
+                      ? due
+                        ? `revisit was due ${w.revisitOn}`
+                        : `revisit ${w.revisitOn}`
+                      : "no revisit date"}
+                  </span>
+                  <button
+                    type="button"
+                    className="text-xs font-medium text-brand-600 hover:text-brand-800 shrink-0"
+                    onClick={() =>
+                      updateItem(w.propertyId, "workOrders", w.id, unparkPatch())
+                    }
+                  >
+                    Unpark → Triage
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
 
       {detail && (
         <WorkOrderDrawer
@@ -979,6 +1050,34 @@ export default function WorkOrders() {
             </Button>
             <Button onClick={complete}>Complete work order</Button>
           </div>
+        </Modal>
+      )}
+
+      {parking && (
+        <Modal title={`Park "${parking.title}"?`} onClose={() => setParking(null)}>
+          <p className="text-sm text-ink-2 mb-4">
+            Parking takes it off the pipeline — the homeowner knows about it and
+            will get to it on their own timeline. It won't count as open work or
+            nag anyone. Give it a revisit date and it'll knock on the attention
+            inbox when the time comes.
+          </p>
+          <DynamicForm
+            fields={[
+              {
+                name: "waitingOn",
+                label: "Waiting on",
+                type: "text",
+                placeholder: "e.g. bathroom remodel",
+              },
+              { name: "revisitOn", label: "Revisit date (optional)", type: "date" },
+            ]}
+            initialValues={{ waitingOn: "", revisitOn: "" }}
+            submitLabel="Park it"
+            onSubmit={async (v) => {
+              await updateItem(parking.propertyId, "workOrders", parking.id, parkPatch(v))
+              setParking(null)
+            }}
+          />
         </Modal>
       )}
 

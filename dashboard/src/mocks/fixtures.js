@@ -185,6 +185,27 @@ export const fixtureData = {
             createdOn: "July 1, 2026",
             order: 1,
           },
+          {
+            // Parked: the homeowner's-court backlog. Off the pipeline, out
+            // of every open-work count, waiting on the homeowner's remodel.
+            id: "wo-exhaust-fans",
+            title: "Replace ceiling exhaust fans (both baths)",
+            category: "Electrical",
+            priorityId: "",
+            lane: "parked",
+            waitingOn: "bathroom remodel",
+            revisitOn: "2028-03-01",
+            parkedOn: "July 20, 2026",
+            assigneeType: "",
+            contractorId: "",
+            contractorName: "",
+            quoteStatus: "none",
+            quoteAmount: "",
+            scheduledFor: "",
+            notes: "Homeowner wants to fold this into the remodel rather than do it twice.",
+            createdOn: "July 8, 2026",
+            order: 2,
+          },
         ],
         jobHistory: [
           {
@@ -447,6 +468,27 @@ export const fixtureData = {
             notes: "Two lifted tabs on south face",
             createdOn: "June 30, 2026",
             order: 1,
+          },
+          {
+            // Parked with its revisit date already past — exercises the
+            // "due for a check-in" entry in the attention inbox.
+            id: "r-wo-water-filter",
+            title: "Whole-house water filter install",
+            category: "Plumbing",
+            priorityId: "",
+            lane: "parked",
+            waitingOn: "spring budget",
+            revisitOn: "2026-07-01",
+            parkedOn: "January 10, 2026",
+            assigneeType: "",
+            contractorId: "",
+            contractorName: "",
+            quoteStatus: "none",
+            quoteAmount: "",
+            scheduledFor: "",
+            notes: "Homeowner deferred until they set this year's budget.",
+            createdOn: "January 10, 2026",
+            order: 3,
           },
         ],
         jobHistory: [

@@ -6,7 +6,7 @@ import { addItem } from "../firestoreApi"
 import { todayLabel, todayISO, isoToLabel } from "../dates"
 import { seasonalPlan, recurrenceInsights } from "../maintenanceIntelligence"
 import { viewFor } from "../roles"
-import { workOrderFromPriority, workOrderFromBundle } from "../workOrders"
+import { workOrderFromPriority, workOrderFromBundle, isParked } from "../workOrders"
 import { suggestRequirements } from "../requirementSuggestions"
 import { groupByTrade, tradeForItem } from "../trades"
 import { findDuplicates } from "../issuePlaybook"
@@ -419,6 +419,7 @@ export default function PriorityList() {
   const { items: wnSystems } = useItems(uid, "healthReport")
   const { items: wnCalendar } = useItems(uid, "careCalendar")
   const { items: wnJobs } = useItems(uid, "jobHistory")
+  const { items: wnOrders } = useItems(uid, "workOrders")
   const founder = viewFor(user?.email).business
   const { items, add, update, remove, moveUp, moveDown } = useItems(uid, "priorityList")
   const [editing, setEditing] = useState(null)
@@ -1057,6 +1058,41 @@ export default function PriorityList() {
           </div>
         </div>
       )}
+
+      {/* Parked — your call: projects the homeowner chose to defer. Shown
+          so they know we remember; nothing here implies HPS is waiting. */}
+      {(() => {
+        const parkedList = wnOrders.filter(isParked)
+        if (parkedList.length === 0) return null
+        return (
+          <div className="mt-10 mb-6">
+            <p className="eyebrow m-0 mb-1">Parked — your call</p>
+            <p className="m-0 mb-2 text-[13px] text-ink-3">
+              On your list, not ours — we'll pick these up whenever you're ready. Just ask.
+            </p>
+            <ul className="m-0 p-0 list-none">
+              {parkedList.map((w) => (
+                <li
+                  key={`parked-${w.id}`}
+                  className="flex items-baseline justify-between gap-4 py-2.5 border-t border-line last:border-b"
+                >
+                  <span className="min-w-0">
+                    <span className="text-sm font-medium text-ink">{w.title}</span>
+                    {w.waitingOn && (
+                      <span className="block text-[12.5px] text-ink-3 mt-0.5">
+                        waiting on the {w.waitingOn}
+                      </span>
+                    )}
+                  </span>
+                  <span className="numeric text-[11px] text-ink-3 shrink-0">
+                    {w.revisitOn ? `we'll check back ${isoToLabel(w.revisitOn)}` : "no rush"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      })()}
 
       {editing && (
         <Modal title={editing === "new" ? "Add item" : "Edit item"} onClose={() => setEditing(null)}>
