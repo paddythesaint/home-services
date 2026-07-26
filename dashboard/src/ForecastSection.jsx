@@ -107,7 +107,7 @@ export default function ForecastSection({ uid }) {
           <p className="text-sm text-ink-2">
             No lifespan reads yet — add install years to systems on the{" "}
             <Link to="/health-report" className="underline">
-              Health Report
+              Health of the house
             </Link>{" "}
             (nameplate photos usually have them) and this fills in.
           </p>
@@ -154,7 +154,7 @@ export default function ForecastSection({ uid }) {
         {missingYear > 0 && outlook.length > 0 && (
           <p className="text-xs text-ink-3 mt-3">
             {missingYear} system{missingYear === 1 ? "" : "s"} missing an install year — add one
-            on the Health Report and it joins this outlook.
+            on Health of the house and it joins this outlook.
           </p>
         )}
       </Card>

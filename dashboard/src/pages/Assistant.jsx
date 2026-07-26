@@ -24,7 +24,7 @@ const CHIP_DONE = {
   save_fact: "Saved to the record",
   service_request: "Request filed — see Happening now",
   log_job: "Logged — job history + care calendar updated",
-  log_system: "Added to your Property Health Report",
+  log_system: "Added to Health of the house",
 }
 const CHIP_BUTTON = {
   save_fact: "Save",

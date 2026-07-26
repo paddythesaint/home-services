@@ -12,7 +12,7 @@ export function tourStepsFor(role) {
       {
         target: "property-nav",
         title: "The home's record",
-        body: "Everything about the house lives here — its systems and their health, the care calendar, the 90-day plan, and every job ever done. This is what we keep current for every home.",
+        body: "Everything about the house lives here — its systems and their health, the year of care, the what's-next list, and every job ever done. This is what we keep current for every home.",
       },
       {
         target: "view-as",

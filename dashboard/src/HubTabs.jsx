@@ -18,7 +18,7 @@ const RECORD = [
 const PLAN = [
   { key: "calendar", to: "/care-calendar", label: "The year of care" },
   { key: "priorities", to: "/priority-list", label: "What's next" },
-  { key: "report", to: "/home-report", label: "Year in Review" },
+  { key: "report", to: "/home-report", label: "Year in review" },
 ]
 
 // The Simple/Detailed depth control rides on every hub page's tab row —

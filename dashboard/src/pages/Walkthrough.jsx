@@ -286,7 +286,7 @@ export default function Walkthrough() {
           </h2>
           <p className="text-sm text-ink-2 mb-4">
             Check everything present on the property — each becomes a system on
-            the Health Report with its details ready to fill in.
+            Health of the house with its details ready to fill in.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
             {additionOptions.map((name) => (
@@ -341,7 +341,7 @@ export default function Walkthrough() {
           </h2>
           {focusMode && confirmedCount === 0 ? (
             <p className="text-sm text-ink-2 mb-4">
-              Nothing left to confirm — every system on the Health Report has been
+              Nothing left to confirm — every system on Health of the house has been
               verified in person.
             </p>
           ) : (
@@ -350,7 +350,7 @@ export default function Walkthrough() {
                 {confirmedCount} system{confirmedCount === 1 ? "" : "s"} confirmed
                 {checkedAdditions.length > 0 &&
                   `, ${checkedAdditions.length} added`}
-                . Verified systems now carry a badge on the Health Report.
+                . Verified systems now carry a badge on Health of the house.
               </p>
               <p className="text-sm text-ink-2 mb-4">
                 Skipped systems stay unverified — run the walkthrough again anytime
@@ -360,7 +360,7 @@ export default function Walkthrough() {
           )}
           <div className="flex gap-3">
             <Link to="/health-report">
-              <Button>View Health Report</Button>
+              <Button>View Health of the house</Button>
             </Link>
             <Link to="/">
               <Button variant="subtle">Back to overview</Button>

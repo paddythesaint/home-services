@@ -219,7 +219,7 @@ describe("assistant page", () => {
     expect(await screen.findByText(/Add to systems: "Water pump/)).toBeInTheDocument()
     const before = __getItems("prop-ballard", "healthReport").length
     fireEvent.click(screen.getByText("Add system"))
-    expect(await screen.findByText(/Added to your Property Health Report/)).toBeInTheDocument()
+    expect(await screen.findByText(/Added to Health of the house/)).toBeInTheDocument()
     const systems = __getItems("prop-ballard", "healthReport")
     expect(systems).toHaveLength(before + 1)
     expect(systems.find((s) => s.category === "Water pump (basement)")).toMatchObject({

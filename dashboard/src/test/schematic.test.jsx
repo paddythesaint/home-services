@@ -19,6 +19,6 @@ describe("System Map page", () => {
     fireEvent.click(screen.getByText("Spend Intelligence"))
     // The active engine names what it pulls from and feeds into.
     expect(screen.getByText(/pulls from: .*Job History/)).toBeInTheDocument()
-    expect(screen.getByText(/feeds: .*Year in Review/)).toBeInTheDocument()
+    expect(screen.getByText(/feeds: .*Year in review/)).toBeInTheDocument()
   })
 })

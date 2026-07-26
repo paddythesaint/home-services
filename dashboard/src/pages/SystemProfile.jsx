@@ -37,7 +37,7 @@ export default function SystemProfile() {
           subtitle={loading ? "" : "It may have been removed."}
         />
         <Link to="/health-report" className="text-sm text-brand-600 underline">
-          &larr; Back to the Health Report
+          &larr; Back to Health of the house
         </Link>
       </div>
     )
@@ -66,7 +66,7 @@ export default function SystemProfile() {
           to="/health-report"
           className="text-sm font-medium text-brand-600 hover:text-brand-800"
         >
-          &larr; Health Report
+          &larr; Health of the house
         </Link>
       </p>
       <PageHeader
@@ -208,7 +208,7 @@ export default function SystemProfile() {
                 to="/priority-list"
                 className="inline-block mt-3 text-sm font-medium text-brand-600 hover:text-brand-800"
               >
-                Manage on the 90-Day list &rarr;
+                Manage on What's next &rarr;
               </Link>
             </Card>
           )}

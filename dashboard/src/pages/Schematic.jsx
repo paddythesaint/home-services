@@ -23,7 +23,7 @@ const NODES = [
   { id: "request", band: "in", title: "Homeowner Request", tech: "Request button", desc: "The client's own words become a tracked ticket.", fields: ["verbatim ask"], feeds: ["workorders"] },
   { id: "visit", band: "in", title: "Contractor Visit & Job Log", tech: "Job History entry", desc: "Completed work — who, what, cost — logged to the record.", fields: ["vendor", "cost", "notes"], feeds: ["jobs", "workorders"] },
   { id: "seed", band: "in", title: "Public-Records Seed & Nameplate OCR", tech: "seedData.js · nameplateVision.js", desc: "Starter profile from public data; Claude reads nameplate photos for brand/age.", fields: ["public records", "photo OCR"], feeds: ["profile", "health", "media"] },
-  { id: "email", band: "in", title: "Email Forwarding", tech: "designed — onboarding path", desc: "Forwarded service emails parsed into the record. Planned, not yet built.", fields: ["planned"], feeds: ["jobs", "health", "warranties"] },
+  { id: "email", band: "in", title: "Email Forwarding", tech: "gmail.js · emailPoller (live 7/24)", desc: "Each home's forwarding address — service emails are polled every 10 minutes and parsed into the record.", fields: ["+tag routing", "10-min poll", "idempotent ingest"], feeds: ["jobs", "health", "warranties"] },
 
   // Band 2 — Data Stores
   { id: "profile", band: "store", title: "Property Profile", tech: "property doc", desc: "The home itself and who can see it.", fields: ["address", "ZIP / area", "tier", "year built", "acreage", "members"] },
@@ -40,9 +40,9 @@ const NODES = [
   // Band 3 — Intelligence Engines
   { id: "benchmarks", band: "engine", title: "Lifespan & Cost Benchmarks", tech: "benchmarks.js", desc: "Typical life and replacement cost per system type; where each sits against its life.", fields: ["lifespans", "replace cost", "horizon"], pulls: ["health"], feeds: ["s_health", "s_forecast"] },
   { id: "forecast", band: "engine", title: "Cost Forecast", tech: "forecast.js", desc: "3-year planning ranges from system age and open priorities.", fields: ["3-yr ranges"], pulls: ["health", "priorities"], feeds: ["s_forecast"] },
-  { id: "trades", band: "engine", title: "Trade Taxonomy", tech: "trades.js", desc: "Maps free-text categories onto stable trades so everything groups the same way.", fields: ["classifier", "grouping"], pulls: ["health", "jobs", "priorities"], feeds: ["s_health", "s_jobs", "s_priorities", "s_report"] },
-  { id: "issue", band: "engine", title: "Issue Intelligence", tech: "issuePlaybook.js", desc: "Clusters related priorities into a root issue, shows escalation cost, and bundles the fix.", fields: ["clusters", "escalation", "bundle → WO"], pulls: ["priorities"], feeds: ["s_priorities", "s_ops", "s_workorders"] },
-  { id: "resolution", band: "engine", title: "Readiness & Visit Planning", tech: "resolution.js · requirementSuggestions.js", desc: "What each priority still needs, the next-visit manifest, and quote packages.", fields: ["readiness", "manifest", "quote bundles"], pulls: ["priorities"], feeds: ["s_priorities"] },
+  { id: "trades", band: "engine", title: "Trade Taxonomy", tech: "trades.js", desc: "Maps free-text categories onto stable trades so everything groups the same way.", fields: ["classifier", "grouping"], pulls: ["health", "jobs", "priorities"], feeds: ["s_health", "s_jobs", "s_next", "s_report"] },
+  { id: "issue", band: "engine", title: "Issue Intelligence", tech: "issuePlaybook.js", desc: "Clusters related priorities into a root issue, shows escalation cost, and bundles the fix.", fields: ["clusters", "escalation", "bundle → WO"], pulls: ["priorities"], feeds: ["s_next", "s_ops", "s_workorders"] },
+  { id: "resolution", band: "engine", title: "Readiness & Visit Planning", tech: "resolution.js · requirementSuggestions.js", desc: "What each priority still needs, the next-visit manifest, and quote packages.", fields: ["readiness", "manifest", "quote bundles"], pulls: ["priorities"], feeds: ["s_next"] },
   { id: "coverage", band: "engine", title: "Coverage Intelligence", tech: "warranties.js", desc: "Flags coverage that's expiring or already lapsed, soonest first.", fields: ["status", "expiry alerts"], pulls: ["warranties"], feeds: ["s_coverage", "s_ops", "s_report"] },
   { id: "spend", band: "engine", title: "Spend Intelligence", tech: "spendInsights.js", desc: "Reads job costs into an annual story — by trade, month, and vendor.", fields: ["by trade", "by month", "by vendor"], pulls: ["jobs", "health", "warranties"], feeds: ["s_report"] },
   { id: "maint", band: "engine", title: "Recurrence & Seasonal", tech: "maintenanceIntelligence.js · climate.js", desc: "Flags systems that keep recurring, and a seasonal checklist tuned to the home's ZIP.", fields: ["recurrence", "aging", "ZIP → climate"], pulls: ["jobs", "profile"], feeds: ["s_next"] },
@@ -54,15 +54,14 @@ const NODES = [
 
   // Band 4 — Surfaces
   { id: "s_overview", band: "surface", title: "Overview", tech: "Home", desc: "The calm home screen — what's happening now.", fields: ["homeowner"], reads: ["profile", "health", "priorities", "workorders"] },
-  { id: "s_health", band: "surface", title: "Systems & Health", tech: "Record", desc: "Every system by trade, with condition and horizons.", fields: ["homeowner"], reads: ["health"] },
-  { id: "s_jobs", band: "surface", title: "Job History", tech: "Record", desc: "Timeline and by-system rollup of all work.", fields: ["homeowner"], reads: ["jobs"] },
+  { id: "s_health", band: "surface", title: "Health of the house", tech: "Record", desc: "Every system by trade, with condition and horizons.", fields: ["homeowner"], reads: ["health"] },
+  { id: "s_jobs", band: "surface", title: "Everything we've done", tech: "Record", desc: "Timeline and by-system rollup of all work.", fields: ["homeowner"], reads: ["jobs"] },
   { id: "s_coverage", band: "surface", title: "Coverage", tech: "Record", desc: "The warranty & plan ledger with expiry alerts.", fields: ["homeowner"], reads: ["warranties"] },
   { id: "s_contractors", band: "surface", title: "Contractors", tech: "Record", desc: "The home's vendors.", fields: ["homeowner"], reads: ["contractors"] },
-  { id: "s_next", band: "surface", title: "What's next", tech: "Plan", desc: "Three horizons plus this month's care, recurrence flags, seasonal checklist.", fields: ["homeowner"], reads: ["calendar", "priorities", "workorders"] },
-  { id: "s_calendar", band: "surface", title: "Care Calendar", tech: "Plan", desc: "Recurring care across the year.", fields: ["homeowner"], reads: ["calendar"] },
-  { id: "s_priorities", band: "surface", title: "90-Day Priorities", tech: "Plan", desc: "Ranked list with readiness, urgency filter, and issue bundling.", fields: ["homeowner"], reads: ["priorities"] },
-  { id: "s_forecast", band: "surface", title: "Year in Review + Forecast", tech: "Plan", desc: "Annual spend report with the 3-year outlook by system.", fields: ["homeowner"], reads: ["health"] },
-  { id: "s_report", band: "surface", title: "Year in Review", tech: "Plan", desc: "Annual spend, care, and coverage in one report.", fields: ["homeowner"], reads: ["jobs"] },
+  { id: "s_next", band: "surface", title: "What's next", tech: "Plan", desc: "Three horizons, readiness & bundling, this month's care, seasonal checklist, parked projects.", fields: ["homeowner"], reads: ["calendar", "priorities", "workorders"] },
+  { id: "s_calendar", band: "surface", title: "The year of care", tech: "Plan", desc: "Recurring care across the year.", fields: ["homeowner"], reads: ["calendar"] },
+  { id: "s_forecast", band: "surface", title: "Year in review + forecast", tech: "Plan", desc: "Annual spend report with the 3-year outlook by system.", fields: ["homeowner"], reads: ["health"] },
+  { id: "s_report", band: "surface", title: "Year in review", tech: "Plan", desc: "Annual spend, care, and coverage in one report.", fields: ["homeowner"], reads: ["jobs"] },
   { id: "s_assistant", band: "surface", title: "Assistant", tech: "chat", desc: "Native chat over the home's record.", fields: ["homeowner"], reads: ["log"] },
   { id: "s_ops", band: "surface", title: "Command Center", tech: "Ops · founder", desc: "Portfolio health, attention feed, escalation & coverage risk.", fields: ["founder"], reads: ["profile", "health", "priorities"] },
   { id: "s_workorders", band: "surface", title: "Work Orders", tech: "board · founder", desc: "Every ticket across the portfolio, with AI briefing & quote requests.", fields: ["founder"], reads: ["workorders"] },
