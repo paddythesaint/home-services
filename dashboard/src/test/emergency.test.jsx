@@ -22,6 +22,17 @@ describe("emergency derivation (pure)", () => {
     expect(groups[0].entries).toHaveLength(1)
   })
 
+  it("topic alone is not enough — record-keeping facts stay off the card", () => {
+    const groups = emergencyShutoffs([
+      { text: "Grundfos MQ3-45 water pump warranty registered, July 2026" },
+      { text: "Replacement water pump installed by Sunwave, July 2026" },
+      { text: "Well pump breaker is in the main panel, second from top" },
+    ])
+    expect(groups).toHaveLength(1)
+    expect(groups[0].entries).toHaveLength(1)
+    expect(groups[0].entries[0].text).toMatch(/second from top/)
+  })
+
   it("located systems anchor their group when no fact covers them", () => {
     const groups = emergencyShutoffs(
       [],
