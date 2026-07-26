@@ -304,30 +304,19 @@ export default function Layout({ user }) {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Mobile top bar: wordmark + one-tap Emergency. Navigation moved
+            to the bottom tab bar (thumbs live at the bottom of a phone). */}
         <header className="md:hidden bg-sunk border-b border-line-2">
-          <div className="px-4 py-3 flex items-center gap-3">
-            <button
-              type="button"
-              aria-label="Open menu"
-              onClick={() => setMenuOpen(true)}
-              className="p-1 -ml-1 text-ink"
-            >
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                aria-hidden="true"
-              >
-                <path d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <p className="font-display text-sm font-semibold flex-1 text-brand-700">
+          <div className="px-4 py-3 flex items-center justify-between gap-3">
+            <p className="font-display text-sm font-semibold text-brand-700">
               Home &amp; Property Services
             </p>
+            <NavLink
+              to="/emergency"
+              className="text-[12px] font-semibold text-status-critical shrink-0 py-1"
+            >
+              Emergency
+            </NavLink>
           </div>
         </header>
 
@@ -456,7 +445,7 @@ export default function Layout({ user }) {
             )}
           </div>
         </header>
-        <main className="flex-1 p-4 md:p-8 max-w-6xl w-full mx-auto">
+        <main className="flex-1 p-4 pb-24 md:p-8 max-w-6xl w-full mx-auto">
           {view.preview && (
             <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg px-4 py-2.5 mb-4 text-sm flex items-center justify-between gap-3">
               <p>
@@ -498,6 +487,58 @@ export default function Layout({ user }) {
           </Suspense>
         </main>
       </div>
+      {/* Mobile bottom tabs: the effective view's property destinations
+          plus Menu (the drawer — tools, business, property switcher).
+          48px targets, safe-area padded, always one thumb away. */}
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-line pb-[env(safe-area-inset-bottom)]"
+        aria-label="Primary"
+      >
+        <div
+          className="grid"
+          style={{ gridTemplateColumns: `repeat(${navSections[0].items.length + 1}, 1fr)` }}
+        >
+          {navSections[0].items.map((item) => {
+            const active = navActive(item, pathname)
+            return (
+              <NavLink
+                key={`tab-${item.to}`}
+                to={item.to}
+                end={item.end}
+                className={`flex flex-col items-center justify-center gap-0.5 min-h-12 py-1.5 ${
+                  active ? "text-brand-700" : "text-ink-3"
+                }`}
+              >
+                <NavIcon name={item.icon} />
+                <span className={`text-[10px] leading-none ${active ? "font-semibold" : ""}`}>
+                  {item.label === "Property Record" ? "Record" : item.label === "The Plan" ? "Plan" : item.label}
+                </span>
+              </NavLink>
+            )
+          })}
+          <button
+            type="button"
+            aria-label="Open menu"
+            onClick={() => setMenuOpen(true)}
+            className="flex flex-col items-center justify-center gap-0.5 min-h-12 py-1.5 text-ink-3"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <span className="text-[10px] leading-none">Menu</span>
+          </button>
+        </div>
+      </nav>
+
       {tourOpen && <Tour steps={tourSteps} onClose={closeTour} />}
     </div>
   )
