@@ -12,6 +12,7 @@ import { isReadyToAction } from "../resolution"
 import { detectIssues, escalationCeiling } from "../issuePlaybook"
 import { coverageAlerts, coverageStatus, expiryLine } from "../warranties"
 import { workOrderAttention } from "../attentionInbox"
+import { capitalEvents, capitalPhrase, CAPITAL_STATUS_WORD } from "../capitalPlanning"
 import { viewFor } from "../roles"
 import SystemStatus from "../SystemStatus"
 import {
@@ -52,6 +53,7 @@ function OpsProperty({
   onAttention,
   onContractors,
   onOrders = () => {},
+  onCapital = () => {},
   onOpen,
 }) {
   const priorityApi = useItems(propertyId, "priorityList")
@@ -179,6 +181,17 @@ function OpsProperty({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propertyId, workOrders, profile.address])
 
+  // Capital horizon: systems approaching / inside / past their replacement
+  // window. Planning fuel, not fire-fighting — it gets its own card, not
+  // the attention inbox.
+  useEffect(() => {
+    onCapital(
+      propertyId,
+      capitalEvents(systems).map((e) => ({ ...e, property: profile.address, propertyId }))
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propertyId, systems, profile.address])
+
   useEffect(() => {
     const names = [
       ...new Set(
@@ -290,6 +303,7 @@ export default function Ops() {
   const [attention, setAttention] = useState({})
   const [contractors, setContractors] = useState({})
   const [orders, setOrders] = useState({})
+  const [capital, setCapital] = useState({})
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState("")
   const [deleting, setDeleting] = useState(null) // property pending delete confirmation
@@ -518,6 +532,57 @@ export default function Ops() {
             </Card>
           </div>
 
+          {/* Capital horizon: the big-ticket replacements coming across the
+              portfolio, most pressing first. Planning fuel — the trigger for
+              a proactive conversation, deliberately apart from the inbox. */}
+          {(() => {
+            const feed = Object.values(capital).flat()
+            if (feed.length === 0) return null
+            return (
+              <div className="mb-4">
+                <Card title={`Capital horizon (${feed.length})`}>
+                  <ul className="m-0 p-0 list-none">
+                    {feed.map((e) => (
+                      <li
+                        key={`cap-${e.propertyId}-${e.system.id}`}
+                        className="grid grid-cols-[12px_1fr_auto] items-baseline gap-3 py-2.5 border-t border-line"
+                      >
+                        <span
+                          className="w-2 h-2 rounded-full self-center"
+                          style={{
+                            background:
+                              e.horizon.status === "past"
+                                ? "var(--color-status-critical)"
+                                : e.horizon.status === "in-window"
+                                  ? "var(--color-status-warn)"
+                                  : "var(--color-status-good)",
+                          }}
+                          aria-hidden="true"
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium text-ink">
+                            {e.system.category}
+                            <span className="font-normal text-ink-3"> · {e.property}</span>
+                          </span>
+                          <span className="block text-[12.5px] leading-[1.55] text-ink-2">
+                            {capitalPhrase(e)}
+                          </span>
+                        </span>
+                        <span className="numeric text-[10.5px] uppercase tracking-wide text-ink-3 shrink-0">
+                          {CAPITAL_STATUS_WORD[e.horizon.status]}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-ink-3 mt-3">
+                    Only systems with an install year can be placed — every nameplate the
+                    census fill adds joins this view.
+                  </p>
+                </Card>
+              </div>
+            )
+          })()}
+
           {/* 3a pipeline: five headed hairline lists, no card chrome. The
               lanes read across the whole portfolio; rows link to the board. */}
           {(() => {
@@ -587,6 +652,7 @@ export default function Ops() {
                 onAttention={(id, items) => setAttention((prev) => ({ ...prev, [id]: items }))}
                 onContractors={(id, names) => setContractors((prev) => ({ ...prev, [id]: names }))}
                 onOrders={(id, list) => setOrders((prev) => ({ ...prev, [id]: list }))}
+                onCapital={(id, list) => setCapital((prev) => ({ ...prev, [id]: list }))}
                 onOpen={founder ? openProperty : undefined}
               />
             ))}
