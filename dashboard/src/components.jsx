@@ -11,15 +11,33 @@ import { Link } from "react-router-dom"
 
 const ViewMode = createContext({ mode: "simple", setMode: () => {} })
 
-export function ViewModeProvider({ children, initial = "simple" }) {
-  const [mode, setMode] = useState(initial)
+// The chosen depth sticks per device — a homeowner who prefers the
+// expansive view shouldn't have to re-ask for it every visit.
+export function ViewModeProvider({ children, initial }) {
+  const [mode, setModeState] = useState(() => {
+    if (initial) return initial
+    try {
+      return localStorage.getItem("hpsViewMode") === "detailed" ? "detailed" : "simple"
+    } catch {
+      return "simple"
+    }
+  })
+  function setMode(m) {
+    setModeState(m)
+    try {
+      localStorage.setItem("hpsViewMode", m)
+    } catch {
+      /* private mode — the choice just won't persist */
+    }
+  }
   return <ViewMode.Provider value={{ mode, setMode }}>{children}</ViewMode.Provider>
 }
 
 export const useViewMode = () => useContext(ViewMode)
 
-/** Wrap anything that must never reach a homeowner: costs, margins, lanes,
-    contractor economics. Renders only in Detailed. */
+/** Wrap the expansive layer: renders only in Detailed. Anyone may switch to
+    Detailed — it's the homeowner's own record in depth. Operator economics
+    (margins, lanes) need a businessRole gate on top of this, not this alone. */
 export function Detail({ children }) {
   return useViewMode().mode === "detailed" ? children : null
 }

@@ -111,6 +111,17 @@ export default function JobHistory() {
     if (!yearsSeen.includes(y)) yearsSeen.push(y)
   }
   const NUMS4D = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"]
+  // Detailed adds what the year cost, right on the year eyebrow.
+  const yearTotal = (year) => {
+    const total = completed4d
+      .filter((j) => {
+        const t = jobTime(j)
+        const y = Number.isNaN(t) ? "Undated" : String(new Date(t).getFullYear())
+        return y === year
+      })
+      .reduce((sum, j) => sum + (Number(String(j.cost || "").replace(/[^0-9.]/g, "")) || 0), 0)
+    return total > 0 ? `$${Math.round(total).toLocaleString()}` : ""
+  }
   const monthDay = (j) => {
     const t = jobTime(j)
     return Number.isNaN(t)
@@ -134,7 +145,12 @@ export default function JobHistory() {
         <div className="mb-10">
           {yearsSeen.map((year) => (
             <div key={year} className="mb-5">
-              <p className="eyebrow m-0 mb-1">{year}</p>
+              <p className="eyebrow m-0 mb-1">
+                {year}
+                {mode === "detailed" && yearTotal(year) && (
+                  <span className="text-ink-3"> · {yearTotal(year)}</span>
+                )}
+              </p>
               <ul className="m-0 p-0 list-none">
                 {completed4d
                   .filter((j) => {

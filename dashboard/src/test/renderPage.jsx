@@ -6,6 +6,7 @@ import { MemoryRouter, Routes, Route, Outlet } from "react-router-dom"
 import { render } from "@testing-library/react"
 import { MOCK_FOUNDER, fixtureData } from "../mocks/fixtures"
 import { saveProperty } from "../mocks/firestoreApi"
+import { ViewModeProvider } from "../components"
 
 export const DEFAULT_UID = "prop-ballard"
 
@@ -24,16 +25,18 @@ export function renderPage(
     refreshPortfolio: async () => [],
   }
   return render(
-    <MemoryRouter initialEntries={[path || "/"]}>
-      <Routes>
-        <Route element={<Outlet context={context} />}>
-          {routePath ? (
-            <Route path={routePath} element={page} />
-          ) : (
-            <Route index element={page} />
-          )}
-        </Route>
-      </Routes>
-    </MemoryRouter>
+    <ViewModeProvider>
+      <MemoryRouter initialEntries={[path || "/"]}>
+        <Routes>
+          <Route element={<Outlet context={context} />}>
+            {routePath ? (
+              <Route path={routePath} element={page} />
+            ) : (
+              <Route index element={page} />
+            )}
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    </ViewModeProvider>
   )
 }
