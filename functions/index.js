@@ -29,6 +29,7 @@ const {
   intakePrompt,
   todayLabel,
 } = require("./gmail")
+const { buildBrief, rfc822 } = require("./brief")
 
 initializeApp()
 
@@ -419,6 +420,92 @@ exports.emailPoller = onSchedule(
         // never loops: a stuck gate blocks re-processing until cleaned up.
         await gate.set({ status: "error", error: String(err), at: new Date().toISOString() })
         console.error(`emailPoller: failed on message ${id}:`, err)
+      }
+    }
+  }
+)
+
+// The weekly brief: every Monday morning, each home's record composes its
+// own summary — handled / coming up / needs your eye / parked check-ins —
+// and mails it to the property's members from the intake mailbox. A quiet
+// week composes nothing and sends nothing. Every brief is stored on the
+// property (briefs subcollection) whether or not the send succeeds, so
+// the app can surface them later and a send failure loses no content.
+//
+// Sending requires the Gmail token to carry the gmail.send scope — if
+// sends log 403, re-mint the refresh token with that scope (RUNBOOK).
+const BRIEF_FROM = "Charlottesville Home & Property Services <cvillehomeservicestest@gmail.com>"
+
+exports.weeklyBrief = onSchedule(
+  {
+    schedule: "every monday 07:00",
+    timeZone: "America/New_York",
+    maxInstances: 1,
+    memory: "256MiB",
+    timeoutSeconds: 300,
+  },
+  async () => {
+    const { GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN } = process.env
+    const canSend = Boolean(GMAIL_CLIENT_ID && GMAIL_CLIENT_SECRET && GMAIL_REFRESH_TOKEN)
+
+    const db = getFirestore()
+    const propsSnap = await db.collection("properties").get()
+
+    for (const doc of propsSnap.docs) {
+      const profile = doc.data()
+      const members = profile.memberEmails || []
+      if (members.length === 0) continue
+
+      try {
+        const [jobs, workOrders, calendar, systems] = await Promise.all(
+          ["jobHistory", "workOrders", "careCalendar", "healthReport"].map(async (c) => {
+            const snap = await db.collection(`properties/${doc.id}/${c}`).get()
+            return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+          })
+        )
+
+        const brief = buildBrief({ profile, jobs, workOrders, calendar, systems })
+        if (!brief) {
+          console.log(`weeklyBrief: quiet week for ${doc.id} — nothing sent`)
+          continue
+        }
+
+        let status = "composed"
+        if (canSend) {
+          try {
+            const token = await gmailAccessToken()
+            const res = await fetch(`${GMAIL_BASE}/messages/send`, {
+              method: "POST",
+              headers: {
+                authorization: `Bearer ${token}`,
+                "content-type": "application/json",
+              },
+              body: JSON.stringify({
+                raw: rfc822({ from: BRIEF_FROM, to: members, ...brief }),
+              }),
+            })
+            status = res.ok ? "sent" : `send-failed: ${res.status}`
+            if (!res.ok)
+              console.error(
+                `weeklyBrief: send failed for ${doc.id} (${res.status}) — token may lack gmail.send scope`
+              )
+          } catch (err) {
+            status = `send-failed: ${String(err)}`
+            console.error(`weeklyBrief: send errored for ${doc.id}:`, err)
+          }
+        }
+
+        await db.collection(`properties/${doc.id}/briefs`).add({
+          subject: brief.subject,
+          text: brief.text,
+          sentTo: members,
+          status,
+          createdOn: todayLabel(),
+          order: Date.now(),
+        })
+        console.log(`weeklyBrief: ${doc.id} → ${status}`)
+      } catch (err) {
+        console.error(`weeklyBrief: failed for ${doc.id}:`, err)
       }
     }
   }

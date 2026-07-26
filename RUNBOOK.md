@@ -124,10 +124,14 @@ account at each stage.
    (a private window is easiest), open https://developers.google.com/oauthplayground
 2. Click the gear icon (top right) → tick **"Use your own OAuth credentials"**
    → paste the Client ID and Client secret from step A.
-3. In the left panel's "Input your own scopes" box, enter:
-   `https://www.googleapis.com/auth/gmail.modify`
+3. In the left panel's "Input your own scopes" box, enter BOTH scopes
+   (space-separated):
+   `https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.send`
    and click **Authorize APIs**. Approve as cvillehomeservicestest@gmail.com
    (it will warn the app is unverified — Continue; it's your own app).
+   The `gmail.send` scope powers the Monday-morning weekly brief; without
+   it intake still works but brief sends log 403 (the briefs are still
+   composed and stored on each property).
 4. Click **Exchange authorization code for tokens** → copy the
    **Refresh token**.
 
