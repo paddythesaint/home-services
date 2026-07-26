@@ -463,7 +463,7 @@ export default function HealthReport() {
       {confirmDelete && (
         <Modal title="Delete system?" onClose={() => setConfirmDelete(null)}>
           <p className="text-sm text-ink-2 mb-4">
-            Remove "{confirmDelete.category}" from your Property Health Report?
+            Remove "{confirmDelete.category}" from your home's record?
             {(confirmDelete.photoCount || 0) > 0 &&
               ` Its ${confirmDelete.photoCount} photo${
                 confirmDelete.photoCount === 1 ? "" : "s"

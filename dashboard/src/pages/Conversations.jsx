@@ -386,7 +386,7 @@ export default function Conversations() {
                     <p className="text-ink">
                       <span className="font-medium">Same system twice?</span>{" "}
                       <span className="text-ink-2">
-                        “{f.a.category}” and “{f.b.category}” — manage on the Health Report.
+                        “{f.a.category}” and “{f.b.category}” — manage on Health of the house.
                       </span>
                     </p>
                   )}

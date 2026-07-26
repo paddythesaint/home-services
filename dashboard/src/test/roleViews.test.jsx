@@ -134,7 +134,7 @@ describe("hub tab gating", () => {
     const { renderPage } = await import("./renderPage")
     const { default: CareCalendar } = await import("../pages/CareCalendar")
     renderPage(<CareCalendar />, { user: ALTON })
-    const tab = await screen.findByText("Year in Review")
+    const tab = await screen.findByText("Year in review")
     expect(tab.closest("a")).toHaveAttribute("href", "/home-report")
     expect(screen.queryByText("Cost Forecast")).not.toBeInTheDocument()
   })

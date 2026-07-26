@@ -921,7 +921,7 @@ export default function WorkOrders() {
       </div>
 
       <p className="text-xs text-ink-3 mt-3">
-        Raise orders from the 90-Day Priorities page to keep them linked — completing a linked
+        Raise orders from the What's next page to keep them linked — completing a linked
         order resolves its priority and writes the job to Job History automatically.
       </p>
 

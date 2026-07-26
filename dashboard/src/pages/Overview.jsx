@@ -179,7 +179,7 @@ function FullOverview() {
           ))}
           .{" "}
           <Link to="/health-report" className="font-medium underline">
-            Log them on the Health Report
+            Log them on Health of the house
           </Link>
           .
         </div>
