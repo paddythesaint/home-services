@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useOutletContext } from "react-router-dom"
+import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "./useItems"
 import { addItem } from "./firestoreApi"
 import { todayLabel } from "./dates"
@@ -255,6 +255,12 @@ export default function HomeownerHome() {
                   ? `Last note from your team · ${latestNote.sentOn}`
                   : "Anything urgent, call or text — we see it right away."}
               </p>
+              <Link
+                to="/emergency"
+                className="mt-3 inline-block text-[13px] font-medium text-status-critical hover:underline"
+              >
+                Emergency info — shutoffs &amp; who to call &rarr;
+              </Link>
             </div>
 
             <Section label="Membership">

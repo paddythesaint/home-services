@@ -40,6 +40,21 @@ export const fixtureData = {
         // mock mode and tests.
         facts: [
           {
+            // Emergency-card fuel: shutoff locations captured as plain facts.
+            id: "fact-water-shutoff",
+            text: "Main water shutoff is in the basement utility room, on the wall left of the pressure tank",
+            category: "Plumbing",
+            source: "walkthrough",
+            date: "July 2, 2026",
+          },
+          {
+            id: "fact-propane-shutoff",
+            text: "Propane shutoff valve is at the tank behind the garage; house-side valve behind the range",
+            category: "Gas",
+            source: "walkthrough",
+            date: "July 2, 2026",
+          },
+          {
             id: "fact-pump-warranty",
             text: "Grundfos MQ3-45 water pump warranty registered, July 2026",
             category: "Plumbing",

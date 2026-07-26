@@ -28,6 +28,7 @@ const SystemProfile = lazy(() => import("./pages/SystemProfile"))
 const Schematic = lazy(() => import("./pages/Schematic"))
 const Conversations = lazy(() => import("./pages/Conversations"))
 const Census = lazy(() => import("./pages/Census"))
+const Emergency = lazy(() => import("./pages/Emergency"))
 
 export default function App() {
   return (
@@ -60,6 +61,7 @@ export default function App() {
               <Route path="system-map" element={<Schematic />} />
               <Route path="conversations" element={<Conversations />} />
               <Route path="census" element={<Census />} />
+              <Route path="emergency" element={<Emergency />} />
               <Route path="assistant" element={<Assistant />} />
               <Route path="system/:systemId" element={<SystemProfile />} />
             </Route>
