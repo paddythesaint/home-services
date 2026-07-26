@@ -35,6 +35,11 @@ const SHUTOFF_GROUPS = [
   },
 ]
 
+// A fact earns a place on the card only if it says WHERE something is or
+// how to cut it — topic alone isn't enough ("water pump warranty
+// registered" is record-keeping, not emergency knowledge).
+const WHERE_RE = /shut.?off|valve|breaker|main panel|disconnect|alarm|is (in|at|on|behind|under|beside|next to)\b|located/i
+
 // Grouped shutoff knowledge: matching active facts first (the specific
 // "where exactly" sentences), then located systems as fallback anchors.
 export function emergencyShutoffs(facts = [], systems = []) {
@@ -48,7 +53,7 @@ export function emergencyShutoffs(facts = [], systems = []) {
     }
   }
   for (const f of facts) {
-    if (f.archived) continue
+    if (f.archived || !WHERE_RE.test(f.text || "")) continue
     place(f.text || "", f.date ? `noted ${f.date}` : "on the record", f.text || "")
   }
   for (const s of systems) {
