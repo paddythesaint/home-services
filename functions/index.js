@@ -18,7 +18,17 @@ const { onSchedule } = require("firebase-functions/v2/scheduler")
 const { initializeApp } = require("firebase-admin/app")
 const { getAuth } = require("firebase-admin/auth")
 const { getFirestore } = require("firebase-admin/firestore")
-const { extractTag, routeMessage, extractBody, parseActions, intakePrompt, todayLabel } = require("./gmail")
+const { getStorage } = require("firebase-admin/storage")
+const { randomUUID } = require("crypto")
+const {
+  extractTag,
+  routeMessage,
+  extractBody,
+  listAttachments,
+  parseActions,
+  intakePrompt,
+  todayLabel,
+} = require("./gmail")
 
 initializeApp()
 
@@ -217,7 +227,10 @@ async function markRead(token, id) {
   })
 }
 
-async function parseWithClaude(apiKey, system, emailText) {
+async function parseWithClaude(apiKey, system, emailText, imageBlocks = []) {
+  const content = imageBlocks.length
+    ? [...imageBlocks, { type: "text", text: emailText }]
+    : emailText
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -229,12 +242,53 @@ async function parseWithClaude(apiKey, system, emailText) {
       model: MODEL,
       max_tokens: MAX_TOKENS,
       system,
-      messages: [{ role: "user", content: emailText }],
+      messages: [{ role: "user", content }],
     }),
   })
   if (!res.ok) throw new Error(`Anthropic parse failed: ${res.status}`)
   const data = await res.json()
   return (data.content || []).find((b) => b.type === "text")?.text || ""
+}
+
+// File a message's attachments to Storage + the property's documents
+// collection — the same shape the app's uploadDocument writes, so they
+// show up under Documents like any in-app upload. Returns what was filed,
+// with image buffers kept so the parse can read nameplates off them.
+// Per-attachment failures are logged and skipped; they never sink the email.
+async function fileAttachments(db, token, messageId, propertyId, atts) {
+  const filed = []
+  const bucket = getStorage().bucket()
+  for (const a of atts) {
+    try {
+      const data = await gmailGet(token, `/messages/${messageId}/attachments/${a.attachmentId}`)
+      const buf = Buffer.from(
+        (data.data || "").replace(/-/g, "+").replace(/_/g, "/"),
+        "base64"
+      )
+      if (buf.length === 0 || buf.length > 10 * 1024 * 1024) continue
+      const safeName = a.filename.replace(/[^\w.-]+/g, "_")
+      const path = `properties/${propertyId}/documents/${Date.now()}-${safeName}`
+      const dlToken = randomUUID()
+      await bucket.file(path).save(buf, {
+        contentType: a.mimeType,
+        metadata: { metadata: { firebaseStorageDownloadTokens: dlToken } },
+      })
+      const url = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(path)}?alt=media&token=${dlToken}`
+      await db.collection(`properties/${propertyId}/documents`).add({
+        name: a.filename,
+        path,
+        url,
+        size: buf.length,
+        contentType: a.mimeType,
+        uploadedBy: "email-intake",
+        uploadedOn: new Date().toISOString().slice(0, 10),
+      })
+      filed.push({ ...a, buf })
+    } catch (err) {
+      console.error(`emailPoller: attachment "${a.filename}" failed to file:`, err)
+    }
+  }
+  return filed
 }
 
 exports.emailPoller = onSchedule(
@@ -288,7 +342,33 @@ exports.emailPoller = onSchedule(
         }
 
         const body = extractBody(msg.payload).slice(0, 6000)
-        const emailText = `From: ${from}\nSubject: ${subject}\n\n${body}`
+
+        // Attachments (nameplate photos, invoice PDFs) file to the home's
+        // documents; the first couple of images also go to the parse so a
+        // forwarded photo works with no body text at all.
+        const filed = await fileAttachments(
+          db,
+          token,
+          id,
+          property.id,
+          listAttachments(msg.payload)
+        )
+        const imageBlocks = filed
+          .filter((a) => a.mimeType.startsWith("image/"))
+          .slice(0, 2)
+          .map((a) => ({
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: a.mimeType,
+              data: a.buf.toString("base64"),
+            },
+          }))
+        const attachNote = filed.length
+          ? `\n\n[${filed.length} attachment${filed.length === 1 ? "" : "s"} filed to the record: ${filed.map((a) => a.filename).join(", ")}]`
+          : ""
+
+        const emailText = `From: ${from}\nSubject: ${subject}\n\n${body || "(no body text — see attached photo)"}${attachNote}`
 
         // Context for the parse: the property's open orders + systems.
         const [woSnap, sysSnap] = await Promise.all([
@@ -301,7 +381,8 @@ exports.emailPoller = onSchedule(
         const raw = await parseWithClaude(
           ANTHROPIC_API_KEY,
           intakePrompt({ workOrders, systems }),
-          emailText
+          emailText,
+          imageBlocks
         )
         const { text: replyText, actions } = parseActions(raw)
 
@@ -325,10 +406,13 @@ exports.emailPoller = onSchedule(
           from,
           subject,
           proposals: actions.length,
+          attachments: filed.length,
           at: new Date().toISOString(),
         })
         await markRead(token, id)
-        console.log(`emailPoller: parsed "${subject}" → ${property.id} (${actions.length} proposals)`)
+        console.log(
+          `emailPoller: parsed "${subject}" → ${property.id} (${actions.length} proposals, ${filed.length} attachments)`
+        )
       } catch (err) {
         // Leave the gate in "processing" with the error; the message stays
         // unread so the NEXT run retries it once the gate is cleared — but
