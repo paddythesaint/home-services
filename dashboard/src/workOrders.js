@@ -21,6 +21,9 @@ export const LANE_META = {
   scheduled: { label: "Scheduled", hint: "On the calendar" },
   "in-progress": { label: "In progress", hint: "Being worked" },
   done: { label: "Done", hint: "On the record" },
+  // Deliberately not in LANES: parked projects leave the pipeline. The ball
+  // is in the homeowner's court — nobody at HPS is waiting on them.
+  parked: { label: "Parked", hint: "Homeowner's court" },
 }
 
 export const ASSIGNEE_TYPES = ["visit", "contractor"]
@@ -70,7 +73,29 @@ export function ageSummary(w, now = new Date()) {
 // Triage and quote are internal machinery; homeowners see work once it's
 // real (scheduled or underway).
 export const isUnderway = (w) => w.lane === "scheduled" || w.lane === "in-progress"
-export const isOpenWorkOrder = (w) => w.lane !== "done" && w.lane !== "canceled"
+// Parked is neither open nor done — nobody is acting, by agreement.
+export const isOpenWorkOrder = (w) =>
+  w.lane !== "done" && w.lane !== "canceled" && w.lane !== "parked"
+export const isParked = (w) => w.lane === "parked"
+
+// Park a project: it keeps its history but leaves every "act on this" view.
+// waitingOn names the trigger ("bathroom remodel"); revisitOn (ISO date,
+// optional) is when it should knock on the attention inbox again.
+export function parkPatch({ waitingOn = "", revisitOn = "" } = {}) {
+  return { lane: "parked", waitingOn, revisitOn, parkedOn: todayLabel() }
+}
+
+// Unparking sends it back to triage to be re-decided like any new issue.
+export function unparkPatch() {
+  return { lane: "triage", waitingOn: "", revisitOn: "", parkedOn: "" }
+}
+
+// A dated parked project whose revisit date has arrived.
+export function revisitDue(w, now = new Date()) {
+  if (!isParked(w) || !w.revisitOn) return false
+  const t = Date.parse(w.revisitOn)
+  return !Number.isNaN(t) && t <= now.getTime()
+}
 
 // Raise a work order straight off a 90-day priority.
 export function workOrderFromPriority(priority) {

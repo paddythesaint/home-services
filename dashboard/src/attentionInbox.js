@@ -5,7 +5,7 @@
 // orders that have gone quiet past an age threshold. Everything here
 // answers "what needs a human right now."
 
-import { isOpenWorkOrder, daysOpen } from "./workOrders"
+import { isOpenWorkOrder, isParked, revisitDue, daysOpen } from "./workOrders"
 
 // How long an order can sit (total age, from createdOn — we don't track
 // per-lane transitions) before it reads as stalled, by lane. Scheduled is
@@ -15,6 +15,22 @@ export const STALL_DAYS = { triage: 3, quote: 7, "in-progress": 14 }
 export function workOrderAttention(orders = [], now = new Date()) {
   const items = []
   for (const w of orders) {
+    // Parked projects are silent by design — until their revisit date
+    // arrives, at which point the one action is to re-raise it with the
+    // homeowner. Undated parked items never surface here.
+    if (isParked(w)) {
+      if (revisitDue(w, now)) {
+        items.push({
+          key: `wo-revisit-${w.id}`,
+          kind: "revisit",
+          title: `Parked project due for a check-in: ${w.title}`,
+          detail: w.waitingOn ? `was waiting on ${w.waitingOn}` : "revisit date reached",
+          urgency: "medium",
+          workOrderId: w.id,
+        })
+      }
+      continue
+    }
     if (!isOpenWorkOrder(w)) continue
     const d = daysOpen(w, now)
     const quotes = w.quotes || []
