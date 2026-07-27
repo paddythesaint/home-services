@@ -12,7 +12,7 @@ import { overlap } from "./recordAudit"
 // category + detail + brand; `capture` is the cheapest zero-typing way to
 // fill the gap, feeding the guided fill session.
 export const EXPECTED_RURAL_HOME = [
-  { label: "Well pump", match: /well pump|water pump|submersible/i, capture: "nameplate photo" },
+  { label: "Well pump", match: /well pump|water pump|submersible|private well|well system/i, capture: "nameplate photo" },
   { label: "Well pressure tank", match: /pressure tank/i, capture: "nameplate photo" },
   { label: "Water treatment / softener", match: /soften|neutraliz|water treatment|filtration/i, capture: "nameplate photo" },
   { label: "Septic system", match: /septic|drainfield/i, capture: "walkthrough question" },
@@ -38,37 +38,57 @@ const assetText = (s) => `${s.category || ""} ${s.detail || ""} ${s.brand || ""}
 
 const SERIAL_RE = /\b(serial|s\/n|sn[#:\s])/i
 
+// Aspect-class assets — areas and conditions of the house rather than
+// pieces of equipment (paint, windows, drainage…). They have no
+// nameplate, no serial, no single location, and rarely a warranty, so
+// docking them for those fields just poisons the average. They score on
+// what actually applies: when it was done, verified condition, service
+// history, and a photo.
+export const ASPECT_RE =
+  /paint|finish|window|attic|insulat|drainage|grading|exterior|grounds|landscap|basement|crawl ?space|pest|fireplace|gas logs|chimney|gutter|ventilation\b/i
+
+export const isAspect = (system) => ASPECT_RE.test(system.category || "")
+
 // Field-by-field completeness, weighted by what downstream features
-// actually consume. Returns { score: 0-100, missing: [labels] }.
+// actually consume. Returns { score: 0-100, missing: [labels], aspect }.
 export function assetCompleteness(system, { jobs = [], warranties = [], facts = [], photos = [] } = {}) {
-  const checks = [
-    { label: "make/model", weight: 20, ok: Boolean(system.brand || system.detail) },
-    { label: "install year", weight: 20, ok: Boolean(system.installYear) },
-    { label: "verified condition", weight: 15, ok: Boolean(system.condition) && Boolean(system.verified) },
-    { label: "location", weight: 10, ok: Boolean(system.location) },
-    {
-      label: "serial",
-      weight: 10,
-      ok:
-        SERIAL_RE.test(`${system.detail || ""} ${system.note || ""}`) ||
-        facts.some((f) => !f.archived && SERIAL_RE.test(f.text || "") && overlap(f.text, system.category) >= 0.4),
-    },
-    {
-      label: "warranty link",
-      weight: 10,
-      ok: warranties.some((w) => overlap(`${w.item || ""} ${w.provider || ""} ${w.category || ""}`, assetText(system)) >= 0.4),
-    },
-    {
-      label: "service history",
-      weight: 10,
-      ok: jobs.some(
-        (j) => (j.category && j.category === system.category) || overlap(j.title, system.category) >= 0.6
-      ),
-    },
-    { label: "photo", weight: 5, ok: photos.some((p) => p.systemId === system.id) },
-  ]
+  const has = {
+    installYear: Boolean(system.installYear),
+    condition: Boolean(system.condition) && Boolean(system.verified),
+    serviceHistory: jobs.some(
+      (j) => (j.category && j.category === system.category) || overlap(j.title, system.category) >= 0.6
+    ),
+    photo: photos.some((p) => p.systemId === system.id),
+  }
+  const checks = isAspect(system)
+    ? [
+        { label: "install year", weight: 30, ok: has.installYear },
+        { label: "verified condition", weight: 35, ok: has.condition },
+        { label: "service history", weight: 25, ok: has.serviceHistory },
+        { label: "photo", weight: 10, ok: has.photo },
+      ]
+    : [
+        { label: "make/model", weight: 20, ok: Boolean(system.brand || system.detail) },
+        { label: "install year", weight: 20, ok: has.installYear },
+        { label: "verified condition", weight: 15, ok: has.condition },
+        { label: "location", weight: 10, ok: Boolean(system.location) },
+        {
+          label: "serial",
+          weight: 10,
+          ok:
+            SERIAL_RE.test(`${system.detail || ""} ${system.note || ""}`) ||
+            facts.some((f) => !f.archived && SERIAL_RE.test(f.text || "") && overlap(f.text, system.category) >= 0.4),
+        },
+        {
+          label: "warranty link",
+          weight: 10,
+          ok: warranties.some((w) => overlap(`${w.item || ""} ${w.provider || ""} ${w.category || ""}`, assetText(system)) >= 0.4),
+        },
+        { label: "service history", weight: 10, ok: has.serviceHistory },
+        { label: "photo", weight: 5, ok: has.photo },
+      ]
   const score = checks.reduce((sum, c) => sum + (c.ok ? c.weight : 0), 0)
-  return { score, missing: checks.filter((c) => !c.ok).map((c) => c.label) }
+  return { score, missing: checks.filter((c) => !c.ok).map((c) => c.label), aspect: isAspect(system) }
 }
 
 // Which expected systems the registry doesn't know exist at all.
@@ -136,7 +156,10 @@ export function censusSummary(record) {
     `CENSUS ${new Date().toISOString().slice(0, 10)} — ${systems.length} assets, avg completeness ${avg}/100`,
     ...scored
       .sort((a, b) => a.score - b.score)
-      .map((x) => `- ${x.s.category}: ${x.score} (missing: ${x.missing.join(", ") || "nothing"})`),
+      .map(
+        (x) =>
+          `- ${x.s.category}${x.aspect ? " (aspect)" : ""}: ${x.score} (missing: ${x.missing.join(", ") || "nothing"})`
+      ),
     `MISSING FROM REGISTRY: ${missingSystems(systems).map((m) => m.label).join(", ") || "none"}`,
     "FUEL:",
     ...featureFuel(record).map((f) => `- ${f.feature}: ${f.have} → ${f.ready ? "READY" : "NOT READY"}`),

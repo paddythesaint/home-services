@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
 import {
   assetCompleteness,
+  isAspect,
   missingSystems,
   featureFuel,
   censusSummary,
@@ -89,5 +90,34 @@ describe("censusSummary", () => {
     expect(text).toMatch(/1 assets, avg completeness 100\/100/)
     expect(text).toMatch(/MISSING FROM REGISTRY: .*Dryer/)
     expect(text).toMatch(/Capital-event triggers: 1\/1 major systems dated → READY/)
+  })
+})
+
+describe("aspect-class scoring (7/26 tuning)", () => {
+  it("aspects are not docked for nameplate fields that cannot exist", () => {
+    const paint = { id: "a1", category: "Paint & Finishes", condition: "good", verified: true }
+    const { score, missing, aspect } = assetCompleteness(paint, {
+      jobs: [{ title: "Exterior repaint", category: "Paint & Finishes" }],
+      photos: [],
+    })
+    expect(aspect).toBe(true)
+    // condition 35 + service 25; missing only what applies.
+    expect(score).toBe(60)
+    expect(missing).toEqual(["install year", "photo"])
+    expect(missing).not.toContain("serial")
+    expect(missing).not.toContain("make/model")
+    expect(missing).not.toContain("warranty link")
+  })
+
+  it("equipment keeps the full field expectations", () => {
+    expect(isAspect({ category: "Water Heater" })).toBe(false)
+    const { missing } = assetCompleteness({ id: "e1", category: "Water Heater" }, {})
+    expect(missing).toContain("serial")
+    expect(missing).toContain("warranty link")
+  })
+
+  it("'Private Well' satisfies the Well pump expectation", () => {
+    const labels = missingSystems([{ category: "Private Well" }]).map((m) => m.label)
+    expect(labels).not.toContain("Well pump")
   })
 })
