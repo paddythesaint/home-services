@@ -13,6 +13,9 @@ export const seedAddressHint = /old ballard/i
 export const seedProfile = {
   acreage: 5.011,
   yearBuilt: 1992,
+  // Albemarle County APN (Tax Map 59, Parcel 20B1), confirmed against the
+  // assessor record — lot 218,279 sqft = 5.011 ac, built 1992 both match.
+  parcelId: "05900-00-00-020B1",
 }
 
 export const seedHealthReport = [

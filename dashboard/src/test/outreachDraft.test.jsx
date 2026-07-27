@@ -46,7 +46,22 @@ describe("outreach web search (pure)", () => {
     })
     expect(p).toMatch(/web_search tool/)
     expect(p).toMatch(/Albemarle County, Virginia/)
-    expect(p).toMatch(/where the TO address came from/)
+    expect(p).toMatch(/where the TO address/)
+  })
+
+  it("the record's parcel ID rides into the prompt; searching for one is the fallback", () => {
+    const p = outreachSystemPrompt({
+      profile: { address: "895 Old Ballard Road", parcelId: "05900-00-00-020B1" },
+      systems: [],
+      priorities: [],
+      jobs: [],
+      workOrders: [],
+      facts: [],
+      order: { title: "Well report", notes: "", category: "Water" },
+    })
+    expect(p).toMatch(/Parcel ID: 05900-00-00-020B1/)
+    expect(p).toMatch(/use it verbatim/)
+    expect(p).toMatch(/county assessor\/parcel lookup/)
   })
 })
 
@@ -63,6 +78,8 @@ describe("outreach in the drawer", () => {
     expect(screen.getByText(/Blue Ridge Health District contact page/)).toBeInTheDocument()
     // Text from the SECOND text block — the draft is the join, not the first.
     expect(screen.getByText(/owner authorization/)).toBeInTheDocument()
+    // The record now carries the parcel ID, so the draft fills it — no bracket.
+    expect(screen.getByText(/05900-00-00-020B1/)).toBeInTheDocument()
     expect(screen.getByText(/Before sending:/)).toBeInTheDocument()
     expect(screen.getByText("Copy email")).toBeInTheDocument()
     // Regenerate appears once a draft exists.

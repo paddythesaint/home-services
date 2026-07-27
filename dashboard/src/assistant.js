@@ -64,6 +64,7 @@ export function buildAssistantContext({
       line("Client", profile.clientName && `${profile.clientName} family`),
       line("Built", profile.yearBuilt),
       line("Acreage", profile.acreage),
+      line("Parcel ID", profile.parcelId),
       line("Membership", profile.tier && `${profile.tier} plan`),
     ]
       .filter(Boolean)
