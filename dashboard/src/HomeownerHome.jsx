@@ -5,6 +5,7 @@ import { addItem } from "./firestoreApi"
 import { todayLabel } from "./dates"
 import { isUnderway, isOpenWorkOrder } from "./workOrders"
 import { buildRecap } from "./valueRecap"
+import { homeFeed } from "./homeFeed"
 import { businessRole } from "./roles"
 import { DESIGNATED_PROS } from "./designations"
 import { TEAM } from "./team"
@@ -83,6 +84,8 @@ export default function HomeownerHome() {
   const { items: visitNotes } = useItems(uid, "visitNotes")
   const { items: priorities } = useItems(uid, "priorityList")
   const { items: nudges } = useItems(uid, "nudges")
+  const { items: conversations } = useItems(uid, "conversations")
+  const { items: briefs } = useItems(uid, "briefs")
   const latestNote = visitNotes[visitNotes.length - 1]
   const recap = buildRecap({ jobs, priorities })
 
@@ -90,10 +93,10 @@ export default function HomeownerHome() {
   const [sent, setSent] = useState(false)
 
   const happening = workOrders.filter(visibleToHomeowner)
-  const recentCare = jobs
-    .filter((j) => j.status === "completed")
-    .slice(-3)
-    .reverse()
+  // The acknowledgment stream: care done, emails received (and what was
+  // filed from them), briefs sent — so "did you get my email?" is answered
+  // by glancing at Home, not by asking.
+  const recent = homeFeed({ jobs, conversations, briefs }, 4)
 
   // Weather nudges: only while the alert is live. Weather is care, not
   // machinery — it shows in Simple too.
@@ -117,7 +120,7 @@ export default function HomeownerHome() {
 
   // Last-visit figure (founder call, 7/25): the most recent care that
   // actually happened, not a promised future date.
-  const lastJob = recentCare[0]
+  const lastJob = jobs.filter((j) => j.status === "completed").at(-1)
   const lastVisitValue = lastJob
     ? shortDate(lastJob.date) || lastJob.date || "—"
     : latestNote?.sentOn
@@ -236,17 +239,17 @@ export default function HomeownerHome() {
               )}
             </Section>
 
-            <Section label="Recent care">
-              {recentCare.length === 0 ? (
+            <Section label="Recently">
+              {recent.length === 0 ? (
                 <p className="m-0 text-[13.5px] text-ink-3 pt-1">
                   Care will show here as it happens.
                 </p>
               ) : (
-                recentCare.map((j) => (
+                recent.map((e, i) => (
                   <Row
-                    key={j.id}
-                    title={j.title}
-                    meta={[j.date, j.sub, mode === "detailed" && j.cost]
+                    key={`${e.kind}-${i}`}
+                    title={e.title}
+                    meta={[e.when, e.detail, mode === "detailed" && e.cost]
                       .filter(Boolean)
                       .join(" · ")}
                   />

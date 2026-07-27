@@ -122,6 +122,24 @@ function parseActions(raw) {
   return { text, actions }
 }
 
+// The confirmation doctrine (founder call, 7/27): pure information files
+// itself — a fact changes what we KNOW, not what we DO — while anything
+// consequential (requests, jobs, quotes, new systems) still waits for a
+// human. Auto-filed actions come back stamped done+auto so the transcript
+// shows what happened and the Awaiting-confirmation queue never sees them.
+function partitionIntakeActions(actions = []) {
+  const autoFile = []
+  const confirm = []
+  for (const a of actions) {
+    if (a.type === "save_fact" && (a.fact || "").trim()) {
+      autoFile.push({ ...a, status: "done", auto: true })
+    } else {
+      confirm.push(a)
+    }
+  }
+  return { autoFile, confirm }
+}
+
 // --- The intake prompt (server copy of dashboard/src/emailIntake.js) -------
 
 function intakePrompt({ workOrders = [], systems = [] }) {
@@ -161,6 +179,7 @@ module.exports = {
   extractBody,
   listAttachments,
   parseActions,
+  partitionIntakeActions,
   intakePrompt,
   todayLabel,
 }

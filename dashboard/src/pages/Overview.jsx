@@ -14,11 +14,11 @@ import { tradeForText } from "../trades"
 import hero895 from "../assets/hero-895.jpg"
 import { todayISO, isoToLabel } from "../dates"
 import { resolutionCounts } from "../resolution"
+import { homeFeed, FEED_KIND_LABEL } from "../homeFeed"
 import {
   Card,
   PageHeader,
   UrgencyBadge,
-  StatusBadge,
   StatTile,
   Button,
   Modal,
@@ -64,6 +64,8 @@ function FullOverview() {
   const { items: calendarItems, loading: calendarLoading } = calendarApi
   const jobApi = useItems(uid, "jobHistory")
   const { items: workOrders } = useItems(uid, "workOrders")
+  const { items: conversations } = useItems(uid, "conversations")
+  const { items: briefs } = useItems(uid, "briefs")
   const { items: healthItems, loading: healthLoading } = healthApi
   const { items: priorityItems, loading: priorityLoading } = priorityApi
   const { items: jobItems } = jobApi
@@ -79,7 +81,7 @@ function FullOverview() {
     (p) => !p.status || p.status === "open" || p.status === "scheduled"
   )
   const topPriorities = openPriorities.slice(0, 3)
-  const recentJobs = jobItems.slice(-3).reverse()
+  const feed = homeFeed({ jobs: jobItems, conversations, briefs }, 6)
 
   const currentMonth = new Date().toLocaleDateString("en-US", { month: "long" })
   const thisMonthTasks = calendarItems.filter((t) => t.month === currentMonth)
@@ -298,25 +300,25 @@ function FullOverview() {
           </Link>
         </Card>
 
+        {/* The home newsfeed: jobs done, emails received (and what was
+            filed from them), briefs sent — one merged acknowledgment
+            stream, composed from data the record already holds. */}
         <Card title="Recent activity">
-          {recentJobs.length === 0 ? (
-            <p className="text-sm text-ink-3">No jobs logged yet.</p>
+          {feed.length === 0 ? (
+            <p className="text-sm text-ink-3">Nothing logged yet.</p>
           ) : (
             <ul className="divide-y divide-line">
-              {recentJobs.map((job) => (
-                <li key={job.id} className="py-2.5 flex items-start justify-between gap-3">
-                  <div>
-                    <Link
-                      to="/job-history"
-                      className="text-sm font-medium text-ink hover:text-brand-700"
-                    >
-                      {job.title}
-                    </Link>
-                    <p className="text-xs text-ink-3">
-                      {job.date} · {job.sub}
+              {feed.map((e, i) => (
+                <li key={`${e.kind}-${i}`} className="py-2.5 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-ink m-0 truncate">{e.title}</p>
+                    <p className="text-xs text-ink-3 m-0">
+                      {[e.when, e.detail].filter(Boolean).join(" · ")}
                     </p>
                   </div>
-                  <StatusBadge status={job.status} />
+                  <span className="numeric shrink-0 text-[10.5px] uppercase tracking-wide text-ink-3 pt-0.5">
+                    {FEED_KIND_LABEL[e.kind]}
+                  </span>
                 </li>
               ))}
             </ul>

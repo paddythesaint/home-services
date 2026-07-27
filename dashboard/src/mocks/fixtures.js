@@ -316,6 +316,39 @@ export const fixtureData = {
               },
             ],
           },
+          // An email that filed itself: pure data auto-commits (7/27
+          // doctrine) and the Home feed acknowledges it.
+          {
+            id: "conv-intake-airthings",
+            startedBy: "paddythesaint@gmail.com",
+            startedOn: "July 27, 2026",
+            source: "email-intake",
+            summary: "Email intake: Fwd: Insight report for location - Home",
+            order: 9,
+            messages: [
+              { role: "user", text: "Airthings weekly report — radon and air quality averages for week 30." },
+              {
+                role: "assistant",
+                text: "Filed the week's readings to the record.",
+                actions: [
+                  {
+                    type: "save_fact",
+                    fact: "Radon 7-day average 1.1 pCi/L (Airthings, week 30 2026).",
+                    category: "Air Quality",
+                    status: "done",
+                    auto: true,
+                  },
+                  {
+                    type: "save_fact",
+                    fact: "Indoor humidity averaged 52% (Airthings, week 30 2026).",
+                    category: "Air Quality",
+                    status: "done",
+                    auto: true,
+                  },
+                ],
+              },
+            ],
+          },
         ],
         documents: [
           {
