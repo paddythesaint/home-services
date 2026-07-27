@@ -31,6 +31,7 @@ const {
 } = require("./gmail")
 const { buildBrief, rfc822 } = require("./brief")
 const { recallMatches, scanBrands } = require("./recalls")
+const { weatherNudges, pointFor } = require("./weather")
 
 initializeApp()
 
@@ -570,6 +571,64 @@ exports.recallScan = onSchedule(
         )
       } catch (err) {
         console.error(`recallScan: failed for ${doc.id}:`, err)
+      }
+    }
+  }
+)
+
+
+// Daily weather check (4pm ET — evening prep time): pull active NWS
+// alerts for each home's area and turn the relevant ones into
+// home-specific nudges, personalized by what the registry says the home
+// has. Idempotent per NWS alert id; the app shows only unexpired nudges,
+// so nothing needs cleanup.
+exports.weatherCheck = onSchedule(
+  {
+    schedule: "every day 16:00",
+    timeZone: "America/New_York",
+    maxInstances: 1,
+    memory: "256MiB",
+    timeoutSeconds: 120,
+  },
+  async () => {
+    const db = getFirestore()
+    const propsSnap = await db.collection("properties").get()
+
+    for (const doc of propsSnap.docs) {
+      try {
+        const profile = doc.data()
+        const res = await fetch(
+          `https://api.weather.gov/alerts/active?point=${pointFor(profile)}`,
+          { headers: { "user-agent": "cville-home-services (paddythesaint@gmail.com)" } }
+        )
+        if (!res.ok) {
+          console.error(`weatherCheck: NWS ${res.status} for ${doc.id}`)
+          continue
+        }
+        const data = await res.json()
+        const alerts = (data.features || []).map((f) => ({
+          id: f.id || f.properties?.id || "",
+          event: f.properties?.event || "",
+          headline: f.properties?.headline || "",
+          onset: f.properties?.onset || "",
+          ends: f.properties?.ends || f.properties?.expires || "",
+        }))
+
+        const sysSnap = await db.collection(`properties/${doc.id}/healthReport`).get()
+        const systems = sysSnap.docs.map((d) => d.data())
+        const nudges = weatherNudges(alerts, systems)
+
+        let fresh = 0
+        for (const n of nudges) {
+          const id = n.id.replace(/[^\w-]+/g, "_").slice(-120)
+          const ref = db.doc(`properties/${doc.id}/nudges/${id}`)
+          if ((await ref.get()).exists) continue
+          await ref.set({ ...n, createdOn: todayLabel(), order: Date.now() })
+          fresh += 1
+        }
+        if (nudges.length) console.log(`weatherCheck: ${doc.id} — ${nudges.length} active, ${fresh} new`)
+      } catch (err) {
+        console.error(`weatherCheck: failed for ${doc.id}:`, err)
       }
     }
   }

@@ -82,6 +82,7 @@ export default function HomeownerHome() {
   const { items: jobs } = useItems(uid, "jobHistory")
   const { items: visitNotes } = useItems(uid, "visitNotes")
   const { items: priorities } = useItems(uid, "priorityList")
+  const { items: nudges } = useItems(uid, "nudges")
   const latestNote = visitNotes[visitNotes.length - 1]
   const recap = buildRecap({ jobs, priorities })
 
@@ -93,6 +94,10 @@ export default function HomeownerHome() {
     .filter((j) => j.status === "completed")
     .slice(-3)
     .reverse()
+
+  // Weather nudges: only while the alert is live. Weather is care, not
+  // machinery — it shows in Simple too.
+  const activeNudges = nudges.filter((n) => !n.endsAt || Date.parse(n.endsAt) > Date.now())
 
   const headline = headlineFor(systems)
   const counts = systems.reduce((acc, s) => {
@@ -168,6 +173,17 @@ export default function HomeownerHome() {
         <p className="m-0 mt-4 max-w-[620px] text-[14.5px] leading-[1.65] text-ink-2 text-pretty">
           {lede}
         </p>
+
+        {/* 2b · Weather nudges — live alerts turned into what to actually do */}
+        {activeNudges.map((n) => (
+          <p
+            key={n.id}
+            className="m-0 mt-4 max-w-[620px] text-[13.5px] leading-[1.6] text-amber-900 bg-amber-50 border border-amber-200 rounded-(--radius-control) px-4 py-3"
+          >
+            <span className="font-medium">{n.headline}. </span>
+            {n.advice}
+          </p>
+        ))}
 
         {/* 3 · Condition meter */}
         {systems.length > 0 && (
