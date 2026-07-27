@@ -27,6 +27,12 @@ const COLLECTIONS = [
 // Addresses are semi-public but still masked: enough to tell homes apart.
 const mask = (s = "") => (s.length <= 6 ? s : `${s.slice(0, 6)}…(${s.length} chars)`)
 
+// Email pipeline liveness: how many inbound messages the poller has ever
+// claimed (ids only — safe), so "did today's forwards arrive" is
+// answerable without reading any mail.
+const ingest = await db.collection("emailIngest").count().get()
+console.log(`emailIngest (processed message ids): ${ingest.data().count}`)
+
 const props = await db.collection("properties").get()
 console.log(`properties: ${props.size}`)
 for (const doc of props.docs) {
@@ -39,5 +45,16 @@ for (const doc of props.docs) {
     const snap = await db.collection(`properties/${doc.id}/${c}`).count().get()
     console.log(`  ${c}: ${snap.data().count}`)
   }
+  // Intake conversations: count + newest title-free timestamp, so a
+  // just-forwarded email is visible as "intake happened at <time>".
+  const intake = await db
+    .collection(`properties/${doc.id}/conversations`)
+    .where("source", "==", "email-intake")
+    .get()
+  const newest = intake.docs
+    .map((c) => c.get("createdOn") || c.get("startedOn") || "")
+    .sort()
+    .at(-1)
+  console.log(`  email-intake conversations: ${intake.size}${newest ? ` (newest: ${newest})` : ""}`)
 }
 console.log("\ndiagnostic complete")
