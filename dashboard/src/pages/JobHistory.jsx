@@ -38,6 +38,10 @@ export default function JobHistory() {
   const { uid, user, profile } = useOutletContext()
   const { mode } = useViewMode()
   const { items, add, update, remove } = useItems(uid, "jobHistory")
+  // Suggestion fuel for the form (member-readable, unlike the founder
+  // network): the home's own roster and systems registry.
+  const { items: roster } = useItems(uid, "contractors")
+  const { items: whSystems } = useItems(uid, "healthReport")
   const [editing, setEditing] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [contractors, setContractors] = useState([])
@@ -69,22 +73,37 @@ export default function JobHistory() {
     return subscribeContractors(setContractors, () => {})
   }, [founder])
 
-  const fields = founder
-    ? [
-        ...baseFields.slice(0, 3),
-        {
-          name: "contractorId",
-          label: "Contractor (network)",
-          type: "select",
-          options: ["", ...contractors.map((c) => c.id)],
-          optionLabels: {
-            "": "— not in network / one-off —",
-            ...Object.fromEntries(contractors.map((c) => [c.id, c.name])),
+  // Smart completion off the record: contractor names from the home's
+  // roster + past jobs, categories from the systems registry (keeping the
+  // strings consistent is what makes trade grouping work).
+  const withSuggestions = (f) =>
+    f.name === "sub"
+      ? { ...f, suggestions: [...roster.map((c) => c.name), ...items.map((j) => j.sub)] }
+      : f.name === "category"
+        ? {
+            ...f,
+            suggestions: [...whSystems.map((s) => s.category), ...items.map((j) => j.category)],
+          }
+        : f
+
+  const fields = (
+    founder
+      ? [
+          ...baseFields.slice(0, 3),
+          {
+            name: "contractorId",
+            label: "Contractor (network)",
+            type: "select",
+            options: ["", ...contractors.map((c) => c.id)],
+            optionLabels: {
+              "": "— not in network / one-off —",
+              ...Object.fromEntries(contractors.map((c) => [c.id, c.name])),
+            },
           },
-        },
-        ...baseFields.slice(3),
-      ]
-    : baseFields
+          ...baseFields.slice(3),
+        ]
+      : baseFields
+  ).map(withSuggestions)
 
   function submit(values) {
     const patch = { ...values }

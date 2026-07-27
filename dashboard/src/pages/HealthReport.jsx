@@ -94,6 +94,18 @@ export default function HealthReport() {
 
   const unverifiedCount = items.filter((i) => !i.verified).length
 
+  // Smart completion off the record: existing categories keep trade
+  // grouping consistent; brands and locations reuse the home's own
+  // vocabulary ("basement utility room", not five spellings of it).
+  const fieldSuggestions = {
+    category: items.map((s) => s.category),
+    brand: items.map((s) => s.brand),
+    location: items.map((s) => s.location),
+  }
+  const formFields = fields.map((f) =>
+    fieldSuggestions[f.name] ? { ...f, suggestions: fieldSuggestions[f.name] } : f
+  )
+
   // Arriving with a #trade-… hash (from a Systems-at-a-glance row anywhere in
   // the app), expand that trade if it was collapsed, then land on it.
   useEffect(() => {
@@ -446,7 +458,7 @@ export default function HealthReport() {
           onClose={() => setEditing(null)}
         >
           <DynamicForm
-            fields={fields}
+            fields={formFields}
             initialValues={editing === "new" ? { verifyFrequencyMonths: "0" } : editing}
             onSubmit={(values) => {
               if (editing === "new") {
