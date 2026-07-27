@@ -2,6 +2,7 @@ import { Link, useOutletContext, useParams } from "react-router-dom"
 import { useItems } from "../useItems"
 import { tradeForItem, tradeForText } from "../trades"
 import { replacementHorizon, fmtMoneyRange } from "../benchmarks"
+import { repairVsReplace } from "../repairVsReplace"
 import { isOpenWorkOrder } from "../workOrders"
 import {
   Card,
@@ -10,6 +11,7 @@ import {
   VerifiedBadge,
   StatusBadge,
   UrgencyBadge,
+  Detail,
 } from "../components"
 
 // The system dossier: everything the record knows about one system —
@@ -58,6 +60,7 @@ export default function SystemProfile() {
   )
   const relatedDocs = documents.filter((d) => tradeForText(d.name).key === trade.key)
   const horizon = replacementHorizon(system)
+  const doctrine = repairVsReplace(system, { jobs })
 
   return (
     <div>
@@ -136,6 +139,39 @@ export default function SystemProfile() {
               </p>
             )}
           </Card>
+
+          {/* The doctrine: if this system acts up, what's the smart money?
+              The verdict and its age logic show everyone; the dollar
+              arithmetic rides in Detailed. */}
+          {doctrine && (
+            <Card title="If it acts up: repair or replace?">
+              <p className="m-0 font-display text-[19px] text-ink">{doctrine.headline}</p>
+              <ul className="m-0 mt-2 p-0 list-none flex flex-col gap-1.5">
+                {doctrine.reasons.map((r, i) => (
+                  <li key={i} className="text-sm text-ink-2">
+                    {r}
+                  </li>
+                ))}
+              </ul>
+              <Detail>
+                {doctrine.costNotes.length > 0 && (
+                  <ul className="m-0 mt-2 p-0 list-none flex flex-col gap-1.5">
+                    {doctrine.costNotes.map((r, i) => (
+                      <li key={i} className="text-sm text-ink-2">
+                        {r}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="m-0 mt-3 pt-3 border-t border-line text-xs text-ink-3">
+                  How we decide: position in typical life, repair spend over the last two
+                  years, and the 50% rule — any single repair clearing half of replacement
+                  argues for the new unit. Replacement runs ~
+                  {fmtMoneyRange(doctrine.horizon.benchmark.replaceCost, doctrine.horizon.benchmark.costUnit)}.
+                </p>
+              </Detail>
+            </Card>
+          )}
 
           {relatedFacts.length > 0 && (
             <Card title="Learned along the way">
