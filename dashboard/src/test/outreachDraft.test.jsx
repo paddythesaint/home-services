@@ -5,6 +5,7 @@ import { describe, it, expect } from "vitest"
 import { screen, fireEvent, waitFor } from "@testing-library/react"
 import { renderPage } from "./renderPage"
 import { parseOutreach, outreachTools, outreachSystemPrompt } from "../workOrderBriefing"
+import { updateItem } from "../firestoreApi"
 import WorkOrders from "../pages/WorkOrders"
 
 describe("parseOutreach (pure)", () => {
@@ -84,5 +85,19 @@ describe("outreach in the drawer", () => {
     expect(screen.getByText("Copy email")).toBeInTheDocument()
     // Regenerate appears once a draft exists.
     await waitFor(() => expect(screen.getAllByText("Regenerate").length).toBeGreaterThan(0))
+  })
+
+  it("a staked claim without a draft shows the background-research state", async () => {
+    // A previous tab queued the draft and died — the order carries the
+    // claim; reopening the drawer must say the researcher is on it, not
+    // offer to start over (double-spend) or show an error.
+    await updateItem("prop-ballard", "workOrders", "wo-gutters", {
+      outreachStatus: "queued",
+      outreachPrompt: "OUTREACH DRAFT …",
+    })
+    renderPage(<WorkOrders />)
+    fireEvent.click(await screen.findByText("Gutter guards on rear roofline"))
+    expect(await screen.findByText(/Researching in the background/)).toBeInTheDocument()
+    expect(screen.queryByText("Draft the outreach")).not.toBeInTheDocument()
   })
 })

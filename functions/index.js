@@ -32,6 +32,8 @@ const {
 const { buildBrief, rfc822 } = require("./brief")
 const { recallMatches, scanBrands } = require("./recalls")
 const { weatherNudges, pointFor } = require("./weather")
+const { draftOutreach } = require("./outreach")
+const { FieldValue } = require("firebase-admin/firestore")
 
 initializeApp()
 
@@ -79,7 +81,9 @@ exports.api = onRequest(
   {
     maxInstances: 2,
     memory: "256MiB",
-    timeoutSeconds: 120,
+    // Web-search turns (outreach drafting) legitimately run past two
+    // minutes — the searches happen inside the upstream request.
+    timeoutSeconds: 300,
     cors: ALLOWED_ORIGINS,
   },
   async (req, res) => {
@@ -629,6 +633,59 @@ exports.weatherCheck = onSchedule(
         if (nudges.length) console.log(`weatherCheck: ${doc.id} — ${nudges.length} active, ${fresh} new`)
       } catch (err) {
         console.error(`weatherCheck: failed for ${doc.id}:`, err)
+      }
+    }
+  }
+)
+
+// ---------------------------------------------------------------------------
+// Background outreach drafter. When someone taps "Draft the outreach", the
+// app stakes a claim on the work order (outreachStatus "queued" + the full
+// prompt) BEFORE calling the AI. If the phone finishes, it clears the
+// claim; if the tab is closed, navigation kills the call, or the request
+// times out, the claim survives — and this sweep finishes the job
+// server-side so the draft is waiting on the record next visit.
+// Idempotent: a completed draft clears the claim; errors leave it for the
+// next run (capped per run to bound cost).
+exports.outreachDrafter = onSchedule(
+  { schedule: "every 10 minutes", maxInstances: 1, memory: "256MiB", timeoutSeconds: 540 },
+  async () => {
+    const apiKey = process.env.ANTHROPIC_API_KEY
+    if (!apiKey) return
+
+    const db = getFirestore()
+    const propsSnap = await db.collection("properties").get()
+    let drafted = 0
+
+    for (const doc of propsSnap.docs) {
+      if (drafted >= 3) break // cost brake; the next run picks up the rest
+      const queued = await db
+        .collection(`properties/${doc.id}/workOrders`)
+        .where("outreachStatus", "==", "queued")
+        .get()
+
+      for (const wo of queued.docs) {
+        if (drafted >= 3) break
+        const system = wo.get("outreachPrompt")
+        if (!system) {
+          // A claim with no prompt can't be drafted — clear it so the UI
+          // returns to the Draft button instead of "researching" forever.
+          await wo.ref.update({ outreachStatus: FieldValue.delete() })
+          continue
+        }
+        try {
+          const text = await draftOutreach({ apiKey, model: MODEL, maxTokens: MAX_TOKENS, system })
+          await wo.ref.update({
+            outreachDraft: text,
+            outreachOn: todayLabel(),
+            outreachStatus: FieldValue.delete(),
+            outreachPrompt: FieldValue.delete(),
+          })
+          drafted += 1
+          console.log(`outreachDrafter: ${doc.id}/${wo.id} drafted in background`)
+        } catch (err) {
+          console.error(`outreachDrafter: ${doc.id}/${wo.id} failed:`, err.message)
+        }
       }
     }
   }

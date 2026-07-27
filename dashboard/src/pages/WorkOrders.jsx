@@ -239,6 +239,14 @@ function WorkOrderDrawer({
         facts,
         order: w,
       })
+      // Stake the claim FIRST: researching takes minutes, and phones
+      // navigate away. With the prompt parked on the order, the backend's
+      // outreachDrafter sweep finishes any run this tab doesn't.
+      await updateItem(w.propertyId, "workOrders", w.id, {
+        outreachStatus: "queued",
+        outreachPrompt: system,
+        outreachRequestedOn: todayLabel(),
+      })
       // Web search runs server-side; a searching turn can pause partway
       // (stop_reason "pause_turn") — resume by sending the partial turn back.
       let msgs = outreachMessages()
@@ -251,10 +259,14 @@ function WorkOrderDrawer({
       await updateItem(w.propertyId, "workOrders", w.id, {
         outreachDraft: text,
         outreachOn: todayLabel(),
+        outreachStatus: "",
+        outreachPrompt: "",
       })
       setOutreach("idle")
     } catch {
-      setOutreach("error")
+      // The claim is still staked — the background drafter takes it from
+      // here, so this is a handoff, not a failure.
+      setOutreach("background")
     }
   }
 
@@ -451,7 +463,17 @@ function WorkOrderDrawer({
                 )
               })()
             ) : outreach === "loading" ? (
-              <p className="text-sm text-ink-3 animate-pulse">Writing the ask…</p>
+              <p className="text-sm text-ink-3 animate-pulse">
+                Researching and writing the ask — this can take a minute or two. Safe to
+                leave; the draft saves to the record either way.
+              </p>
+            ) : outreach === "background" || w.outreachStatus === "queued" ? (
+              // A staked claim without a draft: this tab (or a previous one)
+              // handed the job to the background drafter.
+              <p className="text-sm text-ink-3">
+                Researching in the background — the draft will be saved here, usually
+                within about ten minutes. You can close this or leave the page.
+              </p>
             ) : (
               <div>
                 <p className="text-sm text-ink-3 mb-2">
@@ -461,11 +483,6 @@ function WorkOrderDrawer({
                 <Button variant="subtle" onClick={generateOutreach}>
                   Draft the outreach
                 </Button>
-                {outreach === "error" && (
-                  <p className="text-sm text-status-critical mt-2">
-                    Couldn't reach the drafting service — try again.
-                  </p>
-                )}
               </div>
             )}
           </section>
