@@ -31,7 +31,13 @@ import {
   chooseQuotePatch,
   lowestQuoteId,
 } from "../workOrders"
-import { briefingSystemPrompt, briefingMessages } from "../workOrderBriefing"
+import {
+  briefingSystemPrompt,
+  briefingMessages,
+  outreachSystemPrompt,
+  outreachMessages,
+  parseOutreach,
+} from "../workOrderBriefing"
 import {
   suggestedContractors,
   combinableOrders,
@@ -64,6 +70,8 @@ function WorkOrderDrawer({
   onAdvance,
 }) {
   const [briefing, setBriefing] = useState("idle") // idle | loading | error
+  const [outreach, setOutreach] = useState("idle") // idle | loading | error
+  const [outreachCopied, setOutreachCopied] = useState(false)
   // The drawer grew past one scroll with quote pack v2 — two tabs keep the
   // read (what/why/status) apart from the doing (quotes in and out).
   const [tab, setTab] = useState("overview") // overview | quotes
@@ -204,6 +212,48 @@ function WorkOrderDrawer({
     }
   }
 
+  async function generateOutreach() {
+    setOutreach("loading")
+    try {
+      const [systems, priorities, jobs, facts] = await Promise.all([
+        fetchItems(w.propertyId, "healthReport"),
+        fetchItems(w.propertyId, "priorityList"),
+        fetchItems(w.propertyId, "jobHistory"),
+        fetchItems(w.propertyId, "facts"),
+      ])
+      const system = outreachSystemPrompt({
+        profile: property,
+        systems,
+        priorities,
+        jobs,
+        workOrders: [],
+        facts,
+        order: w,
+      })
+      const data = await callClaude(w.propertyId, system, outreachMessages())
+      const text = data.content?.find((b) => b.type === "text")?.text || ""
+      await updateItem(w.propertyId, "workOrders", w.id, {
+        outreachDraft: text,
+        outreachOn: todayLabel(),
+      })
+      setOutreach("idle")
+    } catch {
+      setOutreach("error")
+    }
+  }
+
+  async function copyOutreach(draft) {
+    try {
+      await navigator.clipboard.writeText(
+        `To: ${draft.to}\nSubject: ${draft.subject}\n\n${draft.body}`
+      )
+      setOutreachCopied(true)
+      setTimeout(() => setOutreachCopied(false), 2000)
+    } catch {
+      setOutreachCopied(false)
+    }
+  }
+
   const requester =
     w.source === "homeowner"
       ? `${w.requestedBy || "the client"}${w.via === "assistant" ? " · via assistant" : " · via Request button"}`
@@ -319,6 +369,85 @@ function WorkOrderDrawer({
                 {briefing === "error" && (
                   <p className="text-sm text-status-critical mt-2">
                     Couldn't reach the briefing service — try again.
+                  </p>
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* The step after the briefing: don't describe the ask — write it.
+              A ready outbound email grounded in the record; [brackets] mark
+              what to fill, NOTES says what to verify before sending. */}
+          <section>
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-3">
+                Outreach draft
+              </h3>
+              {w.outreachDraft && outreach !== "loading" && (
+                <button
+                  type="button"
+                  onClick={generateOutreach}
+                  className="text-xs font-medium text-brand-600 hover:text-brand-800"
+                >
+                  Regenerate
+                </button>
+              )}
+            </div>
+            {w.outreachDraft ? (
+              (() => {
+                const draft = parseOutreach(w.outreachDraft)
+                const toEmail = (draft.to.match(/[\w.+-]+@[\w-]+\.[\w.]+/) || [])[0]
+                return (
+                  <div className="bg-plane rounded-xl px-3.5 py-3">
+                    <p className="text-xs text-ink-3 m-0">
+                      To: <span className="text-ink-2">{draft.to || "—"}</span>
+                    </p>
+                    <p className="text-xs text-ink-3 m-0 mt-0.5">
+                      Subject: <span className="text-ink-2">{draft.subject || "—"}</span>
+                    </p>
+                    <p className="text-sm text-ink-2 whitespace-pre-line mt-2 mb-0">{draft.body}</p>
+                    {draft.notes && (
+                      <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5 mt-2 mb-0">
+                        Before sending: {draft.notes}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-3 mt-2.5">
+                      <button
+                        type="button"
+                        onClick={() => copyOutreach(draft)}
+                        className="text-xs font-medium text-brand-600 hover:text-brand-800"
+                      >
+                        {outreachCopied ? "Copied ✓" : "Copy email"}
+                      </button>
+                      {toEmail && (
+                        <a
+                          className="text-xs font-medium text-brand-600 hover:text-brand-800"
+                          href={`mailto:${toEmail}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body)}`}
+                        >
+                          Open in mail
+                        </a>
+                      )}
+                      {w.outreachOn && (
+                        <span className="text-[11px] text-ink-3">drafted {w.outreachOn}</span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })()
+            ) : outreach === "loading" ? (
+              <p className="text-sm text-ink-3 animate-pulse">Writing the ask…</p>
+            ) : (
+              <div>
+                <p className="text-sm text-ink-3 mb-2">
+                  Draft the email that moves this — to the vendor, agency, or office that
+                  must act — grounded in the record, blanks marked for you to fill.
+                </p>
+                <Button variant="subtle" onClick={generateOutreach}>
+                  Draft the outreach
+                </Button>
+                {outreach === "error" && (
+                  <p className="text-sm text-status-critical mt-2">
+                    Couldn't reach the drafting service — try again.
                   </p>
                 )}
               </div>

@@ -26,10 +26,53 @@ THIS WORK ORDER:
 - Category: ${order.category || "unspecified"}
 - Current stage: ${order.lane}
 
-Write 4-6 sentences, plain internal tone, no markdown, no pleasantries, covering in order: (1) what the client is asking for; (2) what our record says about the system(s) involved — make/model, age, service history, any related open priorities; (3) the most likely causes or the specific things to check on site given that history; (4) which trade or vendor is the right fit. If the record is thin on the relevant system, say plainly what we should confirm on site.`
+Write 3-5 sentences, plain internal tone, no markdown, no pleasantries. Lead with what the client is asking for and the single most useful next step. Include record facts (make/model, age, service history, related open items) ONLY when they change what the handler should do — leave tangential history out. Name the right trade or vendor when one fits. End with one line: "NEXT: <one imperative sentence — the very next concrete action>".`
 }
 
 // Briefings are prose only — no action tags to parse.
 export function briefingMessages() {
   return [{ role: "user", content: "Brief me on this work order." }]
+}
+
+// --- Outreach draft --------------------------------------------------------
+// The step after the briefing: don't describe the ask — write it. A ready
+// outbound email grounded in the record, with [brackets] where the record
+// is blank instead of invented details. Founder reviews, fills brackets,
+// sends from their own mail.
+
+export const OUTREACH_MARKER = "OUTREACH DRAFT"
+
+export function outreachSystemPrompt({ profile, systems, priorities, jobs, workOrders, facts, order }) {
+  const homeContext = buildAssistantContext({ profile, systems, priorities, jobs, workOrders, facts })
+  return `${OUTREACH_MARKER}
+You are the operations lead at Charlottesville Home & Property Services (HPS). Draft the outbound email that actually moves the work order below — to the vendor, agency, or office that must act.
+
+HOME RECORD:
+${homeContext}
+
+THIS WORK ORDER:
+- Title: ${order.title}
+- What was said: ${order.notes || "(no detail captured)"}
+- Category: ${order.category || "unspecified"}
+
+Reply in EXACTLY this format, nothing before or after:
+TO: <the recipient. A specific email address ONLY if you are confident it is correct for this exact organization; otherwise name the office precisely and write "verify address">
+SUBJECT: <subject line>
+BODY:
+<the email, ready to send. Ground every property detail in the HOME RECORD above. Use [square brackets] for anything the record does not contain (parcel/tax-map number, permit ids, account numbers) — never invent specifics. Under 150 words, direct and courteous. Sign it "Patrick\nCharlottesville Home & Property Services\non behalf of the owner, ${profile.address || "the property"}">
+NOTES: <one line: what to verify or attach before sending>`
+}
+
+export function outreachMessages() {
+  return [{ role: "user", content: "Draft the outreach email for this work order." }]
+}
+
+// Parse the fixed TO/SUBJECT/BODY/NOTES shape; tolerate a missing NOTES.
+export function parseOutreach(raw = "") {
+  const to = (raw.match(/^TO:\s*(.+)$/m) || [])[1]?.trim() || ""
+  const subject = (raw.match(/^SUBJECT:\s*(.+)$/m) || [])[1]?.trim() || ""
+  const bodyMatch = raw.match(/^BODY:\s*\n([\s\S]*?)(?:\n^NOTES:|$(?![\s\S]))/m)
+  const body = (bodyMatch?.[1] || "").trim()
+  const notes = (raw.match(/^NOTES:\s*(.+)$/m) || [])[1]?.trim() || ""
+  return { to, subject, body, notes }
 }
