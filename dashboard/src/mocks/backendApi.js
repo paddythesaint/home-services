@@ -9,9 +9,9 @@ export async function callBackend(action) {
   return { ok: true }
 }
 
-const reply = (text) => ({ content: [{ type: "text", text }] })
+const reply = (text) => ({ content: [{ type: "text", text }], stop_reason: "end_turn" })
 
-export async function callClaude(propertyId, system, messages) {
+export async function callClaude(propertyId, system, messages, tools) {
   // Internal work-order briefing (founder ops tool) — scripted from the
   // order title in the prompt so preview/tests exercise the real flow.
   if (system && system.includes("INTERNAL WORK-ORDER BRIEFING")) {
@@ -21,13 +21,42 @@ export async function callClaude(propertyId, system, messages) {
     )
   }
 
-  // Outreach draft (drawer): scripted in the fixed TO/SUBJECT/BODY/NOTES
-  // shape so preview/tests exercise the parse + copy flow.
+  // Outreach draft (drawer): scripted end-to-end like the real web-search
+  // flow — first call pauses mid-search (stop_reason "pause_turn"), the
+  // resumed call finishes with the draft split across TWO text blocks (a
+  // searching turn interleaves text with result blocks), so tests and
+  // preview exercise the resume loop and the join-all-text-blocks path.
   if (system && system.includes("OUTREACH DRAFT")) {
     const title = (system.match(/- Title: ([^\n]+)/) || [])[1] || "the request"
-    return reply(
-      `TO: Blue Ridge Health District environmental health office — verify address\nSUBJECT: Records request: ${title}\nBODY:\nHello,\n\nI'm writing on behalf of the owner of 895 Old Ballard Farm Ln, Charlottesville, VA 22901 to request the well completion report on file for this property. Tax map parcel: [parcel number]. Please let me know if any owner authorization is needed.\n\nThank you,\nPatrick\nCharlottesville Home & Property Services\nNOTES: Verify the records-request email address and fill the [parcel number] before sending.`
-    )
+    const resumed = messages.some((m) => m.role === "assistant")
+    if (tools && !resumed) {
+      return {
+        stop_reason: "pause_turn",
+        content: [
+          {
+            type: "server_tool_use",
+            id: "srvtoolu_mock01",
+            name: "web_search",
+            input: { query: "Blue Ridge Health District records request email" },
+          },
+          { type: "web_search_tool_result", tool_use_id: "srvtoolu_mock01", content: [] },
+        ],
+      }
+    }
+    return {
+      stop_reason: "end_turn",
+      content: [
+        { type: "web_search_tool_result", tool_use_id: "srvtoolu_mock02", content: [] },
+        {
+          type: "text",
+          text: `TO: BlueRidgeHD@vdh.virginia.gov\nSUBJECT: Records request: ${title}\nBODY:\nHello,\n\nI'm writing on behalf of the owner of 895 Old Ballard Farm Ln, Charlottesville, VA 22901 to request the well completion report on file for this property. `,
+        },
+        {
+          type: "text",
+          text: `Tax map parcel: [parcel number]. Please let me know if any owner authorization is needed.\n\nThank you,\nPatrick\nCharlottesville Home & Property Services\nNOTES: Address from vdh.virginia.gov (Blue Ridge Health District contact page) — fill the [parcel number] before sending.`,
+        },
+      ],
+    }
   }
 
   // Email intake (pipeline phase 1): scripted quote-reply parse, matched to

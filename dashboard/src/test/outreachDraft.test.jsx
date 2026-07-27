@@ -4,7 +4,7 @@
 import { describe, it, expect } from "vitest"
 import { screen, fireEvent, waitFor } from "@testing-library/react"
 import { renderPage } from "./renderPage"
-import { parseOutreach } from "../workOrderBriefing"
+import { parseOutreach, outreachTools, outreachSystemPrompt } from "../workOrderBriefing"
 import WorkOrders from "../pages/WorkOrders"
 
 describe("parseOutreach (pure)", () => {
@@ -27,13 +27,42 @@ describe("parseOutreach (pure)", () => {
   })
 })
 
+describe("outreach web search (pure)", () => {
+  it("requests the web_search server tool with a search cap", () => {
+    expect(outreachTools()).toEqual([
+      { type: "web_search_20260209", name: "web_search", max_uses: 3 },
+    ])
+  })
+
+  it("the prompt directs the search at the exact recipient", () => {
+    const p = outreachSystemPrompt({
+      profile: { address: "895 Old Ballard Road" },
+      systems: [],
+      priorities: [],
+      jobs: [],
+      workOrders: [],
+      facts: [],
+      order: { title: "Well report", notes: "", category: "Water" },
+    })
+    expect(p).toMatch(/web_search tool/)
+    expect(p).toMatch(/Albemarle County, Virginia/)
+    expect(p).toMatch(/where the TO address came from/)
+  })
+})
+
 describe("outreach in the drawer", () => {
-  it("drafts, renders the parsed fields, and persists on the order", async () => {
+  it("searches, resumes the paused turn, joins split text blocks, and renders", async () => {
     renderPage(<WorkOrders />)
     fireEvent.click(await screen.findByText("Gutter guards on rear roofline"))
     fireEvent.click(await screen.findByText("Draft the outreach"))
 
-    expect(await screen.findByText(/Blue Ridge Health District/)).toBeInTheDocument()
+    // The mock's first reply is a pause_turn mid-search; the address only
+    // arrives on the resumed call — seeing it proves the loop ran.
+    expect(await screen.findByText(/BlueRidgeHD@vdh\.virginia\.gov/)).toBeInTheDocument()
+    // NOTES cite where the searched-up address came from.
+    expect(screen.getByText(/Blue Ridge Health District contact page/)).toBeInTheDocument()
+    // Text from the SECOND text block — the draft is the join, not the first.
+    expect(screen.getByText(/owner authorization/)).toBeInTheDocument()
     expect(screen.getByText(/Before sending:/)).toBeInTheDocument()
     expect(screen.getByText("Copy email")).toBeInTheDocument()
     // Regenerate appears once a draft exists.
