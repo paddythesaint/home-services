@@ -30,6 +30,7 @@ const {
   todayLabel,
 } = require("./gmail")
 const { buildBrief, rfc822 } = require("./brief")
+const { recallMatches, scanBrands } = require("./recalls")
 
 initializeApp()
 
@@ -506,6 +507,69 @@ exports.weeklyBrief = onSchedule(
         console.log(`weeklyBrief: ${doc.id} → ${status}`)
       } catch (err) {
         console.error(`weeklyBrief: failed for ${doc.id}:`, err)
+      }
+    }
+  }
+)
+
+// Weekly recall scan: check every registered brand against the CPSC
+// SaferProducts API and file conservative matches (brand AND product
+// context) as recallFindings on the property. The founder reviews them on
+// the Command Center's Recall watch before anything reaches a homeowner.
+// Findings are idempotent by {systemId}-{recallNumber}; a dismissal
+// sticks — re-scans never resurrect it.
+const CPSC_BASE = "https://www.saferproducts.gov/RestWebServices/Recall"
+
+exports.recallScan = onSchedule(
+  {
+    schedule: "every wednesday 08:00",
+    timeZone: "America/New_York",
+    maxInstances: 1,
+    memory: "256MiB",
+    timeoutSeconds: 300,
+  },
+  async () => {
+    const db = getFirestore()
+    const propsSnap = await db.collection("properties").get()
+
+    for (const doc of propsSnap.docs) {
+      try {
+        const sysSnap = await db.collection(`properties/${doc.id}/healthReport`).get()
+        const systems = sysSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
+        const brands = scanBrands(systems)
+        if (brands.length === 0) continue
+
+        const recalls = []
+        for (const brand of brands) {
+          try {
+            const res = await fetch(
+              `${CPSC_BASE}?format=json&RecallDateStart=2015-01-01&Manufacturer=${encodeURIComponent(brand)}`
+            )
+            if (!res.ok) {
+              console.error(`recallScan: CPSC ${res.status} for brand "${brand}"`)
+              continue
+            }
+            const data = await res.json()
+            if (Array.isArray(data)) recalls.push(...data)
+          } catch (err) {
+            console.error(`recallScan: fetch failed for brand "${brand}":`, err)
+          }
+        }
+
+        const findings = recallMatches(systems, recalls)
+        let fresh = 0
+        for (const f of findings) {
+          const id = `${f.systemId}-${f.recallNumber}`.replace(/[^\w-]+/g, "_")
+          const ref = db.doc(`properties/${doc.id}/recallFindings/${id}`)
+          if ((await ref.get()).exists) continue // dismissals stick
+          await ref.set({ ...f, status: "open", foundOn: todayLabel(), order: Date.now() })
+          fresh += 1
+        }
+        console.log(
+          `recallScan: ${doc.id} — ${brands.length} brands, ${findings.length} matches, ${fresh} new`
+        )
+      } catch (err) {
+        console.error(`recallScan: failed for ${doc.id}:`, err)
       }
     }
   }

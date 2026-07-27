@@ -222,6 +222,24 @@ export const fixtureData = {
             order: 2,
           },
         ],
+        recallFindings: [
+          {
+            // Weekly CPSC scan output: reviewed by the founder on the
+            // Command Center's Recall watch before any homeowner hears.
+            id: "rf-water-heater",
+            systemId: "sys-waterheater",
+            systemCategory: "Water Heater",
+            brand: "Rheem",
+            recallNumber: "26-114",
+            title: "Rheem Recalls Electric Water Heaters Due to Fire Hazard",
+            url: "https://www.cpsc.gov/Recalls/2026/rheem-water-heaters",
+            date: "2026-03-04",
+            hazard: "Fire",
+            status: "open",
+            foundOn: "July 27, 2026",
+            order: 1,
+          },
+        ],
         jobHistory: [
           {
             id: "job-hvac-tune",

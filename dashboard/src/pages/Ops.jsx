@@ -6,6 +6,7 @@ import {
   createProperty,
   deletePropertyDeep,
   fetchLatestTouch,
+  updateItem,
 } from "../firestoreApi"
 import { todayISO, isoToLabel, todayLabel } from "../dates"
 import { isReadyToAction } from "../resolution"
@@ -54,6 +55,7 @@ function OpsProperty({
   onContractors,
   onOrders = () => {},
   onCapital = () => {},
+  onRecalls = () => {},
   onOpen,
 }) {
   const priorityApi = useItems(propertyId, "priorityList")
@@ -61,6 +63,7 @@ function OpsProperty({
   const { items: jobs } = useItems(propertyId, "jobHistory")
   const { items: warranties } = useItems(propertyId, "warranties")
   const { items: workOrders } = useItems(propertyId, "workOrders")
+  const { items: recallFindings } = useItems(propertyId, "recallFindings")
 
   // Relationship health, not just property health: when did we last talk
   // to this household? (Founder-only clients store; errors stay quiet.)
@@ -192,6 +195,18 @@ function OpsProperty({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propertyId, systems, profile.address])
 
+  // Recall watch: weekly CPSC scan output, founder-reviewed here before
+  // any homeowner hears about it.
+  useEffect(() => {
+    onRecalls(
+      propertyId,
+      recallFindings
+        .filter((f) => f.status !== "dismissed")
+        .map((f) => ({ ...f, property: profile.address, propertyId }))
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propertyId, recallFindings, profile.address])
+
   useEffect(() => {
     const names = [
       ...new Set(
@@ -304,6 +319,7 @@ export default function Ops() {
   const [contractors, setContractors] = useState({})
   const [orders, setOrders] = useState({})
   const [capital, setCapital] = useState({})
+  const [recalls, setRecalls] = useState({})
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState("")
   const [deleting, setDeleting] = useState(null) // property pending delete confirmation
@@ -583,6 +599,72 @@ export default function Ops() {
             )
           })()}
 
+          {/* Recall watch: CPSC matches on registered brands. The founder
+              decides what reaches the homeowner — Dismiss buries a finding
+              for good (re-scans never resurrect it). */}
+          {(() => {
+            const feed = Object.values(recalls).flat()
+            if (feed.length === 0) return null
+            return (
+              <div className="mb-4">
+                <Card title={`Recall watch (${feed.length})`}>
+                  <ul className="m-0 p-0 list-none">
+                    {feed.map((f) => (
+                      <li
+                        key={`rc-${f.propertyId}-${f.id}`}
+                        className="grid grid-cols-[12px_1fr_auto] items-baseline gap-3 py-2.5 border-t border-line"
+                      >
+                        <span
+                          className="w-2 h-2 rounded-full self-center"
+                          style={{ background: "var(--color-status-critical)" }}
+                          aria-hidden="true"
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium text-ink">
+                            {f.systemCategory} · {f.brand}
+                            <span className="font-normal text-ink-3"> · {f.property}</span>
+                          </span>
+                          <span className="block text-[12.5px] leading-[1.55] text-ink-2">
+                            {f.title}
+                            {f.hazard && ` — ${f.hazard.toLowerCase()} hazard`}
+                            {f.date && ` (${f.date})`}
+                          </span>
+                        </span>
+                        <span className="shrink-0 flex items-baseline gap-3">
+                          {f.url && (
+                            <a
+                              href={f.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[12.5px] text-brand-700 hover:text-brand-800"
+                            >
+                              CPSC notice →
+                            </a>
+                          )}
+                          <button
+                            type="button"
+                            className="text-xs text-ink-3 hover:text-ink"
+                            onClick={() =>
+                              updateItem(f.propertyId, "recallFindings", f.id, {
+                                status: "dismissed",
+                              })
+                            }
+                          >
+                            Dismiss
+                          </button>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-ink-3 mt-3">
+                    Scanned weekly against CPSC recalls for every brand on the registry.
+                    Verify the model on the notice before raising it with the homeowner.
+                  </p>
+                </Card>
+              </div>
+            )
+          })()}
+
           {/* 3a pipeline: five headed hairline lists, no card chrome. The
               lanes read across the whole portfolio; rows link to the board. */}
           {(() => {
@@ -653,6 +735,7 @@ export default function Ops() {
                 onContractors={(id, names) => setContractors((prev) => ({ ...prev, [id]: names }))}
                 onOrders={(id, list) => setOrders((prev) => ({ ...prev, [id]: list }))}
                 onCapital={(id, list) => setCapital((prev) => ({ ...prev, [id]: list }))}
+                onRecalls={(id, list) => setRecalls((prev) => ({ ...prev, [id]: list }))}
                 onOpen={founder ? openProperty : undefined}
               />
             ))}
