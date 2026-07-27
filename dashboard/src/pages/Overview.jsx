@@ -96,6 +96,22 @@ function FullOverview() {
 
   return (
     <div>
+      {/* Founders start their day on the business plane; this page is one
+          client's home. A slim strip keeps the morning route one tap away
+          (fresh-eyes assessment: "every business day starts on the wrong
+          screen"). */}
+      {viewFor(user?.email).business && (
+        <Link
+          to="/ops"
+          className="flex items-center justify-between gap-3 bg-sunk border border-line-2 rounded-xl px-4 py-2.5 mb-4 text-sm text-ink-2 hover:text-ink"
+        >
+          <span>
+            Running the day? The <span className="font-medium">Command Center</span> has
+            today's attention list, sorted.
+          </span>
+          <span className="text-brand-700 shrink-0">Open →</span>
+        </Link>
+      )}
       {isSeedProperty ? (
         // The property gets a face: aerial hero with the address set over a
         // scrim. Photo is bundled for the flagship home for now; per-property

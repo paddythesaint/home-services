@@ -131,7 +131,8 @@ function OpsProperty({
         ...a,
         property: profile.address,
         propertyId,
-        to: "/work-orders",
+        // Straight into the order's drawer — not the board it lives on.
+        to: a.workOrderId ? `/work-orders?order=${a.workOrderId}` : "/work-orders",
       })),
       ...highPriorities.map((p) => ({
         key: `p-${p.id}`,
@@ -695,7 +696,7 @@ export default function Ops() {
                         <ul className="m-0 mt-2 p-0 list-none">
                           {list.map((w) => (
                             <li key={`${w.propertyId || w.property}-${w.id}`} className="border-b border-line py-2">
-                              <Link to="/work-orders" className="block group">
+                              <Link to={`/work-orders?order=${w.id}`} className="block group">
                                 <span className="block text-[12.5px] text-ink leading-snug group-hover:text-brand-700">
                                   {w.title}
                                 </span>
