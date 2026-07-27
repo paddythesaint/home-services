@@ -26,6 +26,7 @@ const icons = {
   ideas: <path d="M9 18h6M10 21h4M12 3a6 6 0 00-3.9 10.6c.57.5.9 1.2.9 1.9V16h6v-.5c0-.7.33-1.4.9-1.9A6 6 0 0012 3z" />,
   assistant: <path d="M21 12a8 8 0 01-8 8H5l-2 2V12a8 8 0 018-8h2a8 8 0 018 8zM9 11h.01M13 11h.01M17 11h.01" />,
   map: <path d="M9 4L3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4zm0 0v13m6-10.5v13" />,
+  record: <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zM14 2v6h6M8 13h8M8 17h5" />,
 }
 
 function NavIcon({ name }) {
@@ -47,23 +48,26 @@ function NavIcon({ name }) {
   )
 }
 
-// Two hubs instead of ten pages: "Property Record" and "The Plan" hold
-// the detail pages as tabs (HubTabs.jsx); `match` lists the routes that
-// keep the hub highlighted while you're inside it.
+// Two hubs instead of ten pages: "Record" and "Plan" hold the detail
+// pages as tabs (HubTabs.jsx); `match` lists the routes that keep the
+// hub highlighted while you're inside it. One name per destination:
+// sidebar, drawer, and bottom tab bar all say exactly these words.
+// "Record" wears a document icon, not the old waveform — fresh eyes
+// read waveform-Record as "record a problem".
 const PROPERTY_NAV = [
   { key: "overview", to: "/", label: "Home", icon: "overview", end: true },
   { key: "assistant", to: "/assistant", label: "Assistant", icon: "assistant" },
   {
     key: "record",
     to: "/health-report",
-    label: "Property Record",
-    icon: "health",
+    label: "Record",
+    icon: "record",
     match: ["/health-report", "/job-history", "/coverage", "/contractors", "/system/"],
   },
   {
     key: "plan",
     to: "/priority-list",
-    label: "The Plan",
+    label: "Plan",
     icon: "calendar",
     match: ["/care-calendar", "/priority-list", "/home-report"],
   },
@@ -511,7 +515,7 @@ export default function Layout({ user }) {
               >
                 <NavIcon name={item.icon} />
                 <span className={`text-[10px] leading-none ${active ? "font-semibold" : ""}`}>
-                  {item.label === "Property Record" ? "Record" : item.label === "The Plan" ? "Plan" : item.label}
+                  {item.label}
                 </span>
               </NavLink>
             )
