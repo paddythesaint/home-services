@@ -16,6 +16,7 @@ import { workOrderAttention } from "../attentionInbox"
 import { capitalEvents, capitalPhrase, CAPITAL_STATUS_WORD } from "../capitalPlanning"
 import { viewFor } from "../roles"
 import SystemStatus from "../SystemStatus"
+import { IdeasBoard } from "./Ideas"
 import {
   Card,
   PageHeader,
@@ -849,7 +850,19 @@ export default function Ops() {
 
       {founder && (
         <div className="mt-4">
-          <SystemStatus user={user} />
+          {/* Screen-diet fold (7/27): the Ideas board lives here now —
+              collapsed so the morning read stays tight. */}
+          <details className="mt-4 bg-surface border border-line rounded-2xl px-5 py-4">
+            <summary className="cursor-pointer text-sm font-semibold text-ink select-none">
+              Ideas board
+            </summary>
+            <div className="mt-3">
+              <IdeasBoard />
+            </div>
+          </details>
+          <div className="mt-4">
+            <SystemStatus user={user} />
+          </div>
           <Card title="Record census" className="mt-4">
             <p className="text-sm text-ink-2">
               Back-office QA: how complete the selected home's registry is, what a home of

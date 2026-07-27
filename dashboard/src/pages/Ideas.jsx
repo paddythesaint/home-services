@@ -9,7 +9,11 @@ import { Card, PageHeader, Button, Modal } from "../components"
 // trying — captured the moment they occur, visible to both owners, never
 // to anyone else. Deliberately lighter than a project tracker: title,
 // a note, who had it, open or done.
-export default function Ideas() {
+//
+// Screen-diet fold (7/27): the board now lives as a section inside the
+// Command Center rather than its own nav destination — IdeasBoard is the
+// embeddable piece; this page remains for direct links.
+export function IdeasBoard() {
   const { user } = useOutletContext()
   const founder = viewFor(user?.email).business
 
@@ -28,22 +32,7 @@ export default function Ideas() {
     )
   }, [founder])
 
-  if (!founder) {
-    return (
-      <div>
-        <PageHeader title="Ideas" subtitle="Business owners only." />
-        <Card>
-          <p className="text-sm text-ink-2">
-            This is the owners' shared idea board.{" "}
-            <Link to="/" className="underline">
-              Back to the homeowner view
-            </Link>
-            .
-          </p>
-        </Card>
-      </div>
-    )
-  }
+  if (!founder) return null
 
   async function add() {
     const t = title.trim()
@@ -64,11 +53,6 @@ export default function Ideas() {
 
   return (
     <div>
-      <PageHeader
-        title="Ideas"
-        subtitle="The owners' shared board — capture it now, shape it later. Only the two of you see this."
-      />
-
       {state.status === "denied" && (
         <Card className="mb-4">
           <p className="text-sm text-status-critical">
@@ -244,6 +228,35 @@ export default function Ideas() {
           </div>
         </Modal>
       )}
+    </div>
+  )
+}
+
+export default function Ideas() {
+  const { user } = useOutletContext()
+  if (!viewFor(user?.email).business) {
+    return (
+      <div>
+        <PageHeader title="Ideas" subtitle="Business owners only." />
+        <Card>
+          <p className="text-sm text-ink-2">
+            This is the owners' shared idea board.{" "}
+            <Link to="/" className="underline">
+              Back to the homeowner view
+            </Link>
+            .
+          </p>
+        </Card>
+      </div>
+    )
+  }
+  return (
+    <div>
+      <PageHeader
+        title="Ideas"
+        subtitle="The owners' shared board — capture it now, shape it later. Only the two of you see this."
+      />
+      <IdeasBoard />
     </div>
   )
 }

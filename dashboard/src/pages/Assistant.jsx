@@ -13,6 +13,7 @@ import {
 } from "../assistant"
 import { applyAssistantAction, ACTION_DESTINATION } from "../assistantActions"
 import { auditAction, hasDuplicate } from "../recordAudit"
+import PendingConfirmations from "../PendingConfirmations"
 import { Card, Button } from "../components"
 
 // The 24/7 concierge: knows this home's record (and nothing else), answers
@@ -284,6 +285,11 @@ export default function Assistant() {
           Conversations are shared with your HPS team.
         </p>
       </div>
+
+      {/* Decisions surface where decisions get made: anything proposed but
+          never confirmed (from chats or emails) waits here, not on a page
+          named like an archive. Renders nothing when the queue is empty. */}
+      <PendingConfirmations uid={uid} email={user?.email} />
 
       {/* The chat shell: a fixed-height column — thread scrolls, composer
           stays pinned — full-bleed on mobile like a native chat app. */}

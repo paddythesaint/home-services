@@ -7,8 +7,9 @@
 // One name per destination: these labels are THE names — the sidebar, the
 // bottom tab bar, and every inline reference use the same words.
 
-import { NavLink, useOutletContext } from "react-router-dom"
+import { NavLink, useLocation, useOutletContext } from "react-router-dom"
 import { viewFor } from "./roles"
+import { useItems } from "./useItems"
 import { Segmented } from "./components"
 
 const RECORD = [
@@ -65,9 +66,21 @@ function Tabs({ tabs }) {
 }
 
 export function RecordTabs() {
-  const { user } = useOutletContext()
+  const { user, uid } = useOutletContext()
   const allowed = viewFor(user?.email).recordTabs
-  return <Tabs tabs={RECORD.filter((t) => allowed.has(t.key))} />
+  const { pathname } = useLocation()
+  // Data-driven diet: an empty coverage ledger makes that tab a guaranteed
+  // dead end, so it stays hidden until a warranty exists (it returns by
+  // itself the day one is logged). Never hide the tab you're standing on.
+  const { items: warranties, loading } = useItems(uid, "warranties")
+  const tabs = RECORD.filter((t) => allowed.has(t.key)).filter(
+    (t) =>
+      t.key !== "coverage" ||
+      loading ||
+      warranties.length > 0 ||
+      pathname.startsWith("/coverage")
+  )
+  return <Tabs tabs={tabs} />
 }
 
 export function PlanTabs() {

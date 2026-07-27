@@ -73,10 +73,10 @@ const PROPERTY_NAV = [
   },
 ]
 
+// Screen diet (7/27): Import Records reached contextually from Home; the
+// Assistant Log's queue lives on the Assistant page now. Routes survive.
 const TOOLS_NAV = [
   { key: "walkthrough", to: "/walkthrough", label: "Walkthrough", icon: "walkthrough" },
-  { key: "import", to: "/import", label: "Import Records", icon: "import" },
-  { key: "conversations", to: "/conversations", label: "Assistant Log", icon: "assistant" },
   { key: "systemMap", to: "/system-map", label: "System Map", icon: "map" },
 ]
 
@@ -113,7 +113,6 @@ function buildNavSections(view) {
         { to: "/work-orders", label: "Work Orders", icon: "workorders" },
         { to: "/contractor-network", label: "Contractor Network", icon: "network" },
         { to: "/census", label: "Record Census", icon: "history" },
-        { to: "/ideas", label: "Ideas", icon: "ideas" },
       ],
     })
   }

@@ -34,9 +34,12 @@ export const businessRole = (email) => STAFF_ROLES[(email || "").toLowerCase()] 
 // intent-shaped, not table-shaped: two hubs (record, plan) hold the
 // detail pages as tabs, and the intake tools live under Tools for the
 // seats that use them.
+// Screen diet (7/27): Import Records and the Assistant Log left the nav —
+// imports are reached contextually from Home, and the log's queue moved
+// onto the Assistant page (routes stay alive for direct links).
 const NAV = {
-  founder: ["overview", "assistant", "record", "plan", "walkthrough", "import", "systemMap", "conversations"],
-  relationship: ["overview", "assistant", "record", "plan", "walkthrough", "import", "systemMap"],
+  founder: ["overview", "assistant", "record", "plan", "walkthrough", "systemMap"],
+  relationship: ["overview", "assistant", "record", "plan", "walkthrough", "systemMap"],
   technician: ["overview", "assistant", "record", "plan", "walkthrough"],
   homeowner: ["overview", "assistant", "record", "plan"],
 }
@@ -44,7 +47,9 @@ const NAV = {
 // Tabs inside the two hubs, per role — the old page-level trims live on
 // here (technicians see no vendors, staff see no money).
 const RECORD_TABS = {
-  founder: ["health", "history", "coverage", "contractors"],
+  // Founders keep only the Contractor Network — the Record-hub Contractors
+  // tab was the same people behind a second door (screen diet, 7/27).
+  founder: ["health", "history", "coverage"],
   relationship: ["health", "history", "coverage", "contractors"],
   technician: ["health", "history", "coverage"],
   homeowner: ["health", "history", "coverage", "contractors"],
