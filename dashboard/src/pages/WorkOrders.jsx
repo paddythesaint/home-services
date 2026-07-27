@@ -702,7 +702,15 @@ export default function WorkOrders() {
     const matchedIds = new Set(matched.map((c) => c.id))
     return [
       { name: "title", label: "What needs doing", type: "text" },
-      { name: "category", label: "Category", type: "text", placeholder: "e.g. Exterior, HVAC" },
+      {
+        name: "category",
+        label: "Category",
+        type: "text",
+        placeholder: "e.g. Exterior, HVAC",
+        // Existing category strings across the portfolio — consistent
+        // categories are what let orders match systems and trades.
+        suggestions: all.map((w) => w.category),
+      },
       {
         name: "assigneeType",
         label: "Who does it",

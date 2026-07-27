@@ -56,11 +56,31 @@ function StatusPill({ status }) {
 export default function Warranties() {
   const { uid } = useOutletContext()
   const { items, add, update, remove } = useItems(uid, "warranties")
+  // Suggestion fuel: the systems registry names what can be covered; the
+  // roster and brands name who might be covering it.
+  const { items: covSystems } = useItems(uid, "healthReport")
+  const { items: covRoster } = useItems(uid, "contractors")
   const [editing, setEditing] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
 
   const alerts = coverageAlerts(items)
   const ordered = byExpiry(items)
+
+  const formFields = fields.map((f) =>
+    f.name === "item"
+      ? {
+          ...f,
+          suggestions: covSystems.map((s) =>
+            s.brand ? `${s.category} — ${s.brand}` : s.category
+          ),
+        }
+      : f.name === "provider"
+        ? {
+            ...f,
+            suggestions: [...covSystems.map((s) => s.brand), ...covRoster.map((c) => c.name)],
+          }
+        : f
+  )
 
   function submit(values) {
     if (editing === "new") add(values)
@@ -159,7 +179,7 @@ export default function Warranties() {
           onClose={() => setEditing(null)}
         >
           <DynamicForm
-            fields={fields}
+            fields={formFields}
             initialValues={editing === "new" ? { type: "manufacturer" } : editing}
             onSubmit={submit}
           />

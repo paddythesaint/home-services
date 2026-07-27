@@ -336,13 +336,27 @@ export function DynamicForm({ fields, initialValues = {}, onSubmit, submitLabel 
           ) : field.type === "textarea" ? (
             <textarea className={inputClass} rows={3} value={values[field.name]} onChange={(e) => set(field.name, e.target.value)} />
           ) : (
-            <input
-              type={field.type === "number" ? "number" : field.type === "date" ? "date" : "text"}
-              className={inputClass}
-              value={values[field.name]}
-              onChange={(e) => set(field.name, field.type === "number" ? Number(e.target.value) : e.target.value)}
-              placeholder={field.placeholder}
-            />
+            <>
+              <input
+                type={field.type === "number" ? "number" : field.type === "date" ? "date" : "text"}
+                className={inputClass}
+                value={values[field.name]}
+                onChange={(e) => set(field.name, field.type === "number" ? Number(e.target.value) : e.target.value)}
+                placeholder={field.placeholder}
+                list={field.suggestions?.length ? `dl-${field.name}` : undefined}
+              />
+              {/* Smart completion: a field can carry `suggestions` — values
+                  the record already knows (contractors, categories, brands,
+                  locations). Native datalist: free text still allowed, works
+                  on phones, no dropdown machinery. */}
+              {field.suggestions?.length > 0 && (
+                <datalist id={`dl-${field.name}`}>
+                  {[...new Set(field.suggestions.filter(Boolean))].map((s) => (
+                    <option key={s} value={s} />
+                  ))}
+                </datalist>
+              )}
+            </>
           )}
         </label>
       ))}
