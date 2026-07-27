@@ -55,11 +55,11 @@ const NODES = [
   // Band 4 — Surfaces
   { id: "s_overview", band: "surface", title: "Overview", tech: "Home", desc: "The calm home screen — what's happening now.", fields: ["homeowner"], reads: ["profile", "health", "priorities", "workorders"] },
   { id: "s_health", band: "surface", title: "Health of the house", tech: "Record", desc: "Every system by trade, with condition and horizons.", fields: ["homeowner"], reads: ["health"] },
-  { id: "s_jobs", band: "surface", title: "Everything we've done", tech: "Record", desc: "Timeline and by-system rollup of all work.", fields: ["homeowner"], reads: ["jobs"] },
+  { id: "s_jobs", band: "surface", title: "Service history", tech: "Record", desc: "Timeline and by-system rollup of all work.", fields: ["homeowner"], reads: ["jobs"] },
   { id: "s_coverage", band: "surface", title: "Coverage", tech: "Record", desc: "The warranty & plan ledger with expiry alerts.", fields: ["homeowner"], reads: ["warranties"] },
   { id: "s_contractors", band: "surface", title: "Contractors", tech: "Record", desc: "The home's vendors.", fields: ["homeowner"], reads: ["contractors"] },
   { id: "s_next", band: "surface", title: "What's next", tech: "Plan", desc: "Three horizons, readiness & bundling, this month's care, seasonal checklist, parked projects.", fields: ["homeowner"], reads: ["calendar", "priorities", "workorders"] },
-  { id: "s_calendar", band: "surface", title: "The year of care", tech: "Plan", desc: "Recurring care across the year.", fields: ["homeowner"], reads: ["calendar"] },
+  { id: "s_calendar", band: "surface", title: "Year of care", tech: "Plan", desc: "Recurring care across the year.", fields: ["homeowner"], reads: ["calendar"] },
   { id: "s_forecast", band: "surface", title: "Year in review + forecast", tech: "Plan", desc: "Annual spend report with the 3-year outlook by system.", fields: ["homeowner"], reads: ["health"] },
   { id: "s_report", band: "surface", title: "Year in review", tech: "Plan", desc: "Annual spend, care, and coverage in one report.", fields: ["homeowner"], reads: ["jobs"] },
   { id: "s_assistant", band: "surface", title: "Assistant", tech: "chat", desc: "Native chat over the home's record.", fields: ["homeowner"], reads: ["log"] },

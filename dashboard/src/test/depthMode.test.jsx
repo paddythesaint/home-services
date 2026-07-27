@@ -49,7 +49,8 @@ describe("homeowner Detailed mode", () => {
     // assert absence: every system row gains a depth line on toggle.
     const before = screen.queryAllByText(/verified in person/i).length
 
-    fireEvent.click(screen.getByText("Detailed"))
+    // Hub pages render the depth pill twice (mobile row + desktop row).
+    fireEvent.click(screen.getAllByText("Detailed")[0])
     const after = (await screen.findAllByText(/verified in person/i)).length
     expect(after).toBeGreaterThan(before)
   })
@@ -59,7 +60,7 @@ describe("homeowner Detailed mode", () => {
     await screen.findAllByText("Spring HVAC tune-up")
     expect(screen.queryByText(/\$535/)).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByText("Detailed"))
+    fireEvent.click(screen.getAllByText("Detailed")[0])
     // 2026 completed jobs: $225 + $310.
     expect(await screen.findByText(/\$535/)).toBeInTheDocument()
   })
