@@ -222,6 +222,21 @@ export const fixtureData = {
             order: 2,
           },
         ],
+        nudges: [
+          {
+            // Weather nudge (weatherCheck output): active until endsAt.
+            id: "nudge-wind",
+            key: "wind",
+            event: "Wind Advisory",
+            headline: "Wind Advisory in effect this evening",
+            advice:
+              "Bring in or tie down outdoor furniture, and glance at the trees over the roofline — we'll check for lifted shingles after it passes.",
+            startsAt: "2026-07-27T18:00:00-04:00",
+            endsAt: "2099-01-01T00:00:00-05:00",
+            createdOn: "July 27, 2026",
+            order: 1,
+          },
+        ],
         recallFindings: [
           {
             // Weekly CPSC scan output: reviewed by the founder on the
