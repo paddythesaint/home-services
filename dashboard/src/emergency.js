@@ -77,6 +77,7 @@ export function emergencyContacts(contractors = []) {
       name: t.name,
       role: t.title,
       phone: t.phone || "",
+      email: t.email || "",
       team: true,
     })),
     ...DESIGNATED_PROS.map((d) => ({

@@ -421,6 +421,9 @@ export default function PriorityList() {
   const { items: wnJobs } = useItems(uid, "jobHistory")
   const { items: wnOrders } = useItems(uid, "workOrders")
   const founder = viewFor(user?.email).business
+  // The homeowner's What's next is read-and-request: the working controls
+  // (edit/resolve/reorder, the visit manifest) are staff instruments.
+  const staff = viewFor(user?.email).staff
   const { items, add, update, remove, moveUp, moveDown } = useItems(uid, "priorityList")
   const [editing, setEditing] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -767,7 +770,7 @@ export default function PriorityList() {
         <IssueInsights priorities={items} onBundle={founder ? raiseBundle : undefined} />
       )}
 
-      {manifest.items.length > 0 && (
+      {staff && manifest.items.length > 0 && (
         <div className="mb-4">
           <Card title="Next visit manifest">
             <p className="text-xs text-ink-3 mb-2">
@@ -909,6 +912,7 @@ export default function PriorityList() {
                       </Link>
                     ) : null}
                     <p className="text-sm text-ink-2 mt-1.5">{item.reason}</p>
+                    {staff && (
                     <div className="flex gap-3 mt-3 flex-wrap">
                       <Button variant="ghost" className="!px-0" onClick={() => setEditing(item)}>
                         Edit
@@ -954,6 +958,7 @@ export default function PriorityList() {
                         Dismiss
                       </Button>
                     </div>
+                    )}
                   </div>
                 </div>
                 <div className="text-right shrink-0 flex flex-col items-end gap-2">
@@ -961,7 +966,7 @@ export default function PriorityList() {
                   <Detail>
                     <p className="text-sm text-ink-2">{item.estCost}</p>
                   </Detail>
-                  {index !== null && urgency === "all" && (
+                  {staff && index !== null && urgency === "all" && (
                   <div className="flex gap-1">
                     <button
                       type="button"
@@ -1016,51 +1021,10 @@ export default function PriorityList() {
         })()
       )}
 
-      {closedItems.length > 0 && (
-        <div className="mt-6">
-          <h2 className="text-sm font-semibold text-ink-2 mb-2">
-            Closed ({closedItems.length})
-          </h2>
-          <div className="flex flex-col gap-2">
-            {closedItems.map((item) => (
-              <div
-                key={item.id}
-                className="bg-surface border border-line rounded-lg px-4 py-3 flex items-start justify-between gap-4"
-              >
-                <div>
-                  <p className="text-sm font-medium text-ink-2 line-through decoration-ink-3/50">
-                    {item.title}
-                  </p>
-                  <p className="text-xs text-ink-3">
-                    {DISPOSITION_LABEL[item.status] || "Closed"}
-                    {item.resolvedOn && ` · ${item.resolvedOn}`}
-                    {item.resolutionNote && ` · ${item.resolutionNote}`}
-                  </p>
-                </div>
-                <div className="flex gap-2 shrink-0">
-                  <button
-                    type="button"
-                    className="text-xs text-ink-3 hover:text-ink"
-                    onClick={() => update(item.id, { status: "open", resolvedOn: "", resolutionNote: "" })}
-                  >
-                    Reopen
-                  </button>
-                  <button
-                    type="button"
-                    className="text-xs text-ink-3 hover:text-red-600"
-                    onClick={() => setConfirmDelete(item)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Parked — your call: projects the homeowner chose to defer. Shown
-          so they know we remember; nothing here implies HPS is waiting. */}
+          so they know we remember; nothing here implies HPS is waiting.
+          Above Closed — a homeowner scanning down should hit their own
+          open decisions before the archive. */}
       {(() => {
         const parkedList = wnOrders.filter(isParked)
         if (parkedList.length === 0) return null
@@ -1093,6 +1057,51 @@ export default function PriorityList() {
           </div>
         )
       })()}
+
+      {closedItems.length > 0 && (
+        <div className="mt-6">
+          <h2 className="text-sm font-semibold text-ink-2 mb-2">
+            Closed ({closedItems.length})
+          </h2>
+          <div className="flex flex-col gap-2">
+            {closedItems.map((item) => (
+              <div
+                key={item.id}
+                className="bg-surface border border-line rounded-lg px-4 py-3 flex items-start justify-between gap-4"
+              >
+                <div>
+                  <p className="text-sm font-medium text-ink-2 line-through decoration-ink-3/50">
+                    {item.title}
+                  </p>
+                  <p className="text-xs text-ink-3">
+                    {DISPOSITION_LABEL[item.status] || "Closed"}
+                    {item.resolvedOn && ` · ${item.resolvedOn}`}
+                    {item.resolutionNote && ` · ${item.resolutionNote}`}
+                  </p>
+                </div>
+                {staff && (
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    type="button"
+                    className="text-xs text-ink-3 hover:text-ink"
+                    onClick={() => update(item.id, { status: "open", resolvedOn: "", resolutionNote: "" })}
+                  >
+                    Reopen
+                  </button>
+                  <button
+                    type="button"
+                    className="text-xs text-ink-3 hover:text-red-600"
+                    onClick={() => setConfirmDelete(item)}
+                  >
+                    Delete
+                  </button>
+                </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {editing && (
         <Modal title={editing === "new" ? "Add item" : "Edit item"} onClose={() => setEditing(null)}>

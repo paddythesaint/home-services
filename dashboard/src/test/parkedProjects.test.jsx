@@ -113,4 +113,16 @@ describe("parked projects across the surfaces", () => {
     await screen.findByText("In motion")
     expect(screen.queryByText("Whole-house water filter install")).not.toBeInTheDocument()
   })
+
+  it("What's next: homeowners get read-and-request — no operator tooling", async () => {
+    renderPage(<PriorityList />, { uid: "prop-ridge", user: ALTON })
+    await screen.findByText("Parked — your call")
+    // The working controls are staff instruments (fresh-eyes assessment:
+    // "the Plan page dumps operator tooling on a homeowner").
+    expect(screen.queryByText("Mark scheduled")).not.toBeInTheDocument()
+    expect(screen.queryByText("Resolve")).not.toBeInTheDocument()
+    expect(screen.queryByText("Dismiss")).not.toBeInTheDocument()
+    expect(screen.queryByText(/visit manifest/i)).not.toBeInTheDocument()
+    expect(screen.queryByText("Reopen")).not.toBeInTheDocument()
+  })
 })

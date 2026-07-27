@@ -301,7 +301,8 @@ export default function HomeownerHome() {
               </span>
             </div>
 
-            <div className="mt-4 overflow-x-auto">
+            {/* Edge fade on phones: the table scrolls sideways — say so. */}
+            <div className="mt-4 overflow-x-auto max-sm:[mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)]">
               <div className="grid grid-cols-[1.6fr_1fr_1fr_.8fr] min-w-[520px]">
                 {["System", "Installed", "Last serviced", "State"].map((h) => (
                   <span key={h} className="text-[10.5px] uppercase tracking-wide text-[#9A9C8E] pb-1.5">
@@ -348,7 +349,7 @@ export default function HomeownerHome() {
                 </span>
               </div>
 
-              <div className="mt-4 overflow-x-auto">
+              <div className="mt-4 overflow-x-auto max-sm:[mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)]">
                 <div className="grid grid-cols-[1.5fr_1fr_.8fr_.7fr_.7fr] min-w-[560px]">
                   {["Order", "Pro", "Quote", "Margin", "Lane"].map((h) => (
                     <span key={h} className="text-[10.5px] uppercase tracking-wide text-[#9A9C8E] pb-1.5">
