@@ -44,7 +44,8 @@ describe("system dossier page", () => {
     expect(await screen.findByRole("heading", { name: "HVAC" })).toBeInTheDocument()
     // The record card: brand + install year + lifespan line.
     expect(screen.getByText("Trane XR16")).toBeInTheDocument()
-    expect(screen.getByText(/replacement window/)).toBeInTheDocument()
+    // Appears on the horizon line AND in the repair-vs-replace doctrine.
+    expect(screen.getAllByText(/replacement window/).length).toBeGreaterThan(0)
     // Trade-related jobs (both HVAC jobs).
     expect(screen.getByText("Spring HVAC tune-up")).toBeInTheDocument()
     expect(screen.getByText("Capacitor replacement")).toBeInTheDocument()
