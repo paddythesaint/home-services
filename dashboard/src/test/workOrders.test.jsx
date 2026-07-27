@@ -186,6 +186,18 @@ describe("Work order detail drawer", () => {
     expect(screen.getByText(/Opened July 4, 2026/)).toBeInTheDocument()
   })
 
+  it("deep link ?order= opens the drawer directly (attention-inbox rows land on the order)", async () => {
+    renderPage(<WorkOrders />, {
+      path: "/work-orders?order=wo-gutters",
+      routePath: "/work-orders",
+    })
+    // The drawer's tablist only exists when a drawer is open.
+    expect(await screen.findByRole("tab", { name: "Overview" })).toBeInTheDocument()
+    expect(
+      (await screen.findAllByText("Gutter guards on rear roofline")).length
+    ).toBeGreaterThan(1) // board card + drawer title
+  })
+
   it("puts the contractor link in the drawer", async () => {
     renderPage(<WorkOrders />)
     fireEvent.click(await screen.findByText("Gutter guards on rear roofline"))

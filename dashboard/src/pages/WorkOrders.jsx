@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Link, useOutletContext } from "react-router-dom"
+import { Link, useOutletContext, useSearchParams } from "react-router-dom"
 import {
   subscribeContractors,
   fetchMemberProperties,
@@ -807,6 +807,12 @@ export default function WorkOrders() {
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [detailKey, setDetailKey] = useState(null) // {propertyId, id} of open drawer
 
+  // Deep links: /work-orders?order=<id> opens that order's drawer as soon
+  // as its property's feed delivers it — so attention-inbox rows land on
+  // the thing that needs attention, not the board it lives on.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const wantedOrder = searchParams.get("order")
+
   useEffect(() => {
     if (!founder) return
     let active = true
@@ -824,6 +830,17 @@ export default function WorkOrders() {
     if (!founder) return
     return subscribeContractors(setContractors, () => {})
   }, [founder])
+
+  useEffect(() => {
+    if (!wantedOrder) return
+    const w = Object.values(byProperty)
+      .flat()
+      .find((x) => x.id === wantedOrder)
+    if (w) {
+      setDetailKey({ propertyId: w.propertyId, id: w.id })
+      setSearchParams({}, { replace: true })
+    }
+  }, [wantedOrder, byProperty, setSearchParams])
 
   if (!founder) {
     return (

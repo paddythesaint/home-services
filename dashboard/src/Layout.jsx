@@ -103,12 +103,16 @@ function buildNavSections(view) {
     sections.push({ heading: "Tools", items: tools })
   }
   if (view.business) {
-    sections.push({
+    // Founders start their day on the business plane — it leads the nav
+    // so "what needs me today" is the first thing on the menu, not the
+    // ninth (fresh-eyes assessment, 7/27).
+    sections.unshift({
       heading: "Business",
       items: [
         { to: "/ops", label: "Command Center", icon: "ops" },
         { to: "/work-orders", label: "Work Orders", icon: "workorders" },
         { to: "/contractor-network", label: "Contractor Network", icon: "network" },
+        { to: "/census", label: "Record Census", icon: "history" },
         { to: "/ideas", label: "Ideas", icon: "ideas" },
       ],
     })
@@ -132,6 +136,9 @@ export default function Layout({ user }) {
 
   const view = viewFor(user?.email)
   const navSections = buildNavSections(view)
+  // The bottom tab bar always carries the property destinations — the
+  // business plane lives in the drawer regardless of section order.
+  const tabItems = navSections.find((s) => s.heading === "Property")?.items ?? []
 
   // Mobile: hamburger → left drawer (the full sidebar, not scroll chips).
   const [menuOpen, setMenuOpen] = useState(false)
@@ -500,9 +507,9 @@ export default function Layout({ user }) {
       >
         <div
           className="grid"
-          style={{ gridTemplateColumns: `repeat(${navSections[0].items.length + 1}, 1fr)` }}
+          style={{ gridTemplateColumns: `repeat(${tabItems.length + 1}, 1fr)` }}
         >
-          {navSections[0].items.map((item) => {
+          {tabItems.map((item) => {
             const active = navActive(item, pathname)
             return (
               <NavLink
