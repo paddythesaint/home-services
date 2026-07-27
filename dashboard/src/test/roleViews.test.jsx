@@ -78,14 +78,17 @@ describe("role-tailored navigation (Layout)", () => {
     await sees("Plan")
     await sees("Command Center")
     await sees("Contractor Network")
-    await sees("Import Records")
+    // Screen diet (7/27): Import Records and Assistant Log left the nav.
+    hidden("Import Records")
+    hidden("Assistant Log")
+    hidden("Ideas")
     await sees(/Next invoice/)
   })
 
   it("relationship (Sally) keeps intake tools, loses business plane and billing", async () => {
     renderLayout(SALLY)
     await sees("Walkthrough")
-    await sees("Import Records")
+    hidden("Import Records")
     await sees("Record")
     hidden("Command Center")
     hidden("Contractor Network")
@@ -137,6 +140,26 @@ describe("hub tab gating", () => {
     const tab = await screen.findByText("Year in review")
     expect(tab.closest("a")).toHaveAttribute("href", "/home-report")
     expect(screen.queryByText("Cost Forecast")).not.toBeInTheDocument()
+  })
+
+  it("founders lose the Record-hub Contractors tab (the Network is their door)", async () => {
+    const { renderPage } = await import("./renderPage")
+    const { default: JobHistory } = await import("../pages/JobHistory")
+    renderPage(<JobHistory />)
+    await screen.findAllByText("Service history")
+    expect(screen.queryByText("Contractors")).not.toBeInTheDocument()
+  })
+
+  it("an empty coverage ledger hides the Coverage tab (returns when a warranty exists)", async () => {
+    const { renderPage } = await import("./renderPage")
+    const { default: JobHistory } = await import("../pages/JobHistory")
+    // prop-ridge has no warranties on record → the tab is a dead end → hidden.
+    renderPage(<JobHistory />, { uid: "prop-ridge", user: ALTON })
+    await screen.findAllByText("Service history")
+    await waitFor(() => expect(screen.queryByText("Coverage")).not.toBeInTheDocument())
+    // prop-ballard has a warranty → the tab stays.
+    renderPage(<JobHistory />, { user: ALTON })
+    expect((await screen.findAllByText("Coverage")).length).toBeGreaterThan(0)
   })
 })
 
