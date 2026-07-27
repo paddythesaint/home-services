@@ -54,38 +54,36 @@ on the 7/24 live census: 27 assets, avg 58/100). Founder decision: fill
 the information gaps first (see the fill session below), build later.
 Priority order when resumed:
 
-**Wave 1 — build next:**
-- [ ] Photo-only capture fix — allow photo-without-text send
-      (Assistant.jsx:134) + persist email image attachments as documents
-      (functions/gmail.js drops them). Hours, not days.
-- [ ] Emergency Card — per-home worst-night page (0 shutoff facts on
-      record today); built by ~30-min guided walkthrough; printable;
-      reachable pre-tour.
-- [ ] Weekly email brief — generated from existing data (22 live calendar
-      tasks, stalls, forecast windows, warranty expiries once ledger
-      fills); Gmail send capability is the only new plumbing.
-- [ ] Capital-event triggers — benchmark window crossing auto-stages a
-      work order. Census: 8/10 majors dated → fuel already in the tank.
-- [ ] Census fill session — see "Filling the gaps" plan (the current
-      active effort).
+**Wave 1 — SHIPPED 7/26-27:** photo-only capture (slice, PR #115),
+Emergency Card (#117), weekly email brief (#118), capital-event triggers
+(Capital horizon, #116). Census fill session completed by founder 7/26
+(re-census: 28 assets, avg 61 pre-tuning; 5/6 features fueled).
 
 **Wave 2:**
+- [x] CPSC recall matching — shipped 7/27 (weekly scan + Recall watch,
+      PR #126).
+- [x] Weather-driven nudges — shipped 7/27 (daily NWS check → homeowner
+      Home advice, PR #127).
 - [ ] Designated vendor per trade (primary + fallback + one-line
-      rationale; 30/39 jobs already contractor-linked).
-- [ ] Machine-email telemetry — expectation table over the live poller
-      (Generac/Govee alert emails auto-forwarded; a missing expected
-      email is itself an alert).
-- [ ] CPSC recall matching (12/27 assets carry brand+model today).
-- [ ] Weather-driven calendar nudges (NWS forecast, rides the brief).
+      rationale; 31/41 jobs already contractor-linked; simple list lives
+      in designations.js awaiting a founder form).
 
 **Wave 3:**
+- [x] Repair-vs-replace doctrine — shipped 7/27 (dossier verdict card,
+      PR #125).
 - [ ] Airthings ingestion (only Tier-A sensor API; key in hand).
-- [ ] Repair-vs-replace doctrine + appliance benchmark rows.
 - [ ] Standing authority (depends on brief + triggers + designations).
 - [ ] 10-year capital plan + spend smoothing.
 - [ ] Annual walkthrough → State-of-the-Home recharge.
 - [ ] Transferable dossier export (record-as-asset).
 - [ ] Technician share access (pre-existing backlog item, folded in).
+
+## LONG LIST — ideas we like but probably won't get to (founder call, 7/27)
+- Machine-email telemetry — expectation table over the live poller
+  (Generac/Govee alert emails auto-forwarded; a missing expected email is
+  itself an alert). Moved here from Wave 2: the official Govee API proved
+  unreliable for the leak class, and the email-expectation approach is
+  clever but low-urgency at one home.
 
 **UX demotions (do opportunistically):** founder import banners off Home;
 merge Forecast into Home Report; benchmark-default verification cadences;
