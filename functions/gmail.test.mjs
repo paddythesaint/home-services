@@ -126,3 +126,18 @@ test("listAttachments handles a payload with no parts", () => {
   assert.deepEqual(listAttachments({ mimeType: "text/plain", body: { data: "aGk=" } }), [])
   assert.deepEqual(listAttachments(null), [])
 })
+
+test("partitionIntakeActions: facts auto-file; consequential actions still confirm", () => {
+  const { partitionIntakeActions } = require("./gmail.js")
+  const { autoFile, confirm } = partitionIntakeActions([
+    { type: "save_fact", fact: "Radon average 1.2 pCi/L, week 30.", status: "pending" },
+    { type: "save_fact", fact: "  ", status: "pending" }, // empty fact → keep human eyes on it
+    { type: "service_request", title: "Leak under sink", status: "pending" },
+    { type: "log_job", title: "Gutter cleaning", status: "pending" },
+  ])
+  assert.equal(autoFile.length, 1)
+  assert.equal(autoFile[0].status, "done")
+  assert.equal(autoFile[0].auto, true)
+  assert.equal(confirm.length, 3)
+  assert.ok(confirm.every((a) => a.status === "pending"))
+})

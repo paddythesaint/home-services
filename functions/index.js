@@ -26,6 +26,7 @@ const {
   extractBody,
   listAttachments,
   parseActions,
+  partitionIntakeActions,
   intakePrompt,
   todayLabel,
 } = require("./gmail")
@@ -393,6 +394,22 @@ exports.emailPoller = onSchedule(
         )
         const { text: replyText, actions } = parseActions(raw)
 
+        // Pure information files itself (founder call, 7/27): facts go
+        // straight onto the record, stamped auto — the Home feed shows the
+        // acknowledgment. Consequential actions still queue for a human.
+        const { autoFile, confirm } = partitionIntakeActions(actions)
+        for (const a of autoFile) {
+          await db.collection(`properties/${property.id}/facts`).add({
+            text: a.fact,
+            category: a.category || "",
+            source: "email-intake",
+            confirmedBy: "auto (email intake)",
+            date: todayLabel(),
+            order: Date.now(),
+          })
+        }
+        const stored = [...autoFile, ...confirm]
+
         // Same doc shape the app writes, so the Assistant Log and the
         // Awaiting-confirmation queue treat it like any other conversation.
         await db.collection(`properties/${property.id}/conversations`).add({
@@ -402,7 +419,7 @@ exports.emailPoller = onSchedule(
           summary: `Email intake: ${(subject || body.split("\n")[0] || "message").slice(0, 60)}`,
           messages: [
             { role: "user", text: emailText.slice(0, 2000) },
-            { role: "assistant", text: replyText, ...(actions.length ? { actions } : {}) },
+            { role: "assistant", text: replyText, ...(stored.length ? { actions: stored } : {}) },
           ],
           order: Date.now(),
         })
@@ -412,7 +429,8 @@ exports.emailPoller = onSchedule(
           propertyId: property.id,
           from,
           subject,
-          proposals: actions.length,
+          proposals: confirm.length,
+          autoFiled: autoFile.length,
           attachments: filed.length,
           at: new Date().toISOString(),
         })
