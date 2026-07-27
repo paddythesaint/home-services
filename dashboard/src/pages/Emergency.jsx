@@ -81,8 +81,14 @@ export default function Emergency() {
                 <a href={`tel:${c.phone.replace(/[^\d+]/g, "")}`} className="numeric text-[15px] text-brand-700 shrink-0">
                   {c.phone}
                 </a>
+              ) : c.email ? (
+                // No number on file yet — email is still one tap, not a
+                // dead "call us" with nothing to press.
+                <a href={`mailto:${c.email}`} className="text-[13px] font-medium text-brand-700 shrink-0">
+                  Email now
+                </a>
               ) : (
-                <span className="text-[12.5px] text-ink-3 shrink-0">call or text the team</span>
+                <span className="text-[12.5px] text-ink-3 shrink-0">via the team</span>
               )}
             </li>
           ))}
