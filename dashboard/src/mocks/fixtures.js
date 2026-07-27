@@ -16,6 +16,7 @@ export const fixtureData = {
         areaLabel: "Charlottesville, VA 22901",
         acreage: 5.011,
         yearBuilt: 1992,
+        parcelId: "05900-00-00-020B1",
         bedrooms: 4,
         bathrooms: 3.5,
         clientName: "Herron",

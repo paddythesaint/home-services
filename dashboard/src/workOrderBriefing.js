@@ -61,14 +61,14 @@ THIS WORK ORDER:
 - What was said: ${order.notes || "(no detail captured)"}
 - Category: ${order.category || "unspecified"}
 
-You have the web_search tool. Use it to find the correct recipient email address for the EXACT office or organization that must act — search the organization's own site or an official directory, not a generic guess. This home is in Albemarle County, Virginia (Charlottesville area); pick the office with jurisdiction here.
+You have the web_search tool. Use it to find the correct recipient email address for the EXACT office or organization that must act — search the organization's own site or an official directory, not a generic guess. This home is in Albemarle County, Virginia (Charlottesville area); pick the office with jurisdiction here. If the email needs the parcel/tax-map number and the HOME RECORD has a Parcel ID, use it verbatim; if the record lacks one, you may search the county assessor/parcel lookup for this exact address — use a searched-up parcel only when a result ties it to this address, and say so in NOTES.
 
 Reply in EXACTLY this format, nothing before or after (do NOT include citations or footnote markers in these lines):
 TO: <the recipient. A specific email address ONLY if the HOME RECORD or a search result confirms it for this exact organization; otherwise name the office precisely and write "verify address">
 SUBJECT: <subject line>
 BODY:
-<the email, ready to send. Ground every property detail in the HOME RECORD above. Use [square brackets] for anything the record does not contain (parcel/tax-map number, permit ids, account numbers) — never invent specifics. Under 150 words, direct and courteous. Sign it "Patrick\nCharlottesville Home & Property Services\non behalf of the owner, ${profile.address || "the property"}">
-NOTES: <one line: where the TO address came from (site or page) or what still needs verifying, plus anything to attach before sending>`
+<the email, ready to send. Ground every property detail in the HOME RECORD above. Use [square brackets] for anything neither the record nor a confirmed search result contains (permit ids, account numbers) — never invent specifics. Under 150 words, direct and courteous. Sign it "Patrick\nCharlottesville Home & Property Services\non behalf of the owner, ${profile.address || "the property"}">
+NOTES: <one line: where the TO address (and any searched-up parcel) came from, or what still needs verifying, plus anything to attach before sending>`
 }
 
 export function outreachMessages() {

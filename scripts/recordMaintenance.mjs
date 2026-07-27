@@ -1,14 +1,12 @@
-// One-shot production maintenance, founder-requested 7/26:
-//   1. Delete the empty "1505 Brook Lane" stub property (recursively) —
-//      it kept catching the app's property selector and produced today's
-//      zero-asset census confusion. Verified empty by the record
-//      diagnostic (0 records; 1 stray conversation).
-//   2. Correct the real home's address: "895 Old Ballard Road" — the
-//      record previously said "…Farm Ln", which is a different address.
+// One-shot production maintenance, founder-requested 7/27:
+//   Set the parcel / tax-map ID on the real home's profile. The value is
+//   Albemarle County APN 05900-00-00-020B1 (Tax Map 59, Parcel 20B1),
+//   confirmed against the assessor record — lot 218,279 sqft = 5.011 ac
+//   and built 1992 both match the profile we seeded from public records.
 //
-// Both operations are guarded: the delete refuses unless the target's
-// address starts with "1505", and the update refuses unless the target's
-// address starts with "895". Idempotent — re-running is harmless.
+// Guarded: refuses unless the target's address starts with "895".
+// Idempotent — re-running is harmless. (The previous one-shot — Brook
+// Lane stub delete + address correction — ran 7/26 and is done.)
 
 import { initializeApp, applicationDefault } from "firebase-admin/app"
 import { getFirestore } from "firebase-admin/firestore"
@@ -16,26 +14,9 @@ import { getFirestore } from "firebase-admin/firestore"
 initializeApp({ credential: applicationDefault() })
 const db = getFirestore()
 
-const DELETE_ID = "IdpJ4b2XqF4CSoKgYOGm" // 1505 Brook Lane stub
 const HOME_ID = "qMiuCATsw2P96T6tYaAH539V7Pd2" // 895 Old Ballard
-const CORRECT_ADDRESS = "895 Old Ballard Road"
+const PARCEL_ID = "05900-00-00-020B1"
 
-// 1 · Delete the stub, with an address guard so a mistyped id can never
-// take out a real home.
-const stubRef = db.doc(`properties/${DELETE_ID}`)
-const stub = await stubRef.get()
-if (!stub.exists) {
-  console.log(`delete: properties/${DELETE_ID} already gone — nothing to do`)
-} else if (!(stub.get("address") || "").startsWith("1505")) {
-  throw new Error(
-    `delete REFUSED: properties/${DELETE_ID} address does not start with "1505" — wrong target?`
-  )
-} else {
-  await db.recursiveDelete(stubRef)
-  console.log(`delete: properties/${DELETE_ID} (1505…) removed recursively`)
-}
-
-// 2 · Correct the home's address.
 const homeRef = db.doc(`properties/${HOME_ID}`)
 const home = await homeRef.get()
 if (!home.exists) {
@@ -46,8 +27,8 @@ if (!(home.get("address") || "").startsWith("895")) {
     `update REFUSED: properties/${HOME_ID} address does not start with "895" — wrong target?`
   )
 }
-const before = home.get("address")
-await homeRef.update({ address: CORRECT_ADDRESS })
-console.log(`update: address "${before.slice(0, 6)}…" → "${CORRECT_ADDRESS.slice(0, 6)}…" (full value set)`)
+const had = home.get("parcelId") || "(none)"
+await homeRef.update({ parcelId: PARCEL_ID })
+console.log(`update: parcelId ${had === PARCEL_ID ? "already set" : `"${had}" → set`} on the 895 record`)
 
 console.log("maintenance complete")

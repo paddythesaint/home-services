@@ -30,6 +30,7 @@ const propertyFields = [
   { name: "areaLabel", label: "City / State / Zip", type: "text" },
   { name: "acreage", label: "Acreage", type: "number" },
   { name: "yearBuilt", label: "Year built", type: "number" },
+  { name: "parcelId", label: "Parcel / tax-map ID", type: "text" },
   { name: "bedrooms", label: "Bedrooms", type: "number" },
   { name: "bathrooms", label: "Bathrooms", type: "number" },
   { name: "profileSessionDate", label: "Property Profile session date", type: "text" },

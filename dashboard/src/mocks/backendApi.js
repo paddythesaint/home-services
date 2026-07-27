@@ -28,6 +28,9 @@ export async function callClaude(propertyId, system, messages, tools) {
   // preview exercise the resume loop and the join-all-text-blocks path.
   if (system && system.includes("OUTREACH DRAFT")) {
     const title = (system.match(/- Title: ([^\n]+)/) || [])[1] || "the request"
+    // Like the real model: use the record's Parcel ID when the home
+    // context carries one, bracket it when the record is blank.
+    const parcel = (system.match(/^Parcel ID: ([^\n]+)$/m) || [])[1] || "[parcel number]"
     const resumed = messages.some((m) => m.role === "assistant")
     if (tools && !resumed) {
       return {
@@ -53,7 +56,7 @@ export async function callClaude(propertyId, system, messages, tools) {
         },
         {
           type: "text",
-          text: `Tax map parcel: [parcel number]. Please let me know if any owner authorization is needed.\n\nThank you,\nPatrick\nCharlottesville Home & Property Services\nNOTES: Address from vdh.virginia.gov (Blue Ridge Health District contact page) — fill the [parcel number] before sending.`,
+          text: `Tax map parcel: ${parcel}. Please let me know if any owner authorization is needed.\n\nThank you,\nPatrick\nCharlottesville Home & Property Services\nNOTES: Address from vdh.virginia.gov (Blue Ridge Health District contact page)${parcel.startsWith("[") ? " — fill the [parcel number] before sending." : "; parcel from the home record."}`,
         },
       ],
     }
