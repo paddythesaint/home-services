@@ -68,8 +68,30 @@ test("rfc822 produces a base64url message with headers and body", () => {
   })
   assert.doesNotMatch(raw, /[+/=]/)
   const decoded = Buffer.from(raw.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8")
+  assert.match(decoded, /MIME-Version: 1.0\r\n/)
   assert.match(decoded, /From: HPS <hps@example.com>\r\n/)
   assert.match(decoded, /To: alton@example.com, sally@example.com\r\n/)
+  // Plain-ASCII subjects pass through unencoded.
   assert.match(decoded, /Subject: Your home this week\r\n/)
-  assert.match(decoded, /\r\n\r\nHello\./)
+  // Body is base64 so no client ever guesses its charset.
+  const body = decoded.split("\r\n\r\n")[1]
+  assert.equal(Buffer.from(body, "base64").toString("utf8"), "Hello.")
+})
+
+test("non-ASCII subjects are RFC 2047-encoded — no more mojibake em-dashes", () => {
+  const raw = rfc822({
+    from: "HPS <hps@example.com>",
+    to: ["a@example.com"],
+    subject: "Your home this week — 895 Old Ballard Road",
+    text: "Hi — all quiet.",
+  })
+  const decoded = Buffer.from(raw.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8")
+  const subject = decoded.match(/Subject: (.+)\r\n/)[1]
+  assert.match(subject, /^=\?UTF-8\?B\?/)
+  assert.equal(
+    Buffer.from(subject.slice(10, -2), "base64").toString("utf8"),
+    "Your home this week — 895 Old Ballard Road"
+  )
+  const body = decoded.split("\r\n\r\n")[1]
+  assert.match(Buffer.from(body, "base64").toString("utf8"), /Hi — all quiet\./)
 })

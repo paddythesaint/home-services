@@ -74,15 +74,23 @@ Reply to this email or write in the app — we see it right away.
   }
 }
 
+// Non-ASCII header values (the em-dash in every subject) must be RFC
+// 2047-encoded or mail clients read the UTF-8 bytes as Latin-1 and
+// render mojibake ("Ã¢Â€Â"" where "—" should be).
+const encodeHeader = (s) =>
+  /^[\x20-\x7e]*$/.test(s) ? s : `=?UTF-8?B?${Buffer.from(s, "utf8").toString("base64")}?=`
+
 // The RFC-822 message Gmail's send endpoint wants, base64url-encoded.
 function rfc822({ from, to, subject, text }) {
   const msg = [
+    "MIME-Version: 1.0",
     `From: ${from}`,
     `To: ${to.join(", ")}`,
-    `Subject: ${subject}`,
+    `Subject: ${encodeHeader(subject)}`,
     'Content-Type: text/plain; charset="UTF-8"',
+    "Content-Transfer-Encoding: base64",
     "",
-    text,
+    Buffer.from(text, "utf8").toString("base64"),
   ].join("\r\n")
   return Buffer.from(msg).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
 }
