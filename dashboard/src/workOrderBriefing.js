@@ -42,6 +42,12 @@ export function briefingMessages() {
 
 export const OUTREACH_MARKER = "OUTREACH DRAFT"
 
+// The web-search server tool the drafter is allowed: enough searches to
+// find and confirm one recipient address, not to wander.
+export function outreachTools() {
+  return [{ type: "web_search_20260209", name: "web_search", max_uses: 3 }]
+}
+
 export function outreachSystemPrompt({ profile, systems, priorities, jobs, workOrders, facts, order }) {
   const homeContext = buildAssistantContext({ profile, systems, priorities, jobs, workOrders, facts })
   return `${OUTREACH_MARKER}
@@ -55,12 +61,14 @@ THIS WORK ORDER:
 - What was said: ${order.notes || "(no detail captured)"}
 - Category: ${order.category || "unspecified"}
 
-Reply in EXACTLY this format, nothing before or after:
-TO: <the recipient. A specific email address ONLY if you are confident it is correct for this exact organization; otherwise name the office precisely and write "verify address">
+You have the web_search tool. Use it to find the correct recipient email address for the EXACT office or organization that must act — search the organization's own site or an official directory, not a generic guess. This home is in Albemarle County, Virginia (Charlottesville area); pick the office with jurisdiction here.
+
+Reply in EXACTLY this format, nothing before or after (do NOT include citations or footnote markers in these lines):
+TO: <the recipient. A specific email address ONLY if the HOME RECORD or a search result confirms it for this exact organization; otherwise name the office precisely and write "verify address">
 SUBJECT: <subject line>
 BODY:
 <the email, ready to send. Ground every property detail in the HOME RECORD above. Use [square brackets] for anything the record does not contain (parcel/tax-map number, permit ids, account numbers) — never invent specifics. Under 150 words, direct and courteous. Sign it "Patrick\nCharlottesville Home & Property Services\non behalf of the owner, ${profile.address || "the property"}">
-NOTES: <one line: what to verify or attach before sending>`
+NOTES: <one line: where the TO address came from (site or page) or what still needs verifying, plus anything to attach before sending>`
 }
 
 export function outreachMessages() {

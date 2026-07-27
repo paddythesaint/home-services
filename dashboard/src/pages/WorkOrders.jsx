@@ -36,6 +36,7 @@ import {
   briefingMessages,
   outreachSystemPrompt,
   outreachMessages,
+  outreachTools,
   parseOutreach,
 } from "../workOrderBriefing"
 import {
@@ -54,6 +55,14 @@ import { Card, PageHeader, Button, Modal, DynamicForm, StatTile, UrgencyBadge } 
 // The operational spine: every open piece of work across the portfolio on
 // one board — who's doing it, where the quote stands, when it happens.
 // Completion writes the Job History entry and resolves the linked priority.
+
+// A turn that used web search interleaves several text blocks with the
+// search-result blocks — the draft is ALL of them joined, not the first.
+const joinText = (content) =>
+  (content || [])
+    .filter((b) => b.type === "text")
+    .map((b) => b.text)
+    .join("")
 
 // The ticket detail: a slide-over (bottom sheet on mobile) that turns a
 // card headline into the whole story — the client's own words, the
@@ -201,7 +210,7 @@ function WorkOrderDrawer({
         order: w,
       })
       const data = await callClaude(w.propertyId, system, briefingMessages())
-      const text = data.content?.find((b) => b.type === "text")?.text || ""
+      const text = joinText(data.content)
       await updateItem(w.propertyId, "workOrders", w.id, {
         aiSummary: text,
         aiSummaryOn: todayLabel(),
@@ -230,8 +239,15 @@ function WorkOrderDrawer({
         facts,
         order: w,
       })
-      const data = await callClaude(w.propertyId, system, outreachMessages())
-      const text = data.content?.find((b) => b.type === "text")?.text || ""
+      // Web search runs server-side; a searching turn can pause partway
+      // (stop_reason "pause_turn") — resume by sending the partial turn back.
+      let msgs = outreachMessages()
+      let data = await callClaude(w.propertyId, system, msgs, outreachTools())
+      for (let i = 0; i < 4 && data.stop_reason === "pause_turn"; i++) {
+        msgs = [...msgs, { role: "assistant", content: data.content }]
+        data = await callClaude(w.propertyId, system, msgs, outreachTools())
+      }
+      const text = joinText(data.content)
       await updateItem(w.propertyId, "workOrders", w.id, {
         outreachDraft: text,
         outreachOn: todayLabel(),
