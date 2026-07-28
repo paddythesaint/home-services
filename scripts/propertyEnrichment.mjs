@@ -21,8 +21,8 @@ const get = async (url) => {
 // --- 1 · Albemarle GIS: find the parcel and read its attributes ----------
 // County ArcGIS servers conventionally live under /arcgis/rest/services.
 const GIS_ROOTS = [
-  "https://gisweb.albemarle.org/arcgis/rest/services",
-  "https://gis.albemarle.org/arcgis/rest/services",
+  // The county's public ArcGIS directory (path is arcgis_public, not arcgis).
+  "https://gisweb.albemarle.org/arcgis_public/rest/services",
 ]
 
 async function listServices(root) {
