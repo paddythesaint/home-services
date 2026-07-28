@@ -99,18 +99,43 @@ async function queryHosted(url) {
     try {
       const meta = await get(`${url}/${layer.id}?f=json`)
       const fields = (meta.fields || []).map((f) => f.name)
-      const pinField = fields.find((f) => /PIN|PARCEL|GPIN|TMP|LRSN/i.test(f))
-      if (!pinField) continue
+      const pinFields = fields.filter((f) => /PIN|PARCEL|GPIN|TMP|LRSN/i.test(f))
+      if (pinFields.length === 0) continue
       console.log(`  layer ${layer.id} fields: ${fields.join(", ").slice(0, 600)}`)
-      for (const val of [PIN, PIN.replace(/-/g, ""), "05900-00-00-020B1".toUpperCase()]) {
-        const q = await get(
-          `${url}/${layer.id}/query?where=${encodeURIComponent(
-            `UPPER(${pinField})='${val}'`
-          )}&outFields=*&returnGeometry=true&outSR=4326&f=json`
+      // Learn the layer's actual id format from a sample before matching.
+      try {
+        const sample = await get(
+          `${url}/${layer.id}/query?where=1%3D1&outFields=${pinFields.join(",")}&resultRecordCount=3&returnGeometry=false&f=json`
         )
-        if ((q.features || []).length > 0) {
-          found.push({ layer: `${url}/${layer.id}`, pinField, feature: q.features[0] })
-          break
+        console.log(
+          `  sample ids: ${JSON.stringify((sample.features || []).map((f) => f.attributes))}`
+        )
+      } catch {
+        /* sampling blocked — try matching blind */
+      }
+      const candidates = [
+        PIN,
+        PIN.replace(/-/g, ""),
+        "05900-00-00-020B1",
+        "059000000020B1",
+        "59-20B1",
+        "05900000020B1",
+      ]
+      for (const pinField of pinFields) {
+        for (const val of candidates) {
+          try {
+            const q = await get(
+              `${url}/${layer.id}/query?where=${encodeURIComponent(
+                `UPPER(${pinField}) LIKE '%${val}%'`
+              )}&outFields=*&returnGeometry=true&outSR=4326&f=json`
+            )
+            if ((q.features || []).length > 0) {
+              found.push({ layer: `${url}/${layer.id}`, pinField, feature: q.features[0] })
+              return found
+            }
+          } catch {
+            /* string ops unsupported on this field — next */
+          }
         }
       }
     } catch (e) {
@@ -119,6 +144,10 @@ async function queryHosted(url) {
   }
   return found
 }
+
+// Statewide parcels published by VGIN (Virginia's GIS clearinghouse).
+const VGIN_PARCELS =
+  "https://vginmaps.vdem.virginia.gov/arcgis/rest/services/VA_Base_Layers/VA_Parcels/FeatureServer"
 
 async function probe() {
   // 1 · County server (expected to fail from cloud IPs — log the cause).
@@ -132,38 +161,49 @@ async function probe() {
     }
   }
 
-  // 2 · Hosted mirrors on ArcGIS Online.
+  // 2 · FEMA reachability with approximate coordinates (exact centroid
+  //     comes later from whichever parcel source wins).
   try {
-    const services = await findHostedParcelServices()
-    console.log(`\nArcGIS Online candidates:`)
-    services.forEach((s) => console.log(`  - ${s.title} (${s.owner}) ${s.url}`))
-    for (const s of services) {
-      if (!s.url) continue
-      console.log(`\nProbing ${s.title}…`)
-      try {
-        const hits = await queryHosted(s.url)
-        for (const h of hits) {
-          console.log(`PARCEL HIT in ${h.layer} via ${h.pinField}:`)
-          console.log(JSON.stringify(h.feature.attributes, null, 2).slice(0, 3500))
-          const c = centroid(h.feature)
-          if (c) {
-            console.log(`centroid: ${c.lat.toFixed(5)}, ${c.lon.toFixed(5)}`)
-            try {
-              const fz = await floodZone(c.lon, c.lat)
-              console.log(`FEMA flood zone: ${JSON.stringify(fz)}`)
-            } catch (e) {
-              console.log(`FEMA lookup failed: ${e.message} (cause: ${e.cause?.code || "?"})`)
-            }
-          }
-          return // one good source is enough
-        }
-        if (hits.length === 0) console.log(`(no parcel match)`)
-      } catch (e) {
-        console.log(`(probe failed: ${e.message})`)
-      }
-    }
+    const fz = await floodZone(-78.55, 38.08)
+    console.log(`\nFEMA reachable — zone near 38.08,-78.55: ${JSON.stringify(fz)}`)
+  } catch (e) {
+    console.log(`\nFEMA lookup failed: ${e.message} (cause: ${e.cause?.code || "?"})`)
+  }
+
+  // 3 · Hosted mirrors: VGIN statewide first, then ArcGIS Online search.
+  const sources = [{ title: "VGIN VA_Parcels", url: VGIN_PARCELS }]
+  try {
+    sources.push(...(await findHostedParcelServices()))
   } catch (e) {
     console.log(`ArcGIS Online search failed: ${e.message}`)
+  }
+  console.log(`\nCandidates:`)
+  sources.forEach((s) => console.log(`  - ${s.title} ${s.url || "(no url)"}`))
+
+  for (const s of sources) {
+    if (!s.url) continue
+    console.log(`\nProbing ${s.title}…`)
+    try {
+      const hits = await queryHosted(s.url)
+      for (const h of hits) {
+        console.log(`PARCEL HIT in ${h.layer} via ${h.pinField}:`)
+        console.log(JSON.stringify(h.feature.attributes, null, 2).slice(0, 3500))
+        const c = centroid(h.feature)
+        if (c) {
+          console.log(`centroid: ${c.lat.toFixed(5)}, ${c.lon.toFixed(5)}`)
+          try {
+            const fz = await floodZone(c.lon, c.lat)
+            console.log(`FEMA flood zone at parcel: ${JSON.stringify(fz)}`)
+          } catch (e) {
+            console.log(`FEMA at parcel failed: ${e.message}`)
+          }
+        }
+        return // one good source is enough
+      }
+      if (hits.length === 0) console.log(`(no parcel match)`)
+    } catch (e) {
+      console.log(`(probe failed: ${e.message})`)
+    }
   }
 }
 
