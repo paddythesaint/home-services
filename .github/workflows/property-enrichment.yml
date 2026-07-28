@@ -1,0 +1,41 @@
+name: Property enrichment (county records)
+
+# Pulls public county/FEMA records for the flagship parcel. probe mode
+# discovers endpoints and prints public-record findings; apply mode (once
+# wired) writes them to the record as facts. Everything logged is public
+# county record — no private data.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "probe (discover) or apply (write facts)"
+        default: "probe"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  enrich:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install firebase-admin
+        run: npm install firebase-admin@12 --no-save
+
+      - name: Write credentials
+        env:
+          SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: printf '%s' "$SA_JSON" > "$RUNNER_TEMP/gcp-sa.json"
+
+      - name: Run enrichment
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/gcp-sa.json
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          MODE: ${{ inputs.mode }}
+        run: node scripts/propertyEnrichment.mjs
