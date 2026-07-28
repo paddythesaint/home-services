@@ -83,44 +83,88 @@ function centroid(feature) {
   return { lon: sx / rings.length, lat: sy / rings.length }
 }
 
+// ArcGIS Online mirrors of county parcel data (UVA Library, VGIN) — solid
+// TLS and cloud-friendly, unlike the county's own server.
+async function findHostedParcelServices() {
+  const q = encodeURIComponent('albemarle parcels type:"Feature Service"')
+  const res = await get(`https://www.arcgis.com/sharing/rest/search?q=${q}&num=10&f=json`)
+  return (res.results || []).map((r) => ({ title: r.title, owner: r.owner, url: r.url }))
+}
+
+async function queryHosted(url) {
+  const svc = await get(`${url}?f=json`)
+  const layers = svc.layers || [{ id: 0 }]
+  const found = []
+  for (const layer of layers.slice(0, 5)) {
+    try {
+      const meta = await get(`${url}/${layer.id}?f=json`)
+      const fields = (meta.fields || []).map((f) => f.name)
+      const pinField = fields.find((f) => /PIN|PARCEL|GPIN|TMP|LRSN/i.test(f))
+      if (!pinField) continue
+      console.log(`  layer ${layer.id} fields: ${fields.join(", ").slice(0, 600)}`)
+      for (const val of [PIN, PIN.replace(/-/g, ""), "05900-00-00-020B1".toUpperCase()]) {
+        const q = await get(
+          `${url}/${layer.id}/query?where=${encodeURIComponent(
+            `UPPER(${pinField})='${val}'`
+          )}&outFields=*&returnGeometry=true&outSR=4326&f=json`
+        )
+        if ((q.features || []).length > 0) {
+          found.push({ layer: `${url}/${layer.id}`, pinField, feature: q.features[0] })
+          break
+        }
+      }
+    } catch (e) {
+      console.log(`  (layer ${layer.id} failed: ${e.message})`)
+    }
+  }
+  return found
+}
+
 async function probe() {
+  // 1 · County server (expected to fail from cloud IPs — log the cause).
   for (const root of GIS_ROOTS) {
     try {
       const { services } = await listServices(root)
       console.log(`\nGIS root OK: ${root}`)
       console.log(services.map((s) => `  - ${s}`).join("\n"))
-      // Query every service whose name smells like parcels/assessment/permits.
-      const interesting = services
-        .map((s) => s.split(" ")[0])
-        .filter((n) => /parcel|assess|property|permit|cama|base/i.test(n))
-      for (const svc of interesting) {
-        try {
-          const hits = await queryParcel(root, svc)
-          for (const h of hits) {
-            console.log(`\nPARCEL HIT in ${h.layer} via ${h.pinField}:`)
-            console.log(JSON.stringify(h.feature.attributes, null, 2).slice(0, 3000))
-            const c = centroid(h.feature)
-            if (c) {
-              console.log(`centroid: ${c.lat.toFixed(5)}, ${c.lon.toFixed(5)}`)
-              try {
-                const fz = await floodZone(c.lon, c.lat)
-                console.log(`FEMA flood zone: ${JSON.stringify(fz)}`)
-              } catch (e) {
-                console.log(`FEMA lookup failed: ${e.message}`)
-              }
-            }
-          }
-          if (hits.length === 0) console.log(`(no parcel match in ${svc})`)
-        } catch (e) {
-          console.log(`(query failed for ${svc}: ${e.message})`)
-        }
-      }
-      return // first working root is enough
     } catch (e) {
-      console.log(`GIS root failed: ${root} — ${e.message}`)
+      console.log(`GIS root failed: ${root} — ${e.message} (cause: ${e.cause?.code || e.cause?.message || "?"})`)
     }
   }
-  console.log("No GIS root reachable — needs endpoint research.")
+
+  // 2 · Hosted mirrors on ArcGIS Online.
+  try {
+    const services = await findHostedParcelServices()
+    console.log(`\nArcGIS Online candidates:`)
+    services.forEach((s) => console.log(`  - ${s.title} (${s.owner}) ${s.url}`))
+    for (const s of services) {
+      if (!s.url) continue
+      console.log(`\nProbing ${s.title}…`)
+      try {
+        const hits = await queryHosted(s.url)
+        for (const h of hits) {
+          console.log(`PARCEL HIT in ${h.layer} via ${h.pinField}:`)
+          console.log(JSON.stringify(h.feature.attributes, null, 2).slice(0, 3500))
+          const c = centroid(h.feature)
+          if (c) {
+            console.log(`centroid: ${c.lat.toFixed(5)}, ${c.lon.toFixed(5)}`)
+            try {
+              const fz = await floodZone(c.lon, c.lat)
+              console.log(`FEMA flood zone: ${JSON.stringify(fz)}`)
+            } catch (e) {
+              console.log(`FEMA lookup failed: ${e.message} (cause: ${e.cause?.code || "?"})`)
+            }
+          }
+          return // one good source is enough
+        }
+        if (hits.length === 0) console.log(`(no parcel match)`)
+      } catch (e) {
+        console.log(`(probe failed: ${e.message})`)
+      }
+    }
+  } catch (e) {
+    console.log(`ArcGIS Online search failed: ${e.message}`)
+  }
 }
 
 async function apply() {
