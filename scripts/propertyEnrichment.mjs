@@ -207,10 +207,112 @@ async function probe() {
   }
 }
 
+// VGIN statewide parcels carry PTM_ID — the locality tax-map id.
+async function vginParcel() {
+  const q = await get(
+    `${VGIN_PARCELS}/0/query?where=${encodeURIComponent(
+      `LOCALITY='Albemarle County' AND PTM_ID='${PIN}'`
+    )}&outFields=*&returnGeometry=true&outSR=4326&f=json`
+  )
+  return (q.features || [])[0] || null
+}
+
 async function apply() {
-  // Filled in after the probe run tells us the real field names.
-  console.log("apply mode not wired yet — run probe first, then update this script")
-  process.exit(1)
+  const { initializeApp, applicationDefault } = await import("firebase-admin/app")
+  const { getFirestore } = await import("firebase-admin/firestore")
+  initializeApp({ credential: applicationDefault() })
+  const db = getFirestore()
+
+  const HOME_ID = "qMiuCATsw2P96T6tYaAH539V7Pd2" // 895 Old Ballard
+  const home = await db.doc(`properties/${HOME_ID}`).get()
+  if (!home.exists || !(home.get("address") || "").startsWith("895")) {
+    throw new Error("apply REFUSED: 895 target not found — wrong property?")
+  }
+
+  // Ground truth for the flood lookup: the parcel's own centroid when VGIN
+  // has it, the area point otherwise.
+  let point = { lon: -78.55, lat: 38.08 }
+  let pointSource = "area approximation"
+  try {
+    const parcel = await vginParcel()
+    if (parcel) {
+      const c = centroid(parcel)
+      if (c) {
+        point = c
+        pointSource = "parcel centroid (VGIN)"
+      }
+      console.log(`VGIN parcel found (PTM_ID match); centroid: ${point.lat.toFixed(5)}, ${point.lon.toFixed(5)}`)
+    } else {
+      console.log("VGIN parcel not matched — using area point for flood lookup")
+    }
+  } catch (e) {
+    console.log(`VGIN lookup failed (${e.message}) — using area point`)
+  }
+
+  const facts = []
+  try {
+    const fz = await floodZone(point.lon, point.lat)
+    if (fz?.FLD_ZONE) {
+      const minimal = /X/.test(fz.FLD_ZONE) && /MINIMAL/i.test(fz.ZONE_SUBTY || "")
+      facts.push({
+        id: "enrich-floodzone",
+        text: `FEMA flood zone ${fz.FLD_ZONE}${fz.ZONE_SUBTY ? ` — ${fz.ZONE_SUBTY.toLowerCase()}` : ""}${minimal ? " (no flood insurance requirement)" : ""}. Source: FEMA NFHL, ${pointSource}, July 2026.`,
+        category: "Site & Hazards",
+      })
+    }
+  } catch (e) {
+    console.log(`FEMA lookup failed: ${e.message}`)
+  }
+
+  // EPA radon county classification — static federal designation.
+  facts.push({
+    id: "enrich-radonzone",
+    text: "EPA Radon Zone 1 county (highest predicted indoor radon potential) — annual radon awareness worthwhile; the home's Airthings monitor covers this. Source: EPA Map of Radon Zones, Albemarle County.",
+    category: "Air Quality",
+  })
+
+  for (const f of facts) {
+    const ref = db.doc(`properties/${HOME_ID}/facts/${f.id}`)
+    if ((await ref.get()).exists) {
+      console.log(`fact ${f.id}: already on the record — skipped`)
+      continue
+    }
+    await ref.set({
+      text: f.text,
+      category: f.category,
+      source: "county records",
+      confirmedBy: "auto (public records enrichment)",
+      date: todayLabel(),
+      order: Date.now(),
+    })
+    console.log(`fact ${f.id}: written`)
+  }
+
+  // Discovery for the next wave (assessment + permits): the county's GIS
+  // server rejects cloud clients, but the main site may host the weekly
+  // tabular extracts — list candidate download links for the next run.
+  try {
+    const res = await fetch(
+      "https://www.albemarle.org/government/information-technology/geographic-information-system-gis-mapping/gis-data"
+    )
+    const html = await res.text()
+    const links = [...html.matchAll(/href="([^"]+\.(?:zip|csv|txt|xlsx)[^"]*)"/gi)]
+      .map((m) => m[1])
+      .slice(0, 30)
+    console.log(`\ncounty download links found (${links.length}):`)
+    links.forEach((l) => console.log(`  - ${l}`))
+  } catch (e) {
+    console.log(`county downloads page unreachable: ${e.message}`)
+  }
+}
+
+function todayLabel() {
+  return new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "America/New_York",
+  })
 }
 
 await (MODE === "apply" ? apply() : probe())
