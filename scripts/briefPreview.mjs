@@ -9,7 +9,8 @@ import { getFirestore } from "firebase-admin/firestore"
 import { createRequire } from "node:module"
 
 const require = createRequire(import.meta.url)
-const { buildBrief, rfc822 } = require("../functions/brief.js")
+const { buildBrief, normalizeForecast, rfc822 } = require("../functions/brief.js")
+const { pointFor } = require("../functions/weather.js")
 
 initializeApp({ credential: applicationDefault() })
 const db = getFirestore()
@@ -41,11 +42,20 @@ for (const doc of props.docs) {
     })
   )
 
-  const brief = buildBrief({ profile, jobs, workOrders, calendar, systems })
-  if (!brief) {
-    console.log(`preview: ${doc.id} — quiet week, nothing to compose`)
-    continue
+  // Live forecast, same as Monday's send; a fetch failure degrades to the
+  // seasonal line rather than blocking the preview.
+  let forecast = []
+  try {
+    const [lat, lon] = pointFor(profile).split(",")
+    const fRes = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_gusts_10m_max&forecast_days=10&timezone=America%2FNew_York&temperature_unit=fahrenheit`
+    )
+    if (fRes.ok) forecast = normalizeForecast(await fRes.json())
+  } catch {
+    /* seasonal fallback */
   }
+
+  const brief = buildBrief({ profile, jobs, workOrders, calendar, systems, forecast, style: "proactive" })
 
   const token = await gmailToken()
   const res = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
@@ -56,7 +66,7 @@ for (const doc of props.docs) {
     }),
   })
   console.log(
-    `preview: ${doc.id} — ${res.ok ? `SENT to ${members.length} member(s)` : `send failed: ${res.status} ${await res.text().then((t) => t.slice(0, 200))}`}`
+    `preview: ${doc.id} — forecast days: ${forecast.length} — ${res.ok ? `SENT to ${members.length} member(s)` : `send failed: ${res.status} ${await res.text().then((t) => t.slice(0, 200))}`}`
   )
 }
 console.log("preview complete")

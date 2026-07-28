@@ -30,7 +30,7 @@ const {
   intakePrompt,
   todayLabel,
 } = require("./gmail")
-const { buildBrief, rfc822 } = require("./brief")
+const { buildBrief, normalizeForecast, rfc822 } = require("./brief")
 const { recallMatches, scanBrands } = require("./recalls")
 const { weatherNudges, pointFor } = require("./weather")
 const { draftOutreach } = require("./outreach")
@@ -449,16 +449,40 @@ exports.emailPoller = onSchedule(
   }
 )
 
-// The weekly brief: every Monday morning, each home's record composes its
-// own summary — handled / coming up / needs your eye / parked check-ins —
-// and mails it to the property's members from the intake mailbox. A quiet
-// week composes nothing and sends nothing. Every brief is stored on the
-// property (briefs subcollection) whether or not the send succeeds, so
-// the app can surface them later and a send failure loses no content.
+// The weekly brief (redesigned 7/27): opens with the week's sky (10-day
+// forecast scanned for actionable weather, seasonal beat otherwise), then
+// done / owner-tagged what's-next / coming 30 days. Always sends — the
+// Monday rhythm is the product. Each member gets their style: proactive
+// (full brief, decision dollars) or passive (sky + done + reassurance),
+// from profile.briefStyles[email] with staff defaulting proactive and
+// everyone else passive. Every brief is stored on the property whether
+// or not the send succeeds.
 //
 // Sending requires the Gmail token to carry the gmail.send scope — if
 // sends log 403, re-mint the refresh token with that scope (RUNBOOK).
 const BRIEF_FROM = "Charlottesville Home & Property Services <cvillehomeservicestest@gmail.com>"
+
+// Staff read proactive unless the profile says otherwise.
+const PROACTIVE_DEFAULT = new Set([...FOUNDER_EMAILS, "sallyrryan@gmail.com"])
+const briefStyleFor = (profile, email) =>
+  profile.briefStyles?.[email] ||
+  (PROACTIVE_DEFAULT.has((email || "").toLowerCase()) ? "proactive" : "passive")
+
+// 10-day forecast for the home's area (Open-Meteo — keyless, generous
+// free tier); pointFor maps the ZIP like the weather nudges do. A fetch
+// failure degrades to the seasonal line, never blocks the send.
+async function fetchForecast(profile) {
+  try {
+    const [lat, lon] = pointFor(profile).split(",")
+    const res = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_gusts_10m_max&forecast_days=10&timezone=America%2FNew_York&temperature_unit=fahrenheit`
+    )
+    if (!res.ok) return []
+    return normalizeForecast(await res.json())
+  } catch {
+    return []
+  }
+}
 
 exports.weeklyBrief = onSchedule(
   {
@@ -488,14 +512,22 @@ exports.weeklyBrief = onSchedule(
           })
         )
 
-        const brief = buildBrief({ profile, jobs, workOrders, calendar, systems })
-        if (!brief) {
-          console.log(`weeklyBrief: quiet week for ${doc.id} — nothing sent`)
-          continue
+        const forecast = await fetchForecast(profile)
+
+        // One compose per style actually in use; one send per style group.
+        const groups = {}
+        for (const m of members) {
+          const style = briefStyleFor(profile, m)
+          ;(groups[style] ||= []).push(m)
         }
 
         let status = "composed"
-        if (canSend) {
+        let stored = null
+        for (const [style, to] of Object.entries(groups)) {
+          const brief = buildBrief({ profile, jobs, workOrders, calendar, systems, forecast, style })
+          if (style === "proactive" || !stored) stored = brief
+
+          if (!canSend) continue
           try {
             const token = await gmailAccessToken()
             const res = await fetch(`${GMAIL_BASE}/messages/send`, {
@@ -505,29 +537,29 @@ exports.weeklyBrief = onSchedule(
                 "content-type": "application/json",
               },
               body: JSON.stringify({
-                raw: rfc822({ from: BRIEF_FROM, to: members, ...brief }),
+                raw: rfc822({ from: BRIEF_FROM, to, ...brief }),
               }),
             })
             status = res.ok ? "sent" : `send-failed: ${res.status}`
             if (!res.ok)
               console.error(
-                `weeklyBrief: send failed for ${doc.id} (${res.status}) — token may lack gmail.send scope`
+                `weeklyBrief: ${style} send failed for ${doc.id} (${res.status}) — token may lack gmail.send scope`
               )
           } catch (err) {
             status = `send-failed: ${String(err)}`
-            console.error(`weeklyBrief: send errored for ${doc.id}:`, err)
+            console.error(`weeklyBrief: ${style} send errored for ${doc.id}:`, err)
           }
         }
 
         await db.collection(`properties/${doc.id}/briefs`).add({
-          subject: brief.subject,
-          text: brief.text,
+          subject: stored.subject,
+          text: stored.text,
           sentTo: members,
           status,
           createdOn: todayLabel(),
           order: Date.now(),
         })
-        console.log(`weeklyBrief: ${doc.id} → ${status}`)
+        console.log(`weeklyBrief: ${doc.id} → ${status} (${Object.keys(groups).join("+")})`)
       } catch (err) {
         console.error(`weeklyBrief: failed for ${doc.id}:`, err)
       }
