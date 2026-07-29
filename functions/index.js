@@ -797,3 +797,81 @@ exports.tradeTriage = onSchedule(
     }
   }
 )
+
+// ---------------------------------------------------------------------------
+// Onboarding sweep: a new property climbs the learning curve by itself.
+// Daily, any member-holding property that's missing its baseline gets it:
+// the starter care calendar (only while the calendar is empty), the
+// hazard facts (flood zone via FEMA, radon zone by county — fixed ids,
+// written once), and registry-aware care (a well on record adds the
+// annual water test). Idempotent everywhere; failures retry next day.
+const { STARTER_CALENDAR, radonZoneFact, floodZoneFact, wellTestTask } = require("./onboarding")
+
+exports.onboardingSweep = onSchedule(
+  { schedule: "every day 05:00", timeZone: "America/New_York", maxInstances: 1, memory: "256MiB", timeoutSeconds: 300 },
+  async () => {
+    const db = getFirestore()
+    const propsSnap = await db.collection("properties").get()
+
+    for (const doc of propsSnap.docs) {
+      const profile = doc.data()
+      if ((profile.memberEmails || []).length === 0) continue
+      try {
+        const calSnap = await db.collection(`properties/${doc.id}/careCalendar`).get()
+        const calendar = calSnap.docs.map((d) => d.data())
+
+        // 1 · Starter calendar, once, while empty.
+        if (calendar.length === 0) {
+          for (const [i, t] of STARTER_CALENDAR.entries()) {
+            await db.collection(`properties/${doc.id}/careCalendar`).add({
+              ...t,
+              source: "starter",
+              order: Date.now() + i,
+            })
+          }
+          console.log(`onboardingSweep: ${doc.id} — starter calendar seeded (${STARTER_CALENDAR.length})`)
+        }
+
+        // 2 · Hazard facts, fixed ids, written once each.
+        const writeFact = async (f) => {
+          if (!f) return false
+          const ref = db.doc(`properties/${doc.id}/facts/${f.id}`)
+          if ((await ref.get()).exists) return false
+          await ref.set({
+            text: f.text,
+            category: f.category,
+            source: "county records",
+            confirmedBy: "auto (onboarding sweep)",
+            date: todayLabel(),
+            order: Date.now(),
+          })
+          return true
+        }
+        const [lat, lon] = pointFor(profile).split(",")
+        const wroteFlood = await writeFact(
+          (await db.doc(`properties/${doc.id}/facts/enrich-floodzone`).get()).exists
+            ? null
+            : await floodZoneFact(lat, lon)
+        )
+        const wroteRadon = await writeFact(radonZoneFact(profile))
+        if (wroteFlood || wroteRadon)
+          console.log(`onboardingSweep: ${doc.id} — hazard facts written (flood: ${wroteFlood}, radon: ${wroteRadon})`)
+
+        // 3 · Registry-aware care.
+        const sysSnap = await db.collection(`properties/${doc.id}/healthReport`).get()
+        const systems = sysSnap.docs.map((d) => d.data())
+        const task = wellTestTask(systems, calendar)
+        if (task) {
+          await db.collection(`properties/${doc.id}/careCalendar`).add({
+            ...task,
+            source: "registry",
+            order: Date.now(),
+          })
+          console.log(`onboardingSweep: ${doc.id} — well water test added to the calendar`)
+        }
+      } catch (err) {
+        console.error(`onboardingSweep: failed for ${doc.id}:`, err)
+      }
+    }
+  }
+)

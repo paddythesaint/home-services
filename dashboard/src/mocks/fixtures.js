@@ -477,8 +477,9 @@ export const fixtureData = {
         members: [
           { email: "paddythesaint@gmail.com", name: "Paddy", role: "owner" },
           { email: "alton@example.com", name: "Alton", role: "owner" },
+          { email: "diy@example.com", name: "Alex", role: "owner" },
         ],
-        memberEmails: ["paddythesaint@gmail.com", "alton@example.com"],
+        memberEmails: ["paddythesaint@gmail.com", "alton@example.com", "diy@example.com"],
       },
       collections: {
         healthReport: [

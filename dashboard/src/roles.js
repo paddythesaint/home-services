@@ -26,6 +26,10 @@ export const STAFF_ROLES = {
   "sallyrryan@gmail.com": "relationship", // Sally — real login
   "sally@example.com": "relationship", // demo/test persona (unroutable, harmless)
   "tech@example.com": "technician",
+  // Pilot cohort (diy): sophisticated owner-operators who self-build their
+  // record — homeowner view plus the self-serve instruments. Add real pilot
+  // emails here when the founder green-lights each one.
+  "diy@example.com": "diy", // demo/test persona
 }
 
 export const businessRole = (email) => STAFF_ROLES[(email || "").toLowerCase()] || null
@@ -41,6 +45,10 @@ const NAV = {
   founder: ["overview", "assistant", "record", "plan", "walkthrough", "systemMap"],
   relationship: ["overview", "assistant", "record", "plan", "walkthrough", "systemMap"],
   technician: ["overview", "assistant", "record", "plan", "walkthrough"],
+  // diy pilots self-build: the homeowner surface plus the walkthrough and
+  // bundle import (import stays off the nav per the screen diet — it's
+  // reachable from Home's contextual link, same as founders).
+  diy: ["overview", "assistant", "record", "plan", "walkthrough", "import"],
   homeowner: ["overview", "assistant", "record", "plan"],
 }
 
@@ -52,12 +60,14 @@ const RECORD_TABS = {
   founder: ["health", "history", "coverage"],
   relationship: ["health", "history", "coverage", "contractors"],
   technician: ["health", "history", "coverage"],
+  diy: ["health", "history", "coverage", "contractors"],
   homeowner: ["health", "history", "coverage", "contractors"],
 }
 const PLAN_TABS = {
   founder: ["calendar", "priorities", "report"],
   relationship: ["calendar", "priorities", "report"],
   technician: ["calendar", "priorities"],
+  diy: ["calendar", "priorities", "report"],
   homeowner: ["calendar", "priorities", "report"],
 }
 
@@ -74,6 +84,7 @@ export const ROLE_LABELS = {
   founder: "Founder — full view",
   relationship: "Relationship (intake)",
   technician: "Technician (visit)",
+  diy: "DIY pilot (self-serve)",
   homeowner: "Homeowner",
 }
 
