@@ -34,6 +34,7 @@ const { buildBrief, normalizeForecast, rfc822 } = require("./brief")
 const { recallMatches, scanBrands } = require("./recalls")
 const { weatherNudges, pointFor } = require("./weather")
 const { draftOutreach } = require("./outreach")
+const { triageSystemPrompt, parseTriage, runTriage } = require("./tradeTriage")
 const { FieldValue } = require("firebase-admin/firestore")
 
 initializeApp()
@@ -735,6 +736,62 @@ exports.outreachDrafter = onSchedule(
           console.log(`outreachDrafter: ${doc.id}/${wo.id} drafted in background`)
         } catch (err) {
           console.error(`outreachDrafter: ${doc.id}/${wo.id} failed:`, err.message)
+        }
+      }
+    }
+  }
+)
+
+// ---------------------------------------------------------------------------
+// Trade triage: the specialist read on every new intake order, run in
+// parallel with the request — never as a gate in front of it. Every 10
+// minutes, orders sitting in the triage lane without an assessment get
+// one: trade classification, urgency (safety escalations included),
+// material gaps, the questions a pro would ask, and constructability
+// notes — written onto the order as `triage`, surfaced in the drawer and
+// (for emergencies) the attention inbox. Checklists live in
+// tradeTriage.js and are meant to be edited as HPS doctrine grows.
+exports.tradeTriage = onSchedule(
+  { schedule: "every 10 minutes", maxInstances: 1, memory: "256MiB", timeoutSeconds: 300 },
+  async () => {
+    const apiKey = process.env.ANTHROPIC_API_KEY
+    if (!apiKey) return
+
+    const db = getFirestore()
+    const propsSnap = await db.collection("properties").get()
+    let assessed = 0
+
+    for (const doc of propsSnap.docs) {
+      if (assessed >= 4) break // cost brake; next run picks up the rest
+      const pending = await db
+        .collection(`properties/${doc.id}/workOrders`)
+        .where("lane", "==", "triage")
+        .get()
+      const fresh = pending.docs.filter((d) => !d.get("triage"))
+      if (fresh.length === 0) continue
+
+      // The record context, once per property with work to assess.
+      const [sysSnap, factsSnap] = await Promise.all([
+        db.collection(`properties/${doc.id}/healthReport`).get(),
+        db.collection(`properties/${doc.id}/facts`).get(),
+      ])
+      const systems = sysSnap.docs.map((d) => d.data())
+      const facts = factsSnap.docs.map((d) => d.data())
+
+      for (const wo of fresh) {
+        if (assessed >= 4) break
+        const order = { id: wo.id, ...wo.data() }
+        try {
+          const system = triageSystemPrompt({ order, systems, facts })
+          const raw = await runTriage({ apiKey, model: MODEL, maxTokens: MAX_TOKENS, system })
+          const t = parseTriage(raw)
+          await wo.ref.update({
+            triage: { ...t, on: todayLabel() },
+          })
+          assessed += 1
+          console.log(`tradeTriage: ${doc.id}/${wo.id} → ${t.trade || "?"} / ${t.urgency || "?"}`)
+        } catch (err) {
+          console.error(`tradeTriage: ${doc.id}/${wo.id} failed:`, err.message)
         }
       }
     }

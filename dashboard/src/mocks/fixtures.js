@@ -525,6 +525,16 @@ export const fixtureData = {
             lane: "triage",
             source: "homeowner",
             requestedBy: "alton@example.com",
+            // The background trade-triage assessment, as the sweep writes it.
+            triage: {
+              trade: "appliance",
+              urgency: "routine",
+              urgencyReason: "no water spread or electrical symptoms reported",
+              gaps: "no disposal brand/model on record; unclear if the unit hums or is fully dead",
+              questions: "Does the disposal hum when switched on, or is it silent? | Has the reset button underneath been tried?",
+              notes: "Likely a jam or seized flywheel — a hex-key reset is a 10-minute first attempt before dispatching. Unit brand unknown; capture the model sticker during any visit.",
+              on: "July 26, 2026",
+            },
             assigneeType: "",
             contractorId: "",
             contractorName: "",

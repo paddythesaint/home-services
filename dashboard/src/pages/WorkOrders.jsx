@@ -357,6 +357,72 @@ function WorkOrderDrawer({
             <p className="text-xs text-ink-3 mt-1.5">— {requester}</p>
           </section>
 
+          {/* The specialist read: trade triage runs in the background on
+              every new intake order — classification, urgency, material
+              gaps, the questions a pro would ask. Checklist doctrine
+              lives in functions/tradeTriage.js. */}
+          {w.triage && (
+            <section>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-3 mb-1.5">
+                Trade triage
+              </h3>
+              <div
+                className={`rounded-xl px-3.5 py-3 ${
+                  w.triage.urgency === "emergency"
+                    ? "bg-red-50 border border-red-200"
+                    : w.triage.urgency === "urgent"
+                      ? "bg-amber-50 border border-amber-200"
+                      : "bg-plane"
+                }`}
+              >
+                <p className="text-xs m-0">
+                  <span className="font-semibold uppercase tracking-wide text-ink-2">
+                    {w.triage.trade || "general"}
+                  </span>
+                  {w.triage.urgency && (
+                    <span
+                      className={`ml-2 font-semibold uppercase tracking-wide ${
+                        w.triage.urgency === "emergency"
+                          ? "text-status-critical"
+                          : w.triage.urgency === "urgent"
+                            ? "text-amber-800"
+                            : "text-ink-3"
+                      }`}
+                    >
+                      {w.triage.urgency}
+                    </span>
+                  )}
+                  {w.triage.urgencyReason && (
+                    <span className="text-ink-3"> — {w.triage.urgencyReason}</span>
+                  )}
+                </p>
+                {w.triage.gaps && w.triage.gaps !== "none" && (
+                  <p className="text-sm text-ink-2 mt-2 mb-0">
+                    <span className="font-medium text-ink">Gaps:</span> {w.triage.gaps}
+                  </p>
+                )}
+                {w.triage.questions && w.triage.questions !== "none" && (
+                  <div className="mt-2">
+                    <p className="text-sm font-medium text-ink m-0">Ask the homeowner:</p>
+                    <ul className="m-0 mt-1 pl-4 list-disc text-sm text-ink-2">
+                      {w.triage.questions.split(" | ").map((q, i) => (
+                        <li key={i}>{q}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {w.triage.notes && (
+                  <p className="text-sm text-ink-2 mt-2 mb-0">
+                    <span className="font-medium text-ink">Notes:</span> {w.triage.notes}
+                  </p>
+                )}
+                {w.triage.on && (
+                  <p className="text-[11px] text-ink-3 mt-2 mb-0">assessed {w.triage.on}</p>
+                )}
+              </div>
+            </section>
+          )}
+
           <section>
             <div className="flex items-center justify-between gap-2 mb-1.5">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-3">
