@@ -47,6 +47,20 @@ export function workOrderAttention(orders = [], now = new Date()) {
       continue
     }
 
+    // A triage safety escalation outranks everything — the specialist
+    // read flagged this as an emergency.
+    if (w.lane === "triage" && w.triage?.urgency === "emergency") {
+      items.push({
+        key: `wo-safety-${w.id}`,
+        kind: "triage-safety",
+        title: `Safety flag from triage: ${w.title}`,
+        detail: w.triage.urgencyReason || "assessed as an emergency",
+        urgency: "high",
+        workOrderId: w.id,
+      })
+      continue
+    }
+
     // A homeowner request still in triage is the loudest signal there is.
     if (w.source === "homeowner" && w.lane === "triage") {
       items.push({
