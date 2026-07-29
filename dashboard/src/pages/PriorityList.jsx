@@ -420,7 +420,9 @@ export default function PriorityList() {
   const { items: wnCalendar } = useItems(uid, "careCalendar")
   const { items: wnJobs } = useItems(uid, "jobHistory")
   const { items: wnOrders } = useItems(uid, "workOrders")
-  const founder = viewFor(user?.email).business
+  // Raising work orders rides the pipeline capability — founders portfolio-
+  // wide, diy pilots for their own home.
+  const founder = viewFor(user?.email).pipeline
   // The homeowner's What's next is read-and-request: the working controls
   // (edit/resolve/reorder, the visit manifest) are staff instruments.
   const staff = viewFor(user?.email).staff

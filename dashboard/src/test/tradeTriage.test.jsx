@@ -56,3 +56,18 @@ describe("triage in the attention inbox (pure)", () => {
     expect(items[0].kind).toBe("request")
   })
 })
+
+describe("diy pilots on the work-order board", () => {
+  it("a diy member gets the board scoped to their own home — no founder gate", async () => {
+    const { renderPage } = await import("./renderPage")
+    const { default: WorkOrders } = await import("../pages/WorkOrders")
+    const { screen } = await import("@testing-library/react")
+    renderPage(<WorkOrders />, { user: { email: "diy@example.com", displayName: "Alex", uid: "u-diy" } })
+    // Membership scoping: prop-ridge orders appear (Alex belongs there)…
+    expect(await screen.findByText("Disposal is jammed")).toBeInTheDocument()
+    // …and the founder-only refusal never renders.
+    expect(screen.queryByText(/Business owners only/)).not.toBeInTheDocument()
+    // The Ballard-only order stays invisible — not their home.
+    expect(screen.queryByText("Gutter guards on rear roofline")).not.toBeInTheDocument()
+  })
+})

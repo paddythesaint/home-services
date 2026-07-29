@@ -105,14 +105,18 @@ describe("role-tailored navigation (Layout)", () => {
     hidden(/Next invoice/)
   })
 
-  it("diy pilots self-build: walkthrough in nav, no business plane, no billing", async () => {
+  it("diy pilots self-build AND self-manage: walkthrough + Work Orders, no business plane", async () => {
     renderLayout({ email: "diy@example.com", displayName: "Alex", uid: "u-diy" })
     await sees("Walkthrough")
     await sees("Record")
     await sees("Plan")
+    // The project pipeline joins their nav under Projects…
+    await sees("Projects")
+    await sees("Work Orders")
+    // …but the business plane stays closed, and pilots ride free.
     hidden("Command Center")
     hidden("Contractor Network")
-    hidden(/Next invoice/) // pilots ride free — no billing chrome
+    hidden(/Next invoice/)
   })
 
   it("homeowner gets a clean four-item nav: no tools, no business plane, billing shown", async () => {

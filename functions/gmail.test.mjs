@@ -23,16 +23,27 @@ test("extractTag finds the +tag in To or Delivered-To", () => {
   assert.equal(extractTag([{ name: "To", value: "cvillehomeservicestest@gmail.com" }]), "")
 })
 
-test("routeMessage: single property takes everything; multi requires a tag match", () => {
+test("routeMessage: tag wins, then sender membership, then single-home fallback", () => {
   const one = [{ id: "p1", address: "895 Old Ballard" }]
   assert.equal(routeMessage("", one).id, "p1")
   assert.equal(routeMessage("anything", one).id, "p1")
+
   const two = [
-    { id: "p1", emailTag: "895" },
-    { id: "p2", emailTag: "ridgeview" },
+    { id: "p1", emailTag: "895", memberEmails: ["paddythesaint@gmail.com", "sally@example.com"] },
+    { id: "p2", emailTag: "ridgeview", memberEmails: ["paddythesaint@gmail.com", "alex@example.com"] },
   ]
+  // 1 · Explicit tag always wins.
   assert.equal(routeMessage("ridgeview", two).id, "p2")
-  assert.equal(routeMessage("", two), null)
+  // 2 · Untagged mail routes by unique membership — clients and pilots
+  //     never need the +tag.
+  assert.equal(routeMessage("", two, "Alex <alex@example.com>").id, "p2")
+  assert.equal(routeMessage("", two, "Sally Ryan <Sally@Example.com>").id, "p1")
+  // A founder who belongs to BOTH homes is ambiguous without a tag.
+  assert.equal(routeMessage("", two, "paddythesaint@gmail.com"), null)
+  // Tag rescues the ambiguous founder.
+  assert.equal(routeMessage("895", two, "paddythesaint@gmail.com").id, "p1")
+  // 3 · Unknown sender, no tag, multiple homes → unrouted.
+  assert.equal(routeMessage("", two, "stranger@example.com"), null)
   assert.equal(routeMessage("unknown", two), null)
 })
 
