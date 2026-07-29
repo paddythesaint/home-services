@@ -1,6 +1,7 @@
 import { useState } from "react"
-import { useOutletContext } from "react-router-dom"
+import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
+import { viewFor } from "../roles"
 import { assetCompleteness, missingSystems, featureFuel, censusSummary } from "../recordCensus"
 import { Card, PageHeader, StatTile, Button } from "../components"
 
@@ -11,7 +12,31 @@ import { Card, PageHeader, StatTile, Button } from "../components"
 // produces the paste-back block that grounds roadmap scoring.
 
 export default function Census() {
-  const { uid } = useOutletContext()
+  const { uid, user } = useOutletContext()
+
+  // The comment above said founder-only; the route now enforces it
+  // (permissions audit, 7/28 — the page was reachable by URL before).
+  if (!viewFor(user?.email).business) {
+    return (
+      <div>
+        <PageHeader title="Record census" subtitle="Business owners only." />
+        <Card>
+          <p className="text-sm text-ink-2">
+            This is back-office record QA.{" "}
+            <Link to="/" className="underline">
+              Back to the homeowner view
+            </Link>
+            .
+          </p>
+        </Card>
+      </div>
+    )
+  }
+
+  return <CensusBody uid={uid} />
+}
+
+function CensusBody({ uid }) {
   const { items: systems } = useItems(uid, "healthReport")
   const { items: jobs } = useItems(uid, "jobHistory")
   const { items: warranties } = useItems(uid, "warranties")
