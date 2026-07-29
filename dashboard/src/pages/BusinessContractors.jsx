@@ -5,6 +5,7 @@ import {
   addContractor,
   fetchPropertyContractors,
   fetchMemberProperties,
+  fetchItems,
   updateItem,
   unifyRosters,
   mergeContractors,
@@ -404,6 +405,47 @@ export default function BusinessContractors() {
     0
   )
 
+  // Pilot suggestions: contractors the diy cohort vouches for, pending a
+  // founder's approve/dismiss. Approval copies them into the roster with
+  // the sourcing trail intact.
+  const [suggestions, setSuggestions] = useState([])
+  useEffect(() => {
+    let active = true
+    ;(async () => {
+      const found = []
+      for (const p of properties) {
+        try {
+          const list = await fetchItems(p.id, "networkSuggestions")
+          for (const s of list) {
+            if (s.status === "pending") found.push({ ...s, propertyId: p.id, address: p.address })
+          }
+        } catch {
+          /* property without the collection — fine */
+        }
+      }
+      if (active) setSuggestions(found)
+    })()
+    return () => {
+      active = false
+    }
+  }, [properties])
+
+  async function resolveSuggestion(s, approve) {
+    if (approve) {
+      await addContractor({
+        name: s.name,
+        trades: s.trades || "",
+        phone: s.phone || "",
+        sourcing: `Pilot suggestion — ${s.suggestedBy || "member"} (${s.address || ""})`,
+        notes: s.notes || "",
+      })
+    }
+    await updateItem(s.propertyId, "networkSuggestions", s.id, {
+      status: approve ? "approved" : "dismissed",
+    })
+    setSuggestions((prev) => prev.filter((x) => x.id !== s.id))
+  }
+
   if (!founder) {
     return (
       <div>
@@ -438,6 +480,50 @@ export default function BusinessContractors() {
         subtitle="One profile per contractor — contacts, trades, cadence, and work across every property, past and scheduled."
         action={<Button onClick={() => setAdding(true)}>+ Add contractor</Button>}
       />
+
+      {suggestions.length > 0 && (
+        <Card
+          title={`Pilot suggestions (${suggestions.length})`}
+          className="mb-4 border-amber-200 bg-amber-50/40"
+        >
+          <p className="text-xs text-ink-3 mb-2">
+            Contractors your pilots vouch for. Approving adds them to the network with the
+            sourcing trail kept.
+          </p>
+          <ul className="flex flex-col gap-2">
+            {suggestions.map((s) => (
+              <li key={`${s.propertyId}-${s.id}`} className="flex items-start justify-between gap-3 text-sm">
+                <span className="min-w-0">
+                  <span className="font-medium text-ink">{s.name}</span>
+                  <span className="text-ink-2">
+                    {" "}
+                    {[s.trades, s.phone].filter(Boolean).join(" · ")}
+                  </span>
+                  <span className="block text-xs text-ink-3">
+                    from {s.suggestedBy || "a member"} · {s.address}
+                  </span>
+                </span>
+                <span className="shrink-0 flex items-center gap-2">
+                  <Button
+                    variant="subtle"
+                    className="!py-1 !px-3 !text-xs"
+                    onClick={() => resolveSuggestion(s, true)}
+                  >
+                    Approve
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => resolveSuggestion(s, false)}
+                    className="text-xs text-ink-3 hover:text-ink"
+                  >
+                    Dismiss
+                  </button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       {totalUnlinked > 0 && (
         <div className="bg-brand-100 border border-line rounded-lg p-4 mb-4 flex items-center justify-between gap-4">

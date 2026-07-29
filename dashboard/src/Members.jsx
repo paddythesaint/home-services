@@ -1,14 +1,28 @@
 import { useState } from "react"
-import { addMember, removeMember } from "./firestoreApi"
+import { addMember, removeMember, saveProperty } from "./firestoreApi"
 import { Card, Button } from "./components"
 
 // People-with-access panel. Members are stored on the property doc; owners
 // invite by email (no Firebase uid needed — the invitee signs in with that
 // Google account and the resolver matches them by verified email).
+//
+// The invite captures two onboarding choices up front (7/28):
+//   - Access level: homeowner (white-glove client) vs diy pilot
+//     (self-builds and self-manages). The choice is stored on the member
+//     record; pilot capabilities are activated platform-side.
+//   - Weekly brief style: their consent + preference for the Monday email,
+//     written to profile.briefStyles so the sender honors it from day one.
+const BRIEF_CHOICES = [
+  { value: "passive", label: "Weekly note — the light check-in" },
+  { value: "proactive", label: "Weekly plan — full actions & decisions" },
+]
+
 export default function Members({ uid, profile, currentEmail }) {
   const members = profile.members || []
   const [email, setEmail] = useState("")
   const [name, setName] = useState("")
+  const [role, setRole] = useState("owner")
+  const [briefStyle, setBriefStyle] = useState("passive")
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
 
@@ -22,9 +36,15 @@ export default function Members({ uid, profile, currentEmail }) {
     setBusy(true)
     setError("")
     try {
-      await addMember(uid, { email: clean, name, role: "owner" })
+      await addMember(uid, { email: clean, name, role })
+      // Their weekly-brief election, acknowledged at onboarding.
+      await saveProperty(uid, {
+        briefStyles: { ...(profile.briefStyles || {}), [clean]: briefStyle },
+      })
       setEmail("")
       setName("")
+      setRole("owner")
+      setBriefStyle("passive")
     } catch (err) {
       console.error(err)
       setError("Couldn't add — try again")
@@ -36,8 +56,8 @@ export default function Members({ uid, profile, currentEmail }) {
   return (
     <Card title="People with access">
       <p className="text-sm text-ink-2 mb-3">
-        Everyone listed is a full owner — they can view and edit everything.
-        Invite by the Google email they'll sign in with.
+        Everyone listed can view and edit this home's record. Invite by the
+        Google email they'll sign in with.
       </p>
 
       <ul className="divide-y divide-line mb-4">
@@ -58,7 +78,12 @@ export default function Members({ uid, profile, currentEmail }) {
                 {m.name && <p className="text-xs text-ink-3 truncate">{m.email}</p>}
               </div>
               <div className="flex items-center gap-3 shrink-0">
-                <span className="text-xs text-ink-3 capitalize">{m.role || "owner"}</span>
+                <span className="text-xs text-ink-3 capitalize">
+                  {m.role === "diy" ? "diy pilot" : m.role || "owner"}
+                  {profile.briefStyles?.[m.email] && (
+                    <span className="text-ink-3"> · {profile.briefStyles[m.email]} brief</span>
+                  )}
+                </span>
                 {m.email !== currentEmail && (
                   <button
                     type="button"
@@ -90,10 +115,45 @@ export default function Members({ uid, profile, currentEmail }) {
             placeholder="Name (optional)"
             className="flex-1 border border-line rounded-lg px-3 py-2 bg-surface text-ink text-sm"
           />
-          <Button type="submit" disabled={busy}>
-            {busy ? "Adding…" : "Invite"}
-          </Button>
         </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <label className="flex-1 text-xs text-ink-3">
+            Access level
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="mt-1 w-full border border-line rounded-lg px-2 py-2 bg-surface text-ink text-sm"
+            >
+              <option value="owner">Homeowner — we manage the home</option>
+              <option value="diy">DIY pilot — self-builds & self-manages</option>
+            </select>
+          </label>
+          <label className="flex-1 text-xs text-ink-3">
+            Weekly brief
+            <select
+              value={briefStyle}
+              onChange={(e) => setBriefStyle(e.target.value)}
+              className="mt-1 w-full border border-line rounded-lg px-2 py-2 bg-surface text-ink text-sm"
+            >
+              {BRIEF_CHOICES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="flex items-end">
+            <Button type="submit" disabled={busy}>
+              {busy ? "Adding…" : "Invite"}
+            </Button>
+          </div>
+        </div>
+        {role === "diy" && (
+          <p className="text-xs text-ink-3">
+            Pilot tools (walkthrough, projects board) are switched on platform-side
+            after the invite — usually the same day.
+          </p>
+        )}
         {error && <p className="text-xs text-red-600">{error}</p>}
       </form>
     </Card>

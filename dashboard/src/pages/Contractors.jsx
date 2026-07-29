@@ -120,11 +120,28 @@ function ImportModal({ candidates, onClose, onImport }) {
 export default function Contractors() {
   const { uid, user } = useOutletContext()
   const founder = viewFor(user?.email).business
+  // Pilots feed the network: their proven contractors can be suggested to
+  // the HPS roster (founder approves on the Contractor Network).
+  const canSuggest = viewFor(user?.email).pipeline && !founder
   const { items: contractors, add, update, remove } = useItems(uid, "contractors")
   const { items: jobs } = useItems(uid, "jobHistory")
+  const { items: suggestions, add: addSuggestion } = useItems(uid, "networkSuggestions")
   const [editing, setEditing] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [importing, setImporting] = useState(false)
+
+  const suggestedNames = new Set(suggestions.map((s) => (s.name || "").toLowerCase()))
+  async function suggestToNetwork(c) {
+    await addSuggestion({
+      name: c.name,
+      trades: c.trades || "",
+      phone: c.phone || "",
+      notes: c.notes || "",
+      suggestedBy: user?.email || "",
+      status: "pending",
+      order: Date.now(),
+    })
+  }
 
   const candidates = useMemo(() => buildCandidates(jobs, contractors), [jobs, contractors])
 
@@ -231,6 +248,19 @@ export default function Contractors() {
                           Edit
                         </Button>
                       )}
+                      {canSuggest &&
+                        !c.networkId &&
+                        (suggestedNames.has((c.name || "").toLowerCase()) ? (
+                          <span className="text-xs text-brand-700">Suggested to HPS ✓</span>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            className="!px-0"
+                            onClick={() => suggestToNetwork(c)}
+                          >
+                            Suggest to HPS
+                          </Button>
+                        ))}
                       <Button
                         variant="danger"
                         className="!px-0"

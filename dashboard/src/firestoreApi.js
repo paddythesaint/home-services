@@ -82,6 +82,9 @@ export async function createProperty(data, user) {
     ...data,
     members: [{ email, name: user.displayName || "", role: "owner" }],
     memberEmails: [email],
+    // Starts the onboarding clock: the empty-record reminder measures from
+    // here (functions/digest.js).
+    createdOnMs: Date.now(),
   })
   // Every new home starts with a year of seasonal rhythm, tailored to its
   // climate region — the owner authors no calendar (7/25 UX cleanup).

@@ -875,3 +875,85 @@ exports.onboardingSweep = onSchedule(
     }
   }
 )
+
+// ---------------------------------------------------------------------------
+// Founder daily digest + empty-record nudges (7/28). The digest mails the
+// founder a plain-text "what changed on which home in the last 24h" every
+// morning — visibility without logging in. The nudge emails a home's
+// non-founder members when their record has sat empty for days (once a
+// week at most), so a stalled onboarding restarts itself.
+const { dailyDigest, emptyRecordReminder } = require("./digest")
+const DIGEST_TO = ["paddythesaint@gmail.com"]
+
+exports.founderDigest = onSchedule(
+  { schedule: "every day 07:30", timeZone: "America/New_York", maxInstances: 1, memory: "256MiB", timeoutSeconds: 300 },
+  async () => {
+    const { GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN } = process.env
+    if (!(GMAIL_CLIENT_ID && GMAIL_CLIENT_SECRET && GMAIL_REFRESH_TOKEN)) return
+
+    const db = getFirestore()
+    const propsSnap = await db.collection("properties").get()
+    const properties = []
+    for (const doc of propsSnap.docs) {
+      const collections = {}
+      for (const c of ["facts", "jobHistory", "workOrders", "conversations", "photos", "healthReport"]) {
+        const snap = await db.collection(`properties/${doc.id}/${c}`).get()
+        collections[c] = snap.docs.map((d) => d.data())
+      }
+      properties.push({ profile: doc.data(), collections })
+    }
+
+    const digest = dailyDigest(properties)
+    if (!digest) {
+      console.log("founderDigest: quiet portfolio — nothing sent")
+      return
+    }
+    try {
+      const token = await gmailAccessToken()
+      const res = await fetch(`${GMAIL_BASE}/messages/send`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ raw: rfc822({ from: BRIEF_FROM, to: DIGEST_TO, ...digest }) }),
+      })
+      console.log(`founderDigest: ${res.ok ? "sent" : `send failed ${res.status}`}`)
+    } catch (err) {
+      console.error("founderDigest: send errored:", err)
+    }
+
+    // Empty-record nudges ride the same morning run.
+    for (const doc of propsSnap.docs) {
+      try {
+        const profile = doc.data()
+        // Homes that predate the createdOnMs stamp get one now — the
+        // clock starts today, so established homes are never nudged.
+        if (!profile.createdOnMs) {
+          await doc.ref.update({ createdOnMs: Date.now() })
+          continue
+        }
+        const [sysSnap, jobsSnap] = await Promise.all([
+          db.collection(`properties/${doc.id}/healthReport`).get(),
+          db.collection(`properties/${doc.id}/jobHistory`).get(),
+        ])
+        const reminder = emptyRecordReminder({
+          profile,
+          systems: sysSnap.docs.map((d) => d.data()),
+          jobs: jobsSnap.docs.map((d) => d.data()),
+          founderEmails: FOUNDER_EMAILS,
+        })
+        if (!reminder) continue
+        const token = await gmailAccessToken()
+        const res = await fetch(`${GMAIL_BASE}/messages/send`, {
+          method: "POST",
+          headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+          body: JSON.stringify({
+            raw: rfc822({ from: BRIEF_FROM, to: reminder.to, subject: reminder.subject, text: reminder.text }),
+          }),
+        })
+        if (res.ok) await doc.ref.update({ reminderSentMs: Date.now() })
+        console.log(`founderDigest: reminder for ${doc.id} — ${res.ok ? "sent" : `failed ${res.status}`}`)
+      } catch (err) {
+        console.error(`founderDigest: reminder failed for ${doc.id}:`, err)
+      }
+    }
+  }
+)
