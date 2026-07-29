@@ -24,16 +24,29 @@ function extractTag(headers) {
   return m ? m[1].toLowerCase() : ""
 }
 
-// Which property a message belongs to. One property in the portfolio →
-// everything routes there (the current single-home reality, zero config).
-// Multiple → the +tag must match a property's emailTag (set on its profile);
-// no match → null, and the poller records it as unrouted.
-function routeMessage(tag, properties) {
+// Which property a message belongs to, in priority order (7/28):
+//   1. An explicit +tag matching a property's emailTag always wins — it's
+//      the sender saying "this home," and founders who belong to every
+//      home need it to disambiguate.
+//   2. Otherwise the sender routes by membership: an address that belongs
+//      to exactly ONE property's memberEmails goes home automatically —
+//      clients and pilots never need to remember the tag.
+//   3. A single-property portfolio takes everything (zero config).
+//   4. Nothing matches → null; the poller records it as unrouted.
+function routeMessage(tag, properties, from = "") {
+  if (tag) {
+    const tagged = properties.find((p) => (p.emailTag || "").toLowerCase() === tag)
+    if (tagged) return tagged
+  }
+  const sender = ((from || "").match(/[\w.+-]+@[\w-]+\.[\w.]+/) || [""])[0].toLowerCase()
+  if (sender) {
+    const homes = properties.filter((p) =>
+      (p.memberEmails || []).some((m) => (m || "").toLowerCase() === sender)
+    )
+    if (homes.length === 1) return homes[0]
+  }
   if (properties.length === 1) return properties[0]
-  if (!tag) return null
-  return (
-    properties.find((p) => (p.emailTag || "").toLowerCase() === tag) || null
-  )
+  return null
 }
 
 // --- Body extraction -------------------------------------------------------

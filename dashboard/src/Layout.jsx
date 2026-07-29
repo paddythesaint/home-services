@@ -102,6 +102,14 @@ function buildNavSections(view) {
   if (tools.length) {
     sections.push({ heading: "Tools", items: tools })
   }
+  // diy pilots self-manage their own projects: the work-order board joins
+  // their nav under Projects (founders reach it via Business instead).
+  if (view.pipeline && !view.business) {
+    sections.push({
+      heading: "Projects",
+      items: [{ to: "/work-orders", label: "Work Orders", icon: "workorders" }],
+    })
+  }
   if (view.business) {
     // Founders start their day on the business plane — it leads the nav
     // so "what needs me today" is the first thing on the menu, not the

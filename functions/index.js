@@ -341,7 +341,7 @@ exports.emailPoller = onSchedule(
         const from = header("from")
         const subject = header("subject")
         const tag = extractTag(headers)
-        const property = routeMessage(tag, properties)
+        const property = routeMessage(tag, properties, from)
 
         if (!property) {
           await gate.set({ status: "unrouted", from, subject, tag, at: new Date().toISOString() })

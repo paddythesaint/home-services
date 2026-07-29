@@ -117,6 +117,10 @@ export function viewFor(email) {
     recordTabs: new Set(RECORD_TABS[role]),
     planTabs: new Set(PLAN_TABS[role]),
     business: role === "founder", // Business nav section + its pages
+    // The project pipeline (work orders, quotes, outreach): founders run
+    // it portfolio-wide; diy pilots run it for their own home — property
+    // membership does the scoping, so no extra gating is needed there.
+    pipeline: role === "founder" || role === "diy",
     staff: role !== "homeowner", // internal instruments (onboarding checklist)
     showBilling: role === "founder" || role === "homeowner",
   }

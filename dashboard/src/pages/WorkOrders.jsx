@@ -860,7 +860,10 @@ function QuoteChip({ w }) {
 
 export default function WorkOrders() {
   const { user } = useOutletContext()
-  const founder = viewFor(user?.email).business
+  // Founders run the board portfolio-wide; diy pilots run it for their own
+  // home — fetchMemberProperties scopes to memberships, so a pilot only
+  // ever sees (and can only ever touch) the homes they belong to.
+  const founder = viewFor(user?.email).pipeline
 
   const [properties, setProperties] = useState([])
   const [byProperty, setByProperty] = useState({})
