@@ -105,6 +105,16 @@ describe("role-tailored navigation (Layout)", () => {
     hidden(/Next invoice/)
   })
 
+  it("diy pilots self-build: walkthrough in nav, no business plane, no billing", async () => {
+    renderLayout({ email: "diy@example.com", displayName: "Alex", uid: "u-diy" })
+    await sees("Walkthrough")
+    await sees("Record")
+    await sees("Plan")
+    hidden("Command Center")
+    hidden("Contractor Network")
+    hidden(/Next invoice/) // pilots ride free — no billing chrome
+  })
+
   it("homeowner gets a clean four-item nav: no tools, no business plane, billing shown", async () => {
     renderLayout(ALTON)
     await sees("Home")
