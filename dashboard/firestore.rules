@@ -53,10 +53,22 @@ service cloud.firestore {
       }
     }
 
+    // DIY pilots: owner-operators granted read access to the shared
+    // contractor network (founder call, 7/28). Keep in sync with the diy
+    // entries in src/roles.js — swap the placeholder for real pilot
+    // emails as each one is green-lit.
+    function isPilot() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in ['diy@example.com'];
+    }
+
     // The contractor network: one profile per contractor, spanning all
-    // properties. Founder-only.
+    // properties. Founders own it; pilots may read it (their additions
+    // come through the suggest-and-approve flow, never direct writes).
     match /contractors/{contractorId} {
-      allow read, write: if isFounder();
+      allow read: if isFounder() || isPilot();
+      allow write: if isFounder();
     }
 
     // The founders' shared idea board. Business-plane scratchpad — never
