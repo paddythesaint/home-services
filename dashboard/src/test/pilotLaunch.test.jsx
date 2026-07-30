@@ -38,3 +38,14 @@ describe("pilot contractor suggestions", () => {
     expect(screen.queryByText("Suggest to HPS")).not.toBeInTheDocument()
   })
 })
+
+describe("the seed hint stays exact", () => {
+  it("matches only the flagship home, never neighbors on the same street", async () => {
+    const { seedAddressHint } = await import("../seedData")
+    expect(seedAddressHint.test("895 Old Ballard Road")).toBe(true)
+    expect(seedAddressHint.test("895 Old Ballard Farm Ln")).toBe(true)
+    // The bug: a new home up the street inherited the 895 hero + banners.
+    expect(seedAddressHint.test("1600 Old Ballard Road")).toBe(false)
+    expect(seedAddressHint.test("42 Ridgeview Rd")).toBe(false)
+  })
+})
