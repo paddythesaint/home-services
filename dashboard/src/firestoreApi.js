@@ -77,15 +77,8 @@ export async function resolvePropertyId(user) {
 // Requires the `allow create` clause in firestore.rules to be published
 // (see RUNBOOK.md) — on permission-denied the UI says exactly that.
 export async function createProperty(data, user) {
-  const email = (user.email || "").toLowerCase()
-  const ref = await addDoc(collection(db, "properties"), {
-    ...data,
-    members: [{ email, name: user.displayName || "", role: "owner" }],
-    memberEmails: [email],
-    // Starts the onboarding clock: the empty-record reminder measures from
-    // here (functions/digest.js).
-    createdOnMs: Date.now(),
-  })
+  const { buildNewProperty } = await import("./propertyCreation")
+  const ref = await addDoc(collection(db, "properties"), buildNewProperty(data, user))
   // Every new home starts with a year of seasonal rhythm, tailored to its
   // climate region — the owner authors no calendar (7/25 UX cleanup).
   const { starterCalendar } = await import("./maintenanceIntelligence")
