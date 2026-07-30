@@ -27,13 +27,15 @@ beforeEach(() => {
 })
 
 describe("createProperty", () => {
-  it("creates a property with the creator as first member", async () => {
+  it("a founder-created home stays in the portfolio without listing the founder", async () => {
     const id = await createProperty({ address: "9 New Place Ct", tier: "Standard" }, MOCK_FOUNDER)
     expect(id).toBeTruthy()
     const portfolio = await fetchMemberProperties(MOCK_FOUNDER.email)
     const created = portfolio.find((p) => p.id === id)
     expect(created.address).toBe("9 New Place Ct")
-    expect(created.memberEmails).toEqual([MOCK_FOUNDER.email])
+    // Respect doctrine (7/30): staff are never members of a client's home —
+    // the portfolio reaches it platform-side.
+    expect(created.memberEmails).toEqual([])
   })
 
   it("seeds a new home's care calendar from the seasonal playbook", async () => {

@@ -3,7 +3,7 @@
 // knowledge accumulates as facts (walkthroughs, the assistant, email
 // intake) and as system locations; this groups it for the worst moment.
 
-import { DESIGNATED_PROS } from "./designations"
+import { designationsFor } from "./designations"
 import { TEAM } from "./team"
 
 const SHUTOFF_GROUPS = [
@@ -67,9 +67,9 @@ export function emergencyShutoffs(facts = [], systems = []) {
   return groups.filter((g) => g.entries.length > 0)
 }
 
-// Who to call, in order: the team (always first), then the designated pro
-// per trade — with a phone number when the home's roster has one.
-export function emergencyContacts(contractors = []) {
+// Who to call, in order: the team (always first), then this home's own
+// designated pro per trade — with a phone number when the roster has one.
+export function emergencyContacts(contractors = [], profile = null) {
   const phoneFor = (name) =>
     contractors.find((c) => (c.name || "").toLowerCase() === name.toLowerCase())?.phone || ""
   return [
@@ -80,7 +80,7 @@ export function emergencyContacts(contractors = []) {
       email: t.email || "",
       team: true,
     })),
-    ...DESIGNATED_PROS.map((d) => ({
+    ...designationsFor(profile).map((d) => ({
       name: d.name,
       role: `${d.trade}${d.interim ? " · interim" : ""}`,
       phone: phoneFor(d.name),

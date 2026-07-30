@@ -1,16 +1,15 @@
 import { useState } from "react"
 import { addMember, removeMember, saveProperty } from "./firestoreApi"
-import { businessRole } from "./roles"
 import { Card, Button } from "./components"
 
-// What a member row calls someone: the platform role wins over the stored
-// label, so a founder who created a home never reads as its "owner" —
-// including on homes created before the enter-once form (7/28).
-const displayRole = (m) => {
-  const platform = businessRole(m.email)
-  if (platform) return platform === "relationship" ? "team" : platform
-  return m.role === "diy" ? "diy pilot" : m.role || "owner"
-}
+// Respect doctrine (7/30): business staff are never listed among a home's
+// people — their access is platform-side (firestore.rules), invisible
+// here. A member row stamped with a staff seat (a pre-doctrine artifact)
+// stays hidden; genuine owners are always stored as "owner" or "diy",
+// so a founder who owns their own home still appears — as its owner.
+const BUSINESS_SEATS = new Set(["founder", "relationship", "technician"])
+
+const displayRole = (m) => (m.role === "diy" ? "diy pilot" : m.role || "owner")
 
 // People-with-access panel. Members are stored on the property doc; owners
 // invite by email (no Firebase uid needed — the invitee signs in with that
@@ -28,7 +27,7 @@ const BRIEF_CHOICES = [
 ]
 
 export default function Members({ uid, profile, currentEmail }) {
-  const members = profile.members || []
+  const members = (profile.members || []).filter((m) => !BUSINESS_SEATS.has(m.role))
   const [email, setEmail] = useState("")
   const [name, setName] = useState("")
   const [role, setRole] = useState("owner")

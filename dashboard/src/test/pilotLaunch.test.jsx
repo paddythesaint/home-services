@@ -3,7 +3,7 @@
 // to the founder roster.
 
 import { describe, it, expect } from "vitest"
-import { screen, fireEvent, waitFor } from "@testing-library/react"
+import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { renderPage } from "./renderPage"
 import { __getItems } from "../mocks/firestoreApi"
 import { addItem } from "../firestoreApi"
@@ -51,8 +51,8 @@ describe("the seed hint stays exact", () => {
 })
 
 describe("enter-once creation", () => {
-  it("the homeowner named on the form becomes the owner-member; the founder stays founder", async () => {
-    const { createProperty } = await import("../firestoreApi")
+  it("the homeowner named on the form becomes the sole owner-member; the founder is never listed", async () => {
+    const { createProperty, fetchMemberProperties } = await import("../firestoreApi")
     const { MOCK_FOUNDER } = await import("../mocks/fixtures")
     const id = await createProperty(
       {
@@ -65,16 +65,49 @@ describe("enter-once creation", () => {
     )
     const { __getProfile } = await import("../mocks/firestoreApi")
     const p = __getProfile(id)
-    expect(p.memberEmails).toContain("mike.family@gmail.com")
-    expect(p.memberEmails).toContain(MOCK_FOUNDER.email)
+    // Respect doctrine: the household is the member list; staff access is
+    // platform-side and never shows up on the home.
+    expect(p.memberEmails).toEqual(["mike.family@gmail.com"])
     const owner = p.members.find((m) => m.email === "mike.family@gmail.com")
     expect(owner.role).toBe("owner")
     expect(owner.name).toBe("Sutton")
-    const creator = p.members.find((m) => m.email === MOCK_FOUNDER.email)
-    expect(creator.role).toBe("founder")
     expect(p.briefStyles["mike.family@gmail.com"]).toBe("proactive")
     // The form-only fields never pollute the profile.
     expect(p.ownerEmail).toBeUndefined()
     expect(p.ownerBrief).toBeUndefined()
+    // The founder still sees the home in the portfolio — platform-side.
+    const portfolio = await fetchMemberProperties(MOCK_FOUNDER.email)
+    expect(portfolio.some((x) => x.id === id)).toBe(true)
+  })
+
+  it("People with access never lists a staff-seat member row", async () => {
+    const { default: Members } = await import("../Members")
+    render(
+      <Members
+        uid="prop-x"
+        currentEmail="paddythesaint@gmail.com"
+        profile={{
+          address: "1600 Old Ballard Road",
+          members: [
+            { email: "paddythesaint@gmail.com", name: "Patrick", role: "founder" },
+            { email: "alex@example.com", name: "Alexander", role: "owner" },
+          ],
+        }}
+      />
+    )
+    expect(screen.getByText("Alexander")).toBeInTheDocument()
+    expect(screen.queryByText("Patrick")).not.toBeInTheDocument()
+  })
+
+  it("a diy pilot creating their own home is its owner from birth", async () => {
+    const { createProperty } = await import("../firestoreApi")
+    const id = await createProperty(
+      { address: "42 Ridgeview Rd" },
+      { email: "diy@example.com", displayName: "Alex" }
+    )
+    const { __getProfile } = await import("../mocks/firestoreApi")
+    const p = __getProfile(id)
+    expect(p.memberEmails).toEqual(["diy@example.com"])
+    expect(p.members[0].role).toBe("diy")
   })
 })

@@ -86,9 +86,23 @@ export async function createProperty(data, user) {
   return ref.id
 }
 
-// All properties the user is a member of — the operator's portfolio. Scoped
-// by membership, so an operator only ever sees properties they belong to.
+// The user's portfolio. Business seats (founder/relationship/technician)
+// see every home platform-side — they are never members of a client's home
+// (respect doctrine, 7/30; rules isFounder/isStaff grant the access).
+// Everyone else — homeowners, diy pilots — is scoped by membership. The
+// membership fallback keeps founders working until the updated rules are
+// published in the console.
 export async function fetchMemberProperties(email) {
+  const { businessRole } = await import("./roles")
+  const seat = businessRole(email)
+  if (seat === "founder" || seat === "relationship" || seat === "technician") {
+    try {
+      const all = await getDocs(collection(db, "properties"))
+      return all.docs.map((d) => ({ id: d.id, ...d.data() }))
+    } catch (err) {
+      console.warn("Portfolio query unavailable (rules not published yet?):", err.code || err)
+    }
+  }
   const snap = await getDocs(
     query(collection(db, "properties"), where("memberEmails", "array-contains", email))
   )

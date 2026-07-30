@@ -30,10 +30,11 @@ import {
 } from "../components"
 
 // Enter-once doctrine (7/28): the homeowner's identity is captured HERE,
-// at creation — they become the owner-member immediately (the creating
-// founder is listed as founder, never as the homeowner), their weekly-
+// at creation — they become the owner-member immediately, their weekly-
 // brief election is honored from day one, and email intake routes their
-// address automatically. No second entry anywhere.
+// address automatically. No second entry anywhere. The creating founder
+// is never listed on the home at all (respect doctrine, 7/30) — staff
+// visibility is platform-side.
 const newPropertyFields = [
   { name: "address", label: "Address", type: "text" },
   { name: "areaLabel", label: "City / State / Zip", type: "text" },
@@ -951,8 +952,9 @@ export default function Ops() {
       {creating && (
         <Modal title="New property" onClose={() => setCreating(false)}>
           <p className="text-sm text-ink-2 mb-4">
-            Creates the property record with you as its first member. Invite the
-            homeowner afterward from the property's "People with access" panel.
+            The homeowner named here owns the record from day one — their email
+            becomes the default for intake routing and the weekly brief, and
+            HPS stays behind the scenes (never listed on their home).
           </p>
           <DynamicForm
             fields={newPropertyFields}

@@ -17,7 +17,7 @@ export default function Emergency() {
   const { items: contractors } = useItems(uid, "contractors")
 
   const groups = emergencyShutoffs(facts, systems)
-  const contacts = emergencyContacts(contractors)
+  const contacts = emergencyContacts(contractors, profile)
 
   return (
     <div className="max-w-[720px]">
