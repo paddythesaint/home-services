@@ -8,7 +8,10 @@
 // The starter seed and every document-insights banner are assembled from
 // THIS property's records — they must never be offered on another home in
 // the portfolio. Overview gates on this address test.
-export const seedAddressHint = /old ballard/i
+// Must match ONLY the flagship home. The street name alone is not enough —
+// a neighbor at 1600 Old Ballard Road inherited the 895 hero photo and
+// nearly its seed banner (pilot onboarding, 7/28). House number required.
+export const seedAddressHint = /\b895\s+old\s+ballard/i
 
 export const seedProfile = {
   acreage: 5.011,

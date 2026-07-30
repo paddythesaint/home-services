@@ -38,3 +38,43 @@ describe("pilot contractor suggestions", () => {
     expect(screen.queryByText("Suggest to HPS")).not.toBeInTheDocument()
   })
 })
+
+describe("the seed hint stays exact", () => {
+  it("matches only the flagship home, never neighbors on the same street", async () => {
+    const { seedAddressHint } = await import("../seedData")
+    expect(seedAddressHint.test("895 Old Ballard Road")).toBe(true)
+    expect(seedAddressHint.test("895 Old Ballard Farm Ln")).toBe(true)
+    // The bug: a new home up the street inherited the 895 hero + banners.
+    expect(seedAddressHint.test("1600 Old Ballard Road")).toBe(false)
+    expect(seedAddressHint.test("42 Ridgeview Rd")).toBe(false)
+  })
+})
+
+describe("enter-once creation", () => {
+  it("the homeowner named on the form becomes the owner-member; the founder stays founder", async () => {
+    const { createProperty } = await import("../firestoreApi")
+    const { MOCK_FOUNDER } = await import("../mocks/fixtures")
+    const id = await createProperty(
+      {
+        address: "1600 Old Ballard Road",
+        clientName: "Sutton",
+        ownerEmail: "Mike.Family@Gmail.com",
+        ownerBrief: "proactive",
+      },
+      MOCK_FOUNDER
+    )
+    const { __getProfile } = await import("../mocks/firestoreApi")
+    const p = __getProfile(id)
+    expect(p.memberEmails).toContain("mike.family@gmail.com")
+    expect(p.memberEmails).toContain(MOCK_FOUNDER.email)
+    const owner = p.members.find((m) => m.email === "mike.family@gmail.com")
+    expect(owner.role).toBe("owner")
+    expect(owner.name).toBe("Sutton")
+    const creator = p.members.find((m) => m.email === MOCK_FOUNDER.email)
+    expect(creator.role).toBe("founder")
+    expect(p.briefStyles["mike.family@gmail.com"]).toBe("proactive")
+    // The form-only fields never pollute the profile.
+    expect(p.ownerEmail).toBeUndefined()
+    expect(p.ownerBrief).toBeUndefined()
+  })
+})

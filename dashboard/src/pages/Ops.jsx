@@ -29,10 +29,26 @@ import {
   DynamicForm,
 } from "../components"
 
+// Enter-once doctrine (7/28): the homeowner's identity is captured HERE,
+// at creation — they become the owner-member immediately (the creating
+// founder is listed as founder, never as the homeowner), their weekly-
+// brief election is honored from day one, and email intake routes their
+// address automatically. No second entry anywhere.
 const newPropertyFields = [
   { name: "address", label: "Address", type: "text" },
   { name: "areaLabel", label: "City / State / Zip", type: "text" },
   { name: "clientName", label: "Family / client name", type: "text" },
+  { name: "ownerEmail", label: "Homeowner's Google email", type: "text", placeholder: "them@gmail.com" },
+  {
+    name: "ownerBrief",
+    label: "Weekly brief for the homeowner",
+    type: "select",
+    options: ["passive", "proactive"],
+    optionLabels: {
+      passive: "Weekly note — the light check-in",
+      proactive: "Weekly plan — full actions & decisions",
+    },
+  },
   { name: "tier", label: "Membership tier", type: "text", placeholder: "e.g. Standard" },
   { name: "monthlyRate", label: "Monthly rate ($)", type: "number" },
   { name: "yearBuilt", label: "Year built", type: "number" },

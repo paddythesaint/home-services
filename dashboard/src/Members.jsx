@@ -1,6 +1,16 @@
 import { useState } from "react"
 import { addMember, removeMember, saveProperty } from "./firestoreApi"
+import { businessRole } from "./roles"
 import { Card, Button } from "./components"
+
+// What a member row calls someone: the platform role wins over the stored
+// label, so a founder who created a home never reads as its "owner" —
+// including on homes created before the enter-once form (7/28).
+const displayRole = (m) => {
+  const platform = businessRole(m.email)
+  if (platform) return platform === "relationship" ? "team" : platform
+  return m.role === "diy" ? "diy pilot" : m.role || "owner"
+}
 
 // People-with-access panel. Members are stored on the property doc; owners
 // invite by email (no Firebase uid needed — the invitee signs in with that
@@ -79,7 +89,7 @@ export default function Members({ uid, profile, currentEmail }) {
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <span className="text-xs text-ink-3 capitalize">
-                  {m.role === "diy" ? "diy pilot" : m.role || "owner"}
+                  {displayRole(m)}
                   {profile.briefStyles?.[m.email] && (
                     <span className="text-ink-3"> · {profile.briefStyles[m.email]} brief</span>
                   )}
