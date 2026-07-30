@@ -1,10 +1,13 @@
-// The designated pro per trade — the founder's standing answer to "who do
-// we call for this?", named 7/25. This is the simple form of the Wave-2
-// vendor-designation item: data first, receipts later. The homeowner
-// surface counts these as "trusted pros on call"; the quote machinery can
-// prefer them when suggesting contractors.
+// The designated pro per trade — a home's standing answer to "who do we
+// call for this?", named 7/25. Designations are per home (7/30): the
+// flagship's proven vendors belong to 895 alone, and every other home
+// starts empty until its owner names their own pros
+// (profile.designatedPros: [{ trade, name, interim? }]).
 
-export const DESIGNATED_PROS = [
+import { seedAddressHint } from "./seedData"
+
+// 895's earned list — applies only to the flagship, never as a default.
+const FLAGSHIP_PROS = [
   { trade: "HVAC", name: "Monticello Air" },
   { trade: "Plumbing", name: "Sunwave Plumbing" },
   // No proven electrician yet — Fitch Services is the interim default
@@ -12,5 +15,13 @@ export const DESIGNATED_PROS = [
   { trade: "Electrical", name: "Fitch Services", interim: true },
 ]
 
-export const designatedFor = (trade) =>
-  DESIGNATED_PROS.find((d) => d.trade.toLowerCase() === (trade || "").toLowerCase()) || null
+export const designationsFor = (profile) => {
+  if (Array.isArray(profile?.designatedPros) && profile.designatedPros.length > 0)
+    return profile.designatedPros
+  return seedAddressHint.test(profile?.address || "") ? FLAGSHIP_PROS : []
+}
+
+export const designatedFor = (profile, trade) =>
+  designationsFor(profile).find(
+    (d) => d.trade.toLowerCase() === (trade || "").toLowerCase()
+  ) || null

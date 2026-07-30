@@ -38,9 +38,12 @@ const propertyFields = [
   { name: "clientName", label: "Family / client name", type: "text" },
   {
     name: "emailTag",
-    label: "Email intake tag",
+    label: "Email intake tag (optional)",
     type: "text",
-    placeholder: "e.g. 895 — routes cvillehomeservicestest+895@gmail.com here",
+    // Sender routing is primary: mail FROM any member's address files here
+    // automatically (their email is captured once, on the new-home form).
+    // The +tag stays as an override for mail from unregistered senders.
+    placeholder: "e.g. 895 — member emails route automatically; +tag covers other senders",
   },
   { name: "tier", label: "Membership tier", type: "text" },
   { name: "monthlyRate", label: "Monthly rate ($)", type: "number" },

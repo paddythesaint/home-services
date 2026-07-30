@@ -7,7 +7,7 @@ import { isUnderway, isOpenWorkOrder } from "./workOrders"
 import { buildRecap } from "./valueRecap"
 import { homeFeed } from "./homeFeed"
 import { businessRole } from "./roles"
-import { DESIGNATED_PROS } from "./designations"
+import { designationsFor } from "./designations"
 import { TEAM } from "./team"
 import {
   Section,
@@ -200,7 +200,9 @@ export default function HomeownerHome() {
           <FigureRow>
             <Figure lead value={recap.tasksDone} label="tasks handled for you" />
             <Figure value={systems.length} label="systems on record" />
-            <Figure value={DESIGNATED_PROS.length} label="trusted pros on call" />
+            {designationsFor(profile).length > 0 && (
+              <Figure value={designationsFor(profile).length} label="trusted pros on call" />
+            )}
             <Figure value={lastVisitValue} label={lastVisitLabel} />
           </FigureRow>
         </div>

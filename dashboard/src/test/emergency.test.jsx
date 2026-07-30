@@ -48,13 +48,29 @@ describe("emergency derivation (pure)", () => {
   })
 
   it("contacts lead with the team, then designated pros with roster phones", () => {
-    const contacts = emergencyContacts([{ name: "Monticello Air", phone: "(434) 246-7111" }])
+    const flagship = { address: "895 Old Ballard Farm Ln" }
+    const contacts = emergencyContacts(
+      [{ name: "Monticello Air", phone: "(434) 246-7111" }],
+      flagship
+    )
     expect(contacts[0].team).toBe(true)
     expect(contacts[0].name).toBe("Sally")
     const hvac = contacts.find((c) => c.name === "Monticello Air")
     expect(hvac.phone).toBe("(434) 246-7111")
     const electric = contacts.find((c) => c.name === "Fitch Services")
     expect(electric.role).toMatch(/interim/)
+  })
+
+  it("another home never inherits 895's pros — team only until its owner designates", () => {
+    const contacts = emergencyContacts([], { address: "1600 Old Ballard Road" })
+    expect(contacts.every((c) => c.team)).toBe(true)
+    // A home that names its own pros sees exactly those.
+    const own = emergencyContacts([], {
+      address: "1600 Old Ballard Road",
+      designatedPros: [{ trade: "Plumbing", name: "Beck Cohen" }],
+    })
+    expect(own.find((c) => c.name === "Beck Cohen")).toBeTruthy()
+    expect(own.find((c) => c.name === "Monticello Air")).toBeUndefined()
   })
 })
 

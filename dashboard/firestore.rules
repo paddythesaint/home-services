@@ -78,22 +78,26 @@ service cloud.firestore {
     }
 
     match /properties/{propertyId} {
-      // Property creation (founder onboarding flow): any verified signed-in
-      // user may create a property that lists themselves as a member. The
+      // Property creation: a verified user may create a property that lists
+      // themselves as a member; founders may create client homes WITHOUT
+      // listing themselves (respect doctrine, 7/30 — staff are never members
+      // of a client's home; their access is platform-side, right here). The
       // existing `allow write` can't cover create — it reads resource.data,
       // which doesn't exist yet on a create.
-      allow create: if request.auth != null
-        && request.auth.token.email_verified == true
-        && request.auth.token.email in request.resource.data.memberEmails;
-      allow read: if isMemberOf(resource.data) || isLegacyOwner(propertyId) || isStaff();
+      allow create: if isFounder()
+        || (request.auth != null
+          && request.auth.token.email_verified == true
+          && request.auth.token.email in request.resource.data.memberEmails);
+      allow read: if isMemberOf(resource.data) || isLegacyOwner(propertyId) || isStaff() || isFounder();
       // A member (or the legacy owner) may update the property, including its
       // member list. New-member writes only work if you can already write.
-      allow write: if isLegacyOwner(propertyId) || isMemberOf(resource.data) || isStaff();
+      allow write: if isLegacyOwner(propertyId) || isMemberOf(resource.data) || isStaff() || isFounder();
 
       match /{sub}/{docId} {
         allow read, create, update: if isLegacyOwner(propertyId)
           || isMemberOf(propertyData(propertyId))
-          || isStaff();
+          || isStaff()
+          || isFounder();
         // Assistant transcripts are the audit trail — members and staff
         // write them as conversations accrue, but only founders may delete
         // one. Everything else keeps normal member delete.

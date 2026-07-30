@@ -59,8 +59,14 @@ export async function resolvePropertyId(user) {
 }
 
 export async function fetchMemberProperties(email) {
+  // Mirrors the real API: business seats see the whole portfolio
+  // platform-side (never as members of a client's home); everyone else
+  // is scoped by membership.
+  const { businessRole } = await import("../roles")
+  const seat = businessRole(email)
+  const businessSeat = seat === "founder" || seat === "relationship" || seat === "technician"
   return Object.entries(store.properties)
-    .filter(([, p]) => (p.profile.memberEmails || []).includes(email))
+    .filter(([, p]) => businessSeat || (p.profile.memberEmails || []).includes(email))
     .map(([id, p]) => ({ id, ...structuredClone(p.profile) }))
 }
 
