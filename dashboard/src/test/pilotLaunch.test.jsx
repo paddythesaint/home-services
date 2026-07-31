@@ -51,7 +51,7 @@ describe("the seed hint stays exact", () => {
 })
 
 describe("enter-once creation", () => {
-  it("the homeowner named on the form becomes the sole owner-member; the founder is never listed", async () => {
+  it("the homeowner is held pending — no access until the founder activates; the founder is never listed", async () => {
     const { createProperty, fetchMemberProperties } = await import("../firestoreApi")
     const { MOCK_FOUNDER } = await import("../mocks/fixtures")
     const id = await createProperty(
@@ -65,21 +65,51 @@ describe("enter-once creation", () => {
     )
     const { __getProfile } = await import("../mocks/firestoreApi")
     const p = __getProfile(id)
-    // Respect doctrine: the household is the member list; staff access is
-    // platform-side and never shows up on the home.
-    expect(p.memberEmails).toEqual(["mike.family@gmail.com"])
-    const owner = p.members.find((m) => m.email === "mike.family@gmail.com")
-    expect(owner.role).toBe("owner")
-    expect(owner.name).toBe("Sutton")
-    expect(p.briefStyles["mike.family@gmail.com"]).toBe("proactive")
+    // Three-step signup: the homeowner waits in the wings — not a member,
+    // no brief election recorded yet — until the founder activates them.
+    expect(p.memberEmails).toEqual([])
+    expect(p.members).toEqual([])
+    expect(p.pendingOwner).toEqual({
+      email: "mike.family@gmail.com",
+      name: "Sutton",
+      brief: "proactive",
+    })
+    expect(p.briefStyles).toBeUndefined()
     // The form-only fields never pollute the profile.
     expect(p.ownerEmail).toBeUndefined()
     expect(p.ownerBrief).toBeUndefined()
-    // The two-step signup: creation queues the background address research.
+    // Step two queues automatically: the background address research.
     expect(p.research).toBe("requested")
     // The founder still sees the home in the portfolio — platform-side.
     const portfolio = await fetchMemberProperties(MOCK_FOUNDER.email)
     expect(portfolio.some((x) => x.id === id)).toBe(true)
+  })
+
+  it("step three: the founder reviews and activates — owner-member, brief election, pending cleared", async () => {
+    const { createProperty } = await import("../firestoreApi")
+    const { MOCK_FOUNDER } = await import("../mocks/fixtures")
+    const id = await createProperty(
+      {
+        address: "1600 Old Ballard Road",
+        clientName: "Sutton",
+        ownerEmail: "mike.family@gmail.com",
+        ownerBrief: "proactive",
+      },
+      MOCK_FOUNDER
+    )
+    const { default: Overview } = await import("../pages/Overview")
+    renderPage(<Overview />, { uid: id })
+    fireEvent.click(
+      await screen.findByText(/Confirm record & give mike.family@gmail.com access/)
+    )
+    const { __getProfile } = await import("../mocks/firestoreApi")
+    await waitFor(() => {
+      const p = __getProfile(id)
+      expect(p.memberEmails).toEqual(["mike.family@gmail.com"])
+      expect(p.members[0]).toMatchObject({ email: "mike.family@gmail.com", role: "owner" })
+      expect(p.briefStyles["mike.family@gmail.com"]).toBe("proactive")
+      expect(p.pendingOwner).toBeFalsy()
+    })
   })
 
   it("People with access never lists a staff-seat member row", async () => {
