@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
+import { addMember } from "../firestoreApi"
 import SeedBanner from "../SeedBanner"
 import OnboardingChecklist from "../OnboardingChecklist"
 import Members from "../Members"
@@ -161,9 +162,10 @@ function FullOverview() {
 
       {dashboardEmpty && isSeedProperty && <SeedBanner uid={uid} />}
 
-      {/* The two-step signup's second half, visible: the background
-          researcher works this address against public records and files
-          what it finds — sourced, unverified until confirmed. */}
+      {/* The three-step signup, visible: (1) created lean, (2) the
+          background researcher files what public records know, (3) the
+          founder reviews and activates the homeowner — nothing reaches
+          them (access, weekly brief, reminders) until this step. */}
       {profile.research === "requested" && (
         <Card className="mb-4">
           <p className="m-0 text-sm text-ink-2">
@@ -174,7 +176,7 @@ function FullOverview() {
           </p>
         </Card>
       )}
-      {profile.research === "done" && dashboardEmpty && (
+      {profile.research === "done" && (dashboardEmpty || profile.pendingOwner) && (
         <Card className="mb-4">
           <p className="m-0 text-sm text-ink-2">
             <span className="font-medium text-ink">
@@ -184,6 +186,32 @@ function FullOverview() {
             {(profile.researchFactCount || 0) === 1 ? "" : "s"} filed to the record
             {profile.researchNote ? ` · ${profile.researchNote}` : ""}
           </p>
+        </Card>
+      )}
+      {profile.pendingOwner && viewFor(user?.email).staff && (
+        <Card className="mb-4">
+          <p className="m-0 text-sm text-ink-2">
+            <span className="font-medium text-ink">
+              {profile.pendingOwner.name || profile.pendingOwner.email} is waiting in the
+              wings.
+            </span>{" "}
+            Review the researched record above, tidy anything off, then give them
+            access — until then they can't sign in and no emails go their way.
+          </p>
+          <div className="mt-3">
+            <Button
+              onClick={async () => {
+                const { email, name, brief } = profile.pendingOwner
+                await addMember(uid, { email, name, role: "owner" })
+                await saveProfile({
+                  briefStyles: { ...(profile.briefStyles || {}), [email]: brief || "passive" },
+                  pendingOwner: null,
+                })
+              }}
+            >
+              Confirm record & give {profile.pendingOwner.email} access
+            </Button>
+          </div>
         </Card>
       )}
 

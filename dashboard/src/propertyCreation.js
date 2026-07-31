@@ -26,17 +26,24 @@ export function buildNewProperty(data, user) {
   if (!BUSINESS_SEATS.has(platform)) {
     members.push({ email, name: user.displayName || "", role: platform || "owner" })
   }
-  if (ownerEmail && ownerEmail !== email && ownerEmail.includes("@")) {
-    members.push({ email: ownerEmail, name: profile.clientName || "", role: "owner" })
-  }
   const memberEmails = members.map((m) => m.email)
 
   return {
     ...profile,
     members,
     memberEmails,
+    // Three-step signup (7/31): the homeowner named on the form is held
+    // PENDING — no access, no weekly brief, no reminders — until the
+    // founder reviews the researched record and activates them from the
+    // home's Overview. Their brief election rides along for that moment.
     ...(ownerEmail && ownerEmail !== email && ownerEmail.includes("@")
-      ? { briefStyles: { [ownerEmail]: ownerBrief || "passive" } }
+      ? {
+          pendingOwner: {
+            email: ownerEmail,
+            name: profile.clientName || "",
+            brief: ownerBrief || "passive",
+          },
+        }
       : {}),
     // Starts the onboarding clock: the empty-record reminder measures
     // from here (functions/digest.js).
