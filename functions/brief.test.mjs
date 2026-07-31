@@ -101,6 +101,24 @@ test("passive brief: sky + done + reassurance — no dollars, no action list", (
   assert.doesNotMatch(b.text, /COMING NEXT 30 DAYS/)
 })
 
+test("low filter stock rides both styles; healthy stock stays silent", () => {
+  const supplies = [
+    { kind: "air", size: "20x25x1", count: 4, stock: 1 },
+    { kind: "air", size: "16x25x1", count: 2, stock: 5 },
+    { kind: "water", size: "Refrigerator filter", count: 1, stock: 0 },
+  ]
+  const pro = buildBrief({ ...RECORD, supplies, style: "proactive" })
+  assert.match(pro.text, /SUPPLIES CHECK/)
+  assert.match(pro.text, /Running low: 20x25x1 air filter — need 4, have 1/)
+  assert.match(pro.text, /Running low: Refrigerator filter — need 1, have 0/)
+  assert.doesNotMatch(pro.text, /16x25x1/)
+  const passive = buildBrief({ ...RECORD, supplies, style: "passive" })
+  assert.match(passive.text, /Running low: 20x25x1 air filter/)
+  // Fully stocked: the section vanishes.
+  const quiet = buildBrief({ ...RECORD, supplies: [{ kind: "air", size: "20x25x1", count: 4, stock: 4 }] })
+  assert.doesNotMatch(quiet.text, /SUPPLIES CHECK/)
+})
+
 test("a quiet week still sends, led by all-quiet reassurance", () => {
   const b = buildBrief({
     profile: { address: "42 Ridgeview Rd" },

@@ -7,6 +7,7 @@
 import { addItem, updateItem, fetchItems } from "./firestoreApi"
 import { withQuote } from "./workOrders"
 import { todayLabel } from "./dates"
+import { DEFAULT_INTERVAL } from "./supplies"
 
 // Where each action type's record can be seen once applied.
 export const ACTION_DESTINATION = {
@@ -15,6 +16,7 @@ export const ACTION_DESTINATION = {
   log_system: "/health-report",
   service_request: "/",
   log_quote: "/work-orders",
+  save_filter: "/health-report",
 }
 
 export async function applyAssistantAction(pid, action, email) {
@@ -85,6 +87,20 @@ export async function applyAssistantAction(pid, action, email) {
         date: todayLabel(),
       })
     }
+  } else if (action.type === "save_filter") {
+    // A filter size joins the home's consumables ledger (Filters &
+    // supplies) — stock starts at zero until someone counts the shelf.
+    const kind = action.kind === "water" ? "water" : "air"
+    await addItem(pid, "supplies", {
+      kind,
+      size: action.size || "",
+      count: Math.max(1, Number(action.count) || 1),
+      stock: 0,
+      intervalMonths: Number(action.intervalMonths) || DEFAULT_INTERVAL[kind],
+      location: action.location || "",
+      createdOnMs: Date.now(),
+      source: "assistant",
+    })
   } else if (action.type === "service_request") {
     await addItem(pid, "workOrders", {
       title: action.title,

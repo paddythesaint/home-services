@@ -2,8 +2,9 @@ import { useState } from "react"
 import { PlanTabs } from "../HubTabs"
 import { Link, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
-import { addItem } from "../firestoreApi"
+import { addItem, updateItem } from "../firestoreApi"
 import { todayLabel } from "../dates"
+import { upcomingByMonth, replacementSummary, isDue, supplyLabel } from "../supplies"
 import { tradeForItem } from "../trades"
 import { starterCalendar, seasonFor, SEASON_LABEL } from "../maintenanceIntelligence"
 import { climateFor } from "../climate"
@@ -50,7 +51,30 @@ const fields = [
 export default function CareCalendar() {
   const { uid, profile } = useOutletContext()
   const { items, add, update, remove } = useItems(uid, "careCalendar")
+  const { items: supplies } = useItems(uid, "supplies")
   const [seeding, setSeeding] = useState(false)
+
+  // Filter replacements are derived rows, not stored tasks: each line's due
+  // month comes from lastReplaced + its interval (see supplies.js), so
+  // marking a change done slides the schedule forward by itself.
+  const filterMonths = upcomingByMonth(supplies)
+
+  async function replaceFilters(lines) {
+    for (const s of lines) {
+      await updateItem(uid, "supplies", s.id, {
+        stock: Math.max(0, (s.stock ?? 0) - (s.count || 1)),
+        lastReplacedMs: Date.now(),
+      })
+    }
+    await addItem(uid, "jobHistory", {
+      date: todayLabel(),
+      title: `Replaced filters — ${lines.map((s) => `${supplyLabel(s)} ×${s.count || 1}`).join(", ")}`,
+      category: "HVAC",
+      sub: "Owner (DIY)",
+      status: "completed",
+      notes: "Filter schedule.",
+    })
+  }
 
   // An empty calendar offers the climate-tailored starter plan instead of a
   // blank grid — nobody should have to author a year of maintenance rhythm.
@@ -127,6 +151,11 @@ export default function CareCalendar() {
             ? `${monthsIn[0].slice(0, 3)}–${monthsIn[monthsIn.length - 1].slice(0, 3)}`.toUpperCase()
             : ""
           const now = season === currentSeason
+          // Derived filter-change rows falling in this season's months.
+          const filterRows = monthsIn
+            .map((name) => MONTHS.indexOf(name))
+            .filter((idx) => filterMonths.has(idx))
+            .map((idx) => ({ idx, lines: filterMonths.get(idx) }))
           return (
             <div key={season} className="grid grid-cols-1 md:grid-cols-[132px_1fr] gap-x-6 gap-y-2">
               <div>
@@ -137,7 +166,7 @@ export default function CareCalendar() {
                 </p>
               </div>
               <ul className="m-0 p-0 list-none">
-                {seasonItems.length === 0 && (
+                {seasonItems.length === 0 && filterRows.length === 0 && (
                   <li className="text-[12.5px] text-ink-4 py-3 border-t border-line">
                     Nothing scheduled.
                   </li>
@@ -187,6 +216,41 @@ export default function CareCalendar() {
                           delete
                         </button>
                         <span className="numeric text-[11px] text-ink-3 w-20 text-right">{item.month.slice(0, 3)}</span>
+                      </span>
+                    </li>
+                  )
+                })}
+                {/* Derived from the filter ledger (Record → Health): the
+                    row rides its due month and slides forward when marked
+                    replaced — nothing to maintain here. */}
+                {filterRows.map(({ idx, lines }) => {
+                  const due = lines.some((s) => isDue(s))
+                  return (
+                    <li
+                      key={`filters-${idx}`}
+                      className="flex items-baseline justify-between gap-4 py-3 border-t border-line last:border-b"
+                    >
+                      <span className={`text-sm ${due ? "font-medium text-ink" : "text-ink-2"}`}>
+                        <Link to="/health-report" className="hover:text-brand-700">
+                          Replace filters — {replacementSummary(lines)}
+                        </Link>
+                        <span className="numeric uppercase text-[10.5px] text-ink-3 ml-2 tracking-wide">
+                          · supplies
+                        </span>
+                      </span>
+                      <span className="shrink-0 flex items-baseline gap-3">
+                        {due && (
+                          <button
+                            type="button"
+                            className="text-brand-600 hover:text-brand-800 text-xs font-medium"
+                            onClick={() => replaceFilters(lines)}
+                          >
+                            mark replaced
+                          </button>
+                        )}
+                        <span className="numeric text-[11px] text-ink-3 w-20 text-right">
+                          {MONTHS[idx].slice(0, 3)}
+                        </span>
                       </span>
                     </li>
                   )

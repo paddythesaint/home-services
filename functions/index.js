@@ -506,8 +506,8 @@ exports.weeklyBrief = onSchedule(
       if (members.length === 0) continue
 
       try {
-        const [jobs, workOrders, calendar, systems] = await Promise.all(
-          ["jobHistory", "workOrders", "careCalendar", "healthReport"].map(async (c) => {
+        const [jobs, workOrders, calendar, systems, supplies] = await Promise.all(
+          ["jobHistory", "workOrders", "careCalendar", "healthReport", "supplies"].map(async (c) => {
             const snap = await db.collection(`properties/${doc.id}/${c}`).get()
             return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
           })
@@ -525,7 +525,7 @@ exports.weeklyBrief = onSchedule(
         let status = "composed"
         let stored = null
         for (const [style, to] of Object.entries(groups)) {
-          const brief = buildBrief({ profile, jobs, workOrders, calendar, systems, forecast, style })
+          const brief = buildBrief({ profile, jobs, workOrders, calendar, systems, supplies, forecast, style })
           if (style === "proactive" || !stored) stored = brief
 
           if (!canSend) continue
