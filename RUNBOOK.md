@@ -15,6 +15,8 @@ about two minutes.
 | `match /clients/{propertyId}` (founder-only) | Slice 34 (7/5/26) | The client relationship card + touch log on the founder Overview, and "last touch" on the Command Center. System status shows a red "Client relationship store" row until published. |
 | `isStaff()` on properties + subcollections | Slice 34 (7/5/26) | Staff (relationship/technician seats) can work on any property **without being made co-owners** of a client's home. Placeholder emails in the rules — swap for real ones alongside `src/roles.js` when hiring. |
 | `match /ideas/{ideaId}` (founder-only) | Slice 36 (7/5/26) | The owners' shared Ideas board in the Business nav. System status shows a red "Idea board" row until published. |
+| `isPilot()` read on `/contractors` | Pilot pack (7/28/26) | DIY pilots can view the shared contractor network (their additions go through suggest-and-approve). The email list is a placeholder until real pilot addresses are added alongside `src/roles.js` — expect one more tiny publish then. |
+| `isFounder()` on properties + subcollections + create | Respect doctrine (7/30/26) | Founders keep full property access **without being members** of any client's home — including creating homes that never list them. **Must be published BEFORE creating/recreating homes with the new form**, or creation fails with permission-denied. |
 
 Publishing the whole file is idempotent: clauses that are already live are
 simply re-published unchanged. There is nothing to diff by hand.
