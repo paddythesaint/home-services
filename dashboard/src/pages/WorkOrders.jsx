@@ -81,6 +81,11 @@ function WorkOrderDrawer({
   const [briefing, setBriefing] = useState("idle") // idle | loading | error
   const [outreach, setOutreach] = useState("idle") // idle | loading | error
   const [outreachCopied, setOutreachCopied] = useState(false)
+  // Triage is a dialogue, not a verdict (7/31): each specialist question
+  // takes an inline answer, and answering queues a background re-read.
+  const { user: drawerUser } = useOutletContext() || {}
+  const [answering, setAnswering] = useState(null) // question index being answered
+  const [answerText, setAnswerText] = useState("")
   // The drawer grew past one scroll with quote pack v2 — two tabs keep the
   // read (what/why/status) apart from the doing (quotes in and out).
   const [tab, setTab] = useState("overview") // overview | quotes
@@ -405,10 +410,79 @@ function WorkOrderDrawer({
                   <div className="mt-2">
                     <p className="text-sm font-medium text-ink m-0">Ask the homeowner:</p>
                     <ul className="m-0 mt-1 pl-4 list-disc text-sm text-ink-2">
-                      {w.triage.questions.split(" | ").map((q, i) => (
-                        <li key={i}>{q}</li>
-                      ))}
+                      {w.triage.questions.split(" | ").map((q, i) => {
+                        const given = (w.triageAnswers || []).find((a) => a.question === q)
+                        return (
+                          <li key={i} className="mb-1.5">
+                            {q}
+                            {given ? (
+                              <p className="m-0 mt-0.5 text-ink">
+                                <span className="text-status-good font-medium">↳ </span>
+                                {given.answer}
+                                <span className="text-[11px] text-ink-3"> — {given.by || "answered"}</span>
+                              </p>
+                            ) : answering === i ? (
+                              <form
+                                className="flex gap-2 mt-1"
+                                onSubmit={async (e) => {
+                                  e.preventDefault()
+                                  const a = answerText.trim()
+                                  if (!a) return
+                                  await updateItem(w.propertyId, "workOrders", w.id, {
+                                    triageAnswers: [
+                                      ...(w.triageAnswers || []),
+                                      {
+                                        question: q,
+                                        answer: a,
+                                        by: drawerUser?.email || "",
+                                        on: todayLabel(),
+                                      },
+                                    ],
+                                    // The background specialist re-reads the
+                                    // order with the answers on its next sweep.
+                                    retriage: true,
+                                  })
+                                  setAnswering(null)
+                                  setAnswerText("")
+                                }}
+                              >
+                                <input
+                                  type="text"
+                                  autoFocus
+                                  value={answerText}
+                                  onChange={(e) => setAnswerText(e.target.value)}
+                                  placeholder="Your answer…"
+                                  className="flex-1 border border-line rounded-lg px-2.5 py-1.5 bg-surface text-ink text-sm"
+                                />
+                                <button
+                                  type="submit"
+                                  className="text-brand-600 hover:text-brand-800 text-xs font-medium"
+                                >
+                                  Save
+                                </button>
+                              </form>
+                            ) : (
+                              <button
+                                type="button"
+                                className="ml-2 text-brand-600 hover:text-brand-800 text-xs font-medium"
+                                onClick={() => {
+                                  setAnswering(i)
+                                  setAnswerText("")
+                                }}
+                              >
+                                answer
+                              </button>
+                            )}
+                          </li>
+                        )
+                      })}
                     </ul>
+                    {w.retriage && (
+                      <p className="text-[11px] text-ink-3 mt-1.5 mb-0">
+                        Answers noted — the specialist re-reads this ticket within ~10
+                        minutes and refreshes the assessment.
+                      </p>
+                    )}
                   </div>
                 )}
                 {w.triage.notes && (
