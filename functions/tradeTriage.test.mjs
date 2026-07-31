@@ -34,6 +34,28 @@ test("the prompt carries the right checklist and the home's record", () => {
   assert.match(p, /200A Square D \(installed 1992\)/)
   assert.match(p, /Panel photo captured July 2026/)
   assert.match(p, /Breaker keeps tripping/)
+  // No answers yet → no answers block.
+  assert.doesNotMatch(p, /ANSWERS FROM THE HOMEOWNER/)
+})
+
+test("homeowner answers ride the re-read as ground truth", () => {
+  const p = triageSystemPrompt({
+    order: {
+      title: "Repair broken sash cord — master bedroom window",
+      notes: "Window won't stay up",
+      category: "",
+      triageAnswers: [
+        {
+          question: "Is the master bedroom window on the first or second floor?",
+          answer: "Second floor — but the sash tilts in.",
+          by: "paddythesaint@gmail.com",
+        },
+      ],
+    },
+  })
+  assert.match(p, /ANSWERS FROM THE HOMEOWNER/)
+  assert.match(p, /treat as ground truth, never re-ask/)
+  assert.match(p, /Second floor — but the sash tilts in/)
 })
 
 test("parseTriage reads the fixed shape and normalizes urgency", () => {

@@ -22,6 +22,30 @@ describe("triage in the drawer", () => {
     expect(screen.getByText(/hex-key reset is a 10-minute first attempt/)).toBeInTheDocument()
     expect(screen.getByText(/assessed July 26, 2026/)).toBeInTheDocument()
   })
+
+  it("a specialist question takes an inline answer and queues the re-read", async () => {
+    const { waitFor } = await import("@testing-library/react")
+    const { __getItems } = await import("../mocks/firestoreApi")
+    renderPage(<WorkOrders />)
+    fireEvent.click(await screen.findByText("Disposal is jammed"))
+    await screen.findByText("Trade triage")
+    // Answer the first open question.
+    fireEvent.click(screen.getAllByText("answer")[0])
+    fireEvent.change(screen.getByPlaceholderText("Your answer…"), {
+      target: { value: "Yes — it hums, then clicks off." },
+    })
+    fireEvent.click(screen.getByText("Save"))
+    await waitFor(() => {
+      const orders = __getItems("prop-ridge", "workOrders")
+      const wo = orders.find((o) => o.title === "Disposal is jammed")
+      expect(wo.triageAnswers).toHaveLength(1)
+      expect(wo.triageAnswers[0].answer).toBe("Yes — it hums, then clicks off.")
+      expect(wo.retriage).toBe(true)
+    })
+    // The answer renders under its question, and the refresh note appears.
+    expect(await screen.findByText(/it hums, then clicks off/)).toBeInTheDocument()
+    expect(screen.getByText(/re-reads this ticket within ~10/)).toBeInTheDocument()
+  })
 })
 
 describe("triage in the attention inbox (pure)", () => {

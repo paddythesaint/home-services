@@ -81,7 +81,14 @@ THE REQUEST:
 - Title: ${order.title}
 - Client's words: ${order.notes || "(no detail captured)"}
 - Category: ${order.category || "unspecified"}
-
+${
+  (order.triageAnswers || []).length
+    ? `
+ANSWERS FROM THE HOMEOWNER (to your earlier questions — treat as ground truth, never re-ask these):
+${order.triageAnswers.map((a) => `- Q: ${a.question}\n  A: ${a.answer}`).join("\n")}
+`
+    : ""
+}
 Reply in EXACTLY this format, nothing before or after:
 TRADE: <electrical|plumbing|hvac|exterior|appliance|general — correct the classification if the checklist trade is wrong>
 URGENCY: <emergency|urgent|routine> — <one short reason>

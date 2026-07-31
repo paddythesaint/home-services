@@ -767,7 +767,9 @@ exports.tradeTriage = onSchedule(
         .collection(`properties/${doc.id}/workOrders`)
         .where("lane", "==", "triage")
         .get()
-      const fresh = pending.docs.filter((d) => !d.get("triage"))
+      // New orders, plus assessed ones whose homeowner answers arrived
+      // (retriage flag) — the dialogue loop: answer → re-read → refresh.
+      const fresh = pending.docs.filter((d) => !d.get("triage") || d.get("retriage"))
       if (fresh.length === 0) continue
 
       // The record context, once per property with work to assess.
@@ -787,6 +789,7 @@ exports.tradeTriage = onSchedule(
           const t = parseTriage(raw)
           await wo.ref.update({
             triage: { ...t, on: todayLabel() },
+            retriage: FieldValue.delete(),
           })
           assessed += 1
           console.log(`tradeTriage: ${doc.id}/${wo.id} → ${t.trade || "?"} / ${t.urgency || "?"}`)
