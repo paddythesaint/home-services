@@ -18,6 +18,7 @@ const PENDING_LABEL = {
   log_system: "Add system",
   service_request: "File request",
   log_quote: "Log quote",
+  save_filter: "Add filter",
 }
 
 export default function PendingConfirmations({ uid, email }) {

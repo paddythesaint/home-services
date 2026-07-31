@@ -13,6 +13,7 @@ import { isReadyToAction } from "../resolution"
 import { detectIssues, escalationCeiling } from "../issuePlaybook"
 import { coverageAlerts, coverageStatus, expiryLine } from "../warranties"
 import { workOrderAttention } from "../attentionInbox"
+import { lowStock, restockLine } from "../supplies"
 import { capitalEvents, capitalPhrase, CAPITAL_STATUS_WORD } from "../capitalPlanning"
 import { viewFor } from "../roles"
 import SystemStatus from "../SystemStatus"
@@ -82,6 +83,7 @@ function OpsProperty({
   const { items: warranties } = useItems(propertyId, "warranties")
   const { items: workOrders } = useItems(propertyId, "workOrders")
   const { items: recallFindings } = useItems(propertyId, "recallFindings")
+  const { items: supplies } = useItems(propertyId, "supplies")
 
   // Relationship health, not just property health: when did we last talk
   // to this household? (Founder-only clients store; errors stay quiet.)
@@ -185,13 +187,25 @@ function OpsProperty({
         to: "/coverage",
         propertyScoped: true,
       })),
+      // Filter stock too thin to cover the next change — cheap to fix
+      // today, a skipped maintenance beat if it waits.
+      ...lowStock(supplies).map((s) => ({
+        key: `sup-${s.id}`,
+        kind: "restock",
+        title: restockLine(s),
+        urgency: "medium",
+        property: profile.address,
+        propertyId,
+        to: "/health-report",
+        propertyScoped: true,
+      })),
     ]
     onAttention(propertyId, items)
     // Depend on the stable subscription arrays, not the derived filters —
     // fresh .filter() identities every render would re-fire this effect
     // (and re-set parent state) on every single render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [propertyId, priorityApi.items, systems, warranties, workOrders, profile.address])
+  }, [propertyId, priorityApi.items, systems, warranties, workOrders, supplies, profile.address])
 
   // Lift the raw orders too — the 3a pipeline reads lanes across the
   // whole portfolio. Same stable-array dependency rule as above.

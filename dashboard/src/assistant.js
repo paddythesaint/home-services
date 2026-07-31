@@ -15,7 +15,7 @@
 
 import { replacementHorizon, fmtMoneyRange } from "./benchmarks"
 
-export const ACTION_TYPES = ["save_fact", "service_request", "log_job", "log_system", "log_quote"]
+export const ACTION_TYPES = ["save_fact", "service_request", "log_job", "log_system", "log_quote", "save_filter"]
 
 const line = (label, value) => (value ? `${label}: ${value}` : null)
 
@@ -216,6 +216,9 @@ Confirming a log_job writes the job history entry AND checks the matching care-c
 4. When a NEW piece of equipment or a system is installed or replaced (a water pump, water heater, softener, HVAC unit, generator, sump pump…), offer to add it to the home's tracked systems:
 <action>{"type":"log_system","title":"<system name, e.g. Water pump (basement)>","detail":"<brand / model / specs if known, e.g. Grundfos MQ3-45>","category":"<trade/system category, e.g. Plumbing>","installYear":"<4-digit year installed if known, else empty>"}</action>
 Confirming a log_system adds it to Health of the house (the systems record) as a tracked system (unverified until inspected). A newly installed unit almost always deserves BOTH a log_system (so it's tracked and forecast) AND a log_job (the install itself). If a nameplate photo is attached, read the brand, model, and install year off it into the detail and installYear.
+5. When the member names a filter the home takes — an air filter size (often printed on the filter's edge: e.g. 20x25x1) or a water filter (refrigerator, under-sink, whole-house, RO) — offer to put it on the home's filter list. If a photo shows the printed size or model, read it off the photo:
+<action>{"type":"save_filter","kind":"<air or water>","size":"<e.g. 20x25x1, or the water filter type/model>","count":"<how many the home takes, default 1>","intervalMonths":"<months between changes if stated, else 3 for air, 6 for water>","location":"<room/unit if mentioned, else empty>"}</action>
+Confirming a save_filter adds it to Filters & supplies (on Health of the house), where stock and the change schedule are tracked. One action per distinct size; several sizes in one message may each get their own.
 Use at most one action of each type per reply — EXCEPT when a document is attached: then summarize it in 2-3 sentences and propose up to five save_fact actions for durable facts worth keeping (equipment and models, install/service dates, warranties, costs, contractor names). If a photo is attached, describe what you see briefly and use it to sharpen the fact, request, or system entry.
 Paint & finishes are part of the record too: when a member shares a paint can label, color name/code, or mentions painting a room, offer a save_fact with category "Paint & Finishes" capturing brand, color name and code, sheen, and where it was used (e.g. "Benjamin Moore Chantilly Lace OC-65, eggshell — living room walls, 2024"). Future touch-ups and color matches start from these facts.`
 }

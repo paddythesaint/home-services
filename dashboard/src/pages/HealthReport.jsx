@@ -3,6 +3,7 @@ import { Link, useLocation, useOutletContext } from "react-router-dom"
 import { useItems } from "../useItems"
 import PhotoSection from "../PhotoSection"
 import PhotoAudit from "../PhotoAudit"
+import FilterSupplies from "../FilterSupplies"
 import ActivitySection from "../ActivitySection"
 import SystemsGlance, { tradeRollup } from "../SystemsGlance"
 import { RecordTabs } from "../HubTabs"
@@ -445,6 +446,13 @@ export default function HealthReport() {
           )
         })()
       )}
+
+      {/* Consumables ride with the systems they serve: sizes, stock, and
+          the change rhythm live here; due dates surface on the care
+          calendar as derived rows. */}
+      <div className="mt-6">
+        <FilterSupplies uid={uid} />
+      </div>
 
       {viewFor(user?.email).business && items.length > 0 && (
         <div className="mt-4">

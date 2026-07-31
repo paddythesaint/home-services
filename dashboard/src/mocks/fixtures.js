@@ -407,6 +407,44 @@ export const fixtureData = {
             order: 4,
           },
         ],
+        // Filter inventory (supplies.js): sizes the home takes, stock on
+        // hand, and each line's change interval. sup-16 is deliberately
+        // short (1 on hand, takes 2) and sup-fridge empty — low-stock
+        // fixtures for the attention feed and the weekly brief.
+        supplies: [
+          {
+            id: "sup-20",
+            kind: "air",
+            size: "20x25x1",
+            count: 4,
+            stock: 6,
+            intervalMonths: 3,
+            location: "Main returns",
+            lastReplacedMs: Date.now() - 30 * 86_400_000,
+            order: 1,
+          },
+          {
+            id: "sup-16",
+            kind: "air",
+            size: "16x25x1",
+            count: 2,
+            stock: 1,
+            intervalMonths: 3,
+            location: "Upstairs unit",
+            lastReplacedMs: Date.now() - 100 * 86_400_000,
+            order: 2,
+          },
+          {
+            id: "sup-fridge",
+            kind: "water",
+            size: "Refrigerator filter — Samsung HAF-CIN",
+            count: 1,
+            stock: 0,
+            intervalMonths: 6,
+            location: "Kitchen",
+            order: 3,
+          },
+        ],
         photos: [
           {
             id: "photo-hvac-1",

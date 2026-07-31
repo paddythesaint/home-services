@@ -155,6 +155,18 @@ function comingLines({ workOrders, calendar, systems, now }) {
   return [...scheduled, ...care, ...overdue, ...checks, ...parked]
 }
 
+// Filter stock too thin to cover one full change (mirrors
+// dashboard/src/supplies.js — functions can't import dashboard code).
+// Short and actionable, so it rides both brief styles.
+function suppliesLines(supplies = []) {
+  return supplies
+    .filter((s) => (s.stock ?? 0) < (s.count || 1))
+    .map((s) => {
+      const label = s.kind === "air" ? `${s.size} air filter` : s.size || "Water filter"
+      return `Running low: ${label} — need ${s.count || 1}, have ${s.stock ?? 0}`
+    })
+}
+
 // --- The brief -------------------------------------------------------------
 
 function section(title, lines) {
@@ -168,6 +180,7 @@ function buildBrief({
   workOrders = [],
   calendar = [],
   systems = [],
+  supplies = [],
   forecast = [],
   style = "proactive",
   now = new Date(),
@@ -197,6 +210,9 @@ function buildBrief({
       coming.length ? coming : ["Nothing on the calendar yet — the care plan picks up next month."]
     )
   }
+
+  // Low filter stock is a two-minute errand either style should hear about.
+  body += section("Supplies check", suppliesLines(supplies))
 
   const text = `Your home this week — ${profile.address || "your home"}
 

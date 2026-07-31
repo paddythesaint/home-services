@@ -10,11 +10,12 @@ export const ACTION_META = {
   log_job: { label: "Job logged", tone: "brand" },
   log_system: { label: "System added", tone: "brand" },
   log_quote: { label: "Quote logged", tone: "brand" },
+  save_filter: { label: "Filter added", tone: "brand" },
 }
 
 // A readable label for one committed action.
 export function actionLabel(a) {
-  return a.title || a.fact || ACTION_META[a.type]?.label || a.type
+  return a.title || a.fact || a.size || ACTION_META[a.type]?.label || a.type
 }
 
 // Every record a conversation committed, flattened, with per-type counts —
