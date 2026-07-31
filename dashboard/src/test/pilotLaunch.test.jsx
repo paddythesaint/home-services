@@ -75,6 +75,8 @@ describe("enter-once creation", () => {
     // The form-only fields never pollute the profile.
     expect(p.ownerEmail).toBeUndefined()
     expect(p.ownerBrief).toBeUndefined()
+    // The two-step signup: creation queues the background address research.
+    expect(p.research).toBe("requested")
     // The founder still sees the home in the portfolio — platform-side.
     const portfolio = await fetchMemberProperties(MOCK_FOUNDER.email)
     expect(portfolio.some((x) => x.id === id)).toBe(true)

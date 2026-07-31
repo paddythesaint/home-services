@@ -41,5 +41,8 @@ export function buildNewProperty(data, user) {
     // Starts the onboarding clock: the empty-record reminder measures
     // from here (functions/digest.js).
     createdOnMs: Date.now(),
+    // Queues the background address researcher (functions/enrichment.js):
+    // public-record basics and sourced facts file in within ~10 minutes.
+    ...(profile.address ? { research: "requested" } : {}),
   }
 }

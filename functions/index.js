@@ -35,6 +35,7 @@ const { recallMatches, scanBrands } = require("./recalls")
 const { weatherNudges, pointFor } = require("./weather")
 const { draftOutreach } = require("./outreach")
 const { triageSystemPrompt, parseTriage, runTriage } = require("./tradeTriage")
+const { researchSystemPrompt, parseResearch, fillProfileGaps, runResearch } = require("./enrichment")
 const { FieldValue } = require("firebase-admin/firestore")
 
 initializeApp()
@@ -796,6 +797,74 @@ exports.tradeTriage = onSchedule(
         } catch (err) {
           console.error(`tradeTriage: ${doc.id}/${wo.id} failed:`, err.message)
         }
+      }
+    }
+  }
+)
+
+// ---------------------------------------------------------------------------
+// Address research: the two-step signup's background half. Creating a home
+// stamps `research: "requested"` (propertyCreation.js); every 10 minutes
+// this picks those up and researches that ONE address against public
+// sources via web search — profile basics fill only where the form left
+// blanks (a founder-entered value always wins), and sourced facts auto-
+// file with the auto stamp so the Home feed acknowledges them. Failures
+// retry on later runs, three strikes then marked failed. Logs counts only.
+exports.addressResearch = onSchedule(
+  { schedule: "every 10 minutes", maxInstances: 1, memory: "256MiB", timeoutSeconds: 300 },
+  async () => {
+    const apiKey = process.env.ANTHROPIC_API_KEY
+    if (!apiKey) return
+
+    const db = getFirestore()
+    const snap = await db.collection("properties").where("research", "==", "requested").get()
+    let researched = 0
+
+    for (const doc of snap.docs) {
+      if (researched >= 2) break // each address is several searches; keep runs cheap
+      const profile = doc.data()
+      if (!profile.address) {
+        await doc.ref.update({ research: "skipped" })
+        continue
+      }
+      try {
+        const raw = await runResearch({
+          apiKey,
+          model: MODEL,
+          maxTokens: MAX_TOKENS,
+          system: researchSystemPrompt(profile),
+        })
+        const { profile: found, facts, note } = parseResearch(raw)
+        const patch = fillProfileGaps(profile, found)
+        for (const [i, f] of facts.entries()) {
+          await db.collection(`properties/${doc.id}/facts`).add({
+            text: f.text,
+            category: f.category || "",
+            source: "address-research",
+            confirmedBy: "auto (address research)",
+            date: todayLabel(),
+            order: Date.now() + i,
+          })
+        }
+        await doc.ref.update({
+          ...patch,
+          research: "done",
+          researchOn: todayLabel(),
+          researchNote: note,
+          researchFactCount: facts.length,
+        })
+        researched += 1
+        console.log(
+          `addressResearch: ${doc.id} → ${facts.length} facts, ${Object.keys(patch).length} profile fields filled`
+        )
+      } catch (err) {
+        console.error(`addressResearch: ${doc.id} failed:`, err.message)
+        const attempts = (profile.researchAttempts || 0) + 1
+        await doc.ref.update(
+          attempts >= 3
+            ? { research: "failed", researchAttempts: attempts }
+            : { researchAttempts: attempts }
+        )
       }
     }
   }

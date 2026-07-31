@@ -161,6 +161,32 @@ function FullOverview() {
 
       {dashboardEmpty && isSeedProperty && <SeedBanner uid={uid} />}
 
+      {/* The two-step signup's second half, visible: the background
+          researcher works this address against public records and files
+          what it finds — sourced, unverified until confirmed. */}
+      {profile.research === "requested" && (
+        <Card className="mb-4">
+          <p className="m-0 text-sm text-ink-2">
+            <span className="font-medium text-ink">Researching this address…</span>{" "}
+            We're checking public records and listings for the basics — year built,
+            lot, systems, sale history. Details file into the record automatically,
+            usually within about ten minutes.
+          </p>
+        </Card>
+      )}
+      {profile.research === "done" && dashboardEmpty && (
+        <Card className="mb-4">
+          <p className="m-0 text-sm text-ink-2">
+            <span className="font-medium text-ink">
+              Address research done{profile.researchOn ? ` — ${profile.researchOn}` : ""}.
+            </span>{" "}
+            {profile.researchFactCount || 0} public-record detail
+            {(profile.researchFactCount || 0) === 1 ? "" : "s"} filed to the record
+            {profile.researchNote ? ` · ${profile.researchNote}` : ""}
+          </p>
+        </Card>
+      )}
+
       {!isSeedProperty && viewFor(user?.email).staff && (
         <OnboardingChecklist profile={profile} systems={healthItems} jobs={jobItems} />
       )}
