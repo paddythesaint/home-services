@@ -85,6 +85,28 @@ describe("enter-once creation", () => {
     expect(portfolio.some((x) => x.id === id)).toBe(true)
   })
 
+  it("What we know lists active facts with their source and archives on tap", async () => {
+    const { addItem } = await import("../firestoreApi")
+    const { __getItems } = await import("../mocks/firestoreApi")
+    await addItem("prop-ridge", "facts", {
+      text: "Built 1975 per the county record.",
+      category: "",
+      source: "address-research",
+      date: "August 9, 2026",
+      order: Date.now(),
+    })
+    const { default: FactsCard } = await import("../FactsCard")
+    render(<FactsCard uid="prop-ridge" />)
+    expect(await screen.findByText("Built 1975 per the county record.")).toBeInTheDocument()
+    expect(screen.getByText(/address research/)).toBeInTheDocument()
+    fireEvent.click(screen.getAllByText("archive")[0])
+    await waitFor(() => {
+      const facts = __getItems("prop-ridge", "facts")
+      const f = facts.find((x) => x.text === "Built 1975 per the county record.")
+      expect(f.archived).toBe(true)
+    })
+  })
+
   it("thin research offers a re-run that re-queues the background researcher", async () => {
     const { createProperty } = await import("../firestoreApi")
     const { MOCK_FOUNDER } = await import("../mocks/fixtures")

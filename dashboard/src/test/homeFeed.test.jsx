@@ -54,6 +54,23 @@ describe("homeFeed (pure)", () => {
     })
     expect(feed[0].detail).toBe("read and archived")
   })
+
+  it("only research facts ride the feed — other sources have their own surfaces", () => {
+    const feed = homeFeed({
+      facts: [
+        { text: "Built 1975 per county record.", source: "address-research", date: "August 9, 2026", order: 2 },
+        { text: "From an email.", source: "email-intake", date: "August 9, 2026", order: 3 },
+        { text: "From a chat.", source: "assistant", date: "August 9, 2026", order: 5 },
+        { text: "Old news.", source: "address-research", archived: true, order: 4 },
+      ],
+    })
+    expect(feed).toHaveLength(1)
+    expect(feed[0]).toMatchObject({
+      kind: "fact",
+      title: "Built 1975 per county record.",
+      detail: "from address research",
+    })
+  })
 })
 
 describe("the feed on both Homes", () => {

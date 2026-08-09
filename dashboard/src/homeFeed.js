@@ -25,8 +25,24 @@ function intakeSummary(conv) {
   return parts.join(" · ") || "read and archived"
 }
 
-export function homeFeed({ jobs = [], conversations = [], briefs = [] }, limit = 8) {
+export function homeFeed({ jobs = [], conversations = [], briefs = [], facts = [] }, limit = 8) {
   const entries = []
+
+  // Only address-research facts ride the feed: they're filed with no other
+  // acknowledgment surface. Every other source already has one — email
+  // facts through their conversation's entry, assistant facts in the chat
+  // itself, walkthrough facts on the walkthrough — and repeating them here
+  // would flood the feed's few slots.
+  for (const f of facts) {
+    if (f.archived || f.source !== "address-research") continue
+    entries.push({
+      kind: "fact",
+      order: f.order || when(f.date),
+      when: f.date || "",
+      title: f.text,
+      detail: "from address research",
+    })
+  }
 
   for (const j of jobs) {
     if ((j.status || "completed") !== "completed") continue
@@ -68,4 +84,5 @@ export const FEED_KIND_LABEL = {
   job: "Work done",
   email: "Email in",
   brief: "Brief",
+  fact: "Filed",
 }
