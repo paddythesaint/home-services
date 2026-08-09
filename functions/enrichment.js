@@ -37,33 +37,39 @@ FACTS:
 NOTE: <one sentence for the team: overall confidence and which sources answered>`
 }
 
-// Parse the fixed shape; "unknown" and empty values drop out.
+// Parse the fixed shape; "unknown" and empty values drop out. Tolerant of
+// the drift models actually produce: markdown bold around headers, *, •,
+// or – bullets, and stray whitespace after "FACTS:" — the first live run
+// came back "thin" partly because the parse was stricter than the model.
 function parseResearch(raw = "") {
   const profile = {}
   for (const key of PROFILE_KEYS) {
-    const v = (raw.match(new RegExp(`^${key}:\\s*(.+)$`, "m")) || [])[1]?.trim() || ""
-    if (v && !/^unknown$/i.test(v)) profile[key] = v
+    const v = (raw.match(new RegExp(`^\\**${key}\\**:\\s*(.+)$`, "mi")) || [])[1]?.trim() || ""
+    if (v && !/^unknown\b/i.test(v)) profile[key] = v.replace(/\*+$/, "").trim()
   }
-  const factsBlock = (raw.split(/^FACTS:$/m)[1] || "").split(/^NOTE:/m)[0]
+  const factsBlock = (raw.split(/^\**FACTS\**:\s*$/m)[1] || "").split(/^\**NOTE\**:/m)[0]
   const facts = factsBlock
     .split("\n")
     .map((l) => l.trim())
-    .filter((l) => l.startsWith("- ") && l.includes("|"))
+    .filter((l) => /^[-•*–]\s/.test(l) && l.includes("|"))
     .map((l) => {
-      const [category, ...rest] = l.slice(2).split("|")
+      const [category, ...rest] = l.replace(/^[-•*–]\s+/, "").split("|")
       return { category: category.trim(), text: rest.join("|").trim() }
     })
     .filter((f) => f.text.length > 3)
-  const note = (raw.match(/^NOTE:\s*(.+)$/m) || [])[1]?.trim() || ""
+  const note = (raw.match(/^\**NOTE\**:\s*(.+)$/m) || [])[1]?.trim() || ""
   return { profile, facts, note }
 }
 
 // Research fills only what the form left blank — a founder-entered value
-// always wins over a scraped one.
+// always wins over a scraped one. A 0 counts as blank: number inputs
+// write 0 for untouched fields, and no home truly has 0 bedrooms or was
+// built in year 0.
 function fillProfileGaps(current = {}, found = {}) {
   const patch = {}
   for (const key of PROFILE_KEYS) {
-    const has = current[key] !== undefined && current[key] !== null && `${current[key]}`.trim() !== ""
+    const cur = `${current[key] ?? ""}`.trim()
+    const has = cur !== "" && cur !== "0"
     if (!has && found[key]) patch[key] = found[key]
   }
   return patch

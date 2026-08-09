@@ -13,7 +13,7 @@ import RelationshipCard from "../RelationshipCard"
 import SystemsGlance from "../SystemsGlance"
 import { tradeForText } from "../trades"
 import hero895 from "../assets/hero-895.jpg"
-import { todayISO, isoToLabel } from "../dates"
+import { todayISO, isoToLabel, todayLabel } from "../dates"
 import { resolutionCounts } from "../resolution"
 import { homeFeed, FEED_KIND_LABEL } from "../homeFeed"
 import {
@@ -176,18 +176,52 @@ function FullOverview() {
           </p>
         </Card>
       )}
-      {profile.research === "done" && (dashboardEmpty || profile.pendingOwner) && (
-        <Card className="mb-4">
-          <p className="m-0 text-sm text-ink-2">
-            <span className="font-medium text-ink">
-              Address research done{profile.researchOn ? ` — ${profile.researchOn}` : ""}.
-            </span>{" "}
-            {profile.researchFactCount || 0} public-record detail
-            {(profile.researchFactCount || 0) === 1 ? "" : "s"} filed to the record
-            {profile.researchNote ? ` · ${profile.researchNote}` : ""}
-          </p>
-        </Card>
-      )}
+      {(profile.research === "done" || profile.research === "failed") &&
+        (dashboardEmpty || profile.pendingOwner) && (
+          <Card className="mb-4">
+            <p className="m-0 text-sm text-ink-2">
+              {profile.research === "failed" ? (
+                <span className="font-medium text-ink">
+                  Address research couldn't finish — sources may have been thin.
+                </span>
+              ) : (
+                <>
+                  <span className="font-medium text-ink">
+                    Address research done{profile.researchOn ? ` — ${profile.researchOn}` : ""}.
+                  </span>{" "}
+                  {profile.researchFactCount || 0} public-record detail
+                  {(profile.researchFactCount || 0) === 1 ? "" : "s"} filed to the record
+                  {profile.researchNote ? ` · ${profile.researchNote}` : ""}
+                </>
+              )}
+            </p>
+            {viewFor(user?.email).staff && (
+              <div className="mt-2.5">
+                <Button
+                  variant="subtle"
+                  onClick={() =>
+                    saveProfile({ research: "requested", researchAttempts: 0 })
+                  }
+                >
+                  Research again
+                </Button>
+                <span className="ml-2 text-xs text-ink-3">
+                  Re-runs within ~10 minutes; fills only fields still blank (or 0).
+                </span>
+              </div>
+            )}
+            {viewFor(user?.email).staff && profile.researchRaw && (
+              <details className="mt-2">
+                <summary className="text-xs text-ink-3 cursor-pointer">
+                  What the researcher actually reported
+                </summary>
+                <pre className="mt-1.5 text-[11.5px] leading-snug text-ink-2 whitespace-pre-wrap bg-sunk rounded-lg p-3 max-h-64 overflow-y-auto">
+                  {profile.researchRaw}
+                </pre>
+              </details>
+            )}
+          </Card>
+        )}
       {profile.pendingOwner && viewFor(user?.email).staff && (
         <Card className="mb-4">
           <p className="m-0 text-sm text-ink-2">
@@ -195,23 +229,56 @@ function FullOverview() {
               {profile.pendingOwner.name || profile.pendingOwner.email} is waiting in the
               wings.
             </span>{" "}
-            Review the researched record above, tidy anything off, then give them
-            access — until then they can't sign in and no emails go their way.
+            Until you finish both steps they can't sign in and no emails go their way.
           </p>
-          <div className="mt-3">
-            <Button
-              onClick={async () => {
-                const { email, name, brief } = profile.pendingOwner
-                await addMember(uid, { email, name, role: "owner" })
-                await saveProfile({
-                  briefStyles: { ...(profile.briefStyles || {}), [email]: brief || "passive" },
-                  pendingOwner: null,
-                })
-              }}
-            >
-              Confirm record & give {profile.pendingOwner.email} access
-            </Button>
-          </div>
+          {/* Two deliberate taps (7/31): confirming the record and opening
+              the doors are different decisions — the first is about the
+              data, the second is about the person. */}
+          <ol className="m-0 mt-3 p-0 list-none flex flex-col gap-2">
+            <li className="flex items-center gap-3">
+              <span className="text-xs font-semibold text-ink-3 w-4">1.</span>
+              {profile.recordConfirmed ? (
+                <span className="text-sm text-status-good font-medium">
+                  Record confirmed — {profile.recordConfirmed.on}
+                </span>
+              ) : (
+                <>
+                  <Button
+                    variant="subtle"
+                    onClick={() =>
+                      saveProfile({
+                        recordConfirmed: { by: user?.email || "", on: todayLabel() },
+                      })
+                    }
+                  >
+                    Confirm the record
+                  </Button>
+                  <span className="text-xs text-ink-3">
+                    after you've reviewed the research and tidied anything off
+                  </span>
+                </>
+              )}
+            </li>
+            <li className="flex items-center gap-3">
+              <span className="text-xs font-semibold text-ink-3 w-4">2.</span>
+              <Button
+                disabled={!profile.recordConfirmed}
+                onClick={async () => {
+                  const { email, name, brief } = profile.pendingOwner
+                  await addMember(uid, { email, name, role: "owner" })
+                  await saveProfile({
+                    briefStyles: { ...(profile.briefStyles || {}), [email]: brief || "passive" },
+                    pendingOwner: null,
+                  })
+                }}
+              >
+                Give {profile.pendingOwner.email} access
+              </Button>
+              {!profile.recordConfirmed && (
+                <span className="text-xs text-ink-3">unlocks after step 1</span>
+              )}
+            </li>
+          </ol>
         </Card>
       )}
 
