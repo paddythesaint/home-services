@@ -60,7 +60,7 @@ service cloud.firestore {
     function isPilot() {
       return request.auth != null
         && request.auth.token.email_verified == true
-        && request.auth.token.email in ['diy@example.com'];
+        && request.auth.token.email in ['aboyatt@gmail.com', 'diy@example.com'];
     }
 
     // The contractor network: one profile per contractor, spanning all
