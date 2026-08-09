@@ -29,6 +29,7 @@ export const STAFF_ROLES = {
   // Pilot cohort (diy): sophisticated owner-operators who self-build their
   // record — homeowner view plus the self-serve instruments. Add real pilot
   // emails here when the founder green-lights each one.
+  "aboyatt@gmail.com": "diy", // Alexander Boyatt — pilot #1 (7/31)
   "diy@example.com": "diy", // demo/test persona
 }
 

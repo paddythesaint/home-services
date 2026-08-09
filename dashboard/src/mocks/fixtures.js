@@ -8,6 +8,8 @@ export const MOCK_FOUNDER = {
   uid: "mock-founder-uid",
 }
 
+const THIS_MONTH = new Date().toLocaleDateString("en-US", { month: "long" })
+
 export const fixtureData = {
   properties: {
     "prop-ballard": {
@@ -130,8 +132,11 @@ export const fixtureData = {
           },
         ],
         careCalendar: [
-          { id: "cal-1", month: "July", task: "Flush water heater", order: 1 },
-          { id: "cal-2", month: "July", task: "Inspect deck boards", order: 2 },
+          // Pinned to the CURRENT month so "this month" surfaces (Overview
+          // strip, What's-next) always have fixture tasks to show — a
+          // hardcoded month broke the suite every calendar rollover.
+          { id: "cal-1", month: THIS_MONTH, task: "Flush water heater", order: 1 },
+          { id: "cal-2", month: THIS_MONTH, task: "Inspect deck boards", order: 2 },
           { id: "cal-3", month: "October", task: "Clean gutters", order: 3 },
         ],
         priorityList: [
