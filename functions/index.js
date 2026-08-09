@@ -852,6 +852,9 @@ exports.addressResearch = onSchedule(
           researchOn: todayLabel(),
           researchNote: note,
           researchFactCount: facts.length,
+          // The raw reply, truncated — makes a thin pass inspectable from
+          // the research card instead of a black box.
+          researchRaw: raw.slice(0, 6000),
         })
         researched += 1
         console.log(

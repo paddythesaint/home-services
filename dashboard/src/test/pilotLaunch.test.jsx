@@ -103,9 +103,10 @@ describe("enter-once creation", () => {
     })
   })
 
-  it("step three: the founder reviews and activates — owner-member, brief election, pending cleared", async () => {
+  it("step three is two deliberate taps: confirm the record, then give access", async () => {
     const { createProperty } = await import("../firestoreApi")
     const { MOCK_FOUNDER } = await import("../mocks/fixtures")
+    const { __getProfile } = await import("../mocks/firestoreApi")
     const id = await createProperty(
       {
         address: "1600 Old Ballard Road",
@@ -116,11 +117,20 @@ describe("enter-once creation", () => {
       MOCK_FOUNDER
     )
     const { default: Overview } = await import("../pages/Overview")
+    const first = renderPage(<Overview />, { uid: id })
+    // Access is locked until the record is confirmed.
+    expect(
+      (await screen.findByText(/Give mike.family@gmail.com access/)).closest("button")
+    ).toBeDisabled()
+    fireEvent.click(screen.getByText("Confirm the record"))
+    await waitFor(() => {
+      expect(__getProfile(id).recordConfirmed).toBeTruthy()
+    })
+    // Fresh render with the confirmed profile (the app's live subscription
+    // does this by itself): the access tap now works.
+    first.unmount()
     renderPage(<Overview />, { uid: id })
-    fireEvent.click(
-      await screen.findByText(/Confirm record & give mike.family@gmail.com access/)
-    )
-    const { __getProfile } = await import("../mocks/firestoreApi")
+    fireEvent.click(await screen.findByText(/Give mike.family@gmail.com access/))
     await waitFor(() => {
       const p = __getProfile(id)
       expect(p.memberEmails).toEqual(["mike.family@gmail.com"])
