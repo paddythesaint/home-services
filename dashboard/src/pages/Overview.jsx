@@ -176,18 +176,42 @@ function FullOverview() {
           </p>
         </Card>
       )}
-      {profile.research === "done" && (dashboardEmpty || profile.pendingOwner) && (
-        <Card className="mb-4">
-          <p className="m-0 text-sm text-ink-2">
-            <span className="font-medium text-ink">
-              Address research done{profile.researchOn ? ` — ${profile.researchOn}` : ""}.
-            </span>{" "}
-            {profile.researchFactCount || 0} public-record detail
-            {(profile.researchFactCount || 0) === 1 ? "" : "s"} filed to the record
-            {profile.researchNote ? ` · ${profile.researchNote}` : ""}
-          </p>
-        </Card>
-      )}
+      {(profile.research === "done" || profile.research === "failed") &&
+        (dashboardEmpty || profile.pendingOwner) && (
+          <Card className="mb-4">
+            <p className="m-0 text-sm text-ink-2">
+              {profile.research === "failed" ? (
+                <span className="font-medium text-ink">
+                  Address research couldn't finish — sources may have been thin.
+                </span>
+              ) : (
+                <>
+                  <span className="font-medium text-ink">
+                    Address research done{profile.researchOn ? ` — ${profile.researchOn}` : ""}.
+                  </span>{" "}
+                  {profile.researchFactCount || 0} public-record detail
+                  {(profile.researchFactCount || 0) === 1 ? "" : "s"} filed to the record
+                  {profile.researchNote ? ` · ${profile.researchNote}` : ""}
+                </>
+              )}
+            </p>
+            {viewFor(user?.email).staff && (
+              <div className="mt-2.5">
+                <Button
+                  variant="subtle"
+                  onClick={() =>
+                    saveProfile({ research: "requested", researchAttempts: 0 })
+                  }
+                >
+                  Research again
+                </Button>
+                <span className="ml-2 text-xs text-ink-3">
+                  Re-runs within ~10 minutes; fills only fields still blank (or 0).
+                </span>
+              </div>
+            )}
+          </Card>
+        )}
       {profile.pendingOwner && viewFor(user?.email).staff && (
         <Card className="mb-4">
           <p className="m-0 text-sm text-ink-2">

@@ -85,6 +85,24 @@ describe("enter-once creation", () => {
     expect(portfolio.some((x) => x.id === id)).toBe(true)
   })
 
+  it("thin research offers a re-run that re-queues the background researcher", async () => {
+    const { createProperty } = await import("../firestoreApi")
+    const { MOCK_FOUNDER } = await import("../mocks/fixtures")
+    const { saveProperty, __getProfile } = await import("../mocks/firestoreApi")
+    const id = await createProperty(
+      { address: "1600 Old Ballard Road", ownerEmail: "aboyatt@gmail.com" },
+      MOCK_FOUNDER
+    )
+    // Simulate a completed-but-thin research pass.
+    await saveProperty(id, { research: "done", researchOn: "August 9, 2026", researchFactCount: 1 })
+    const { default: Overview } = await import("../pages/Overview")
+    renderPage(<Overview />, { uid: id })
+    fireEvent.click(await screen.findByText("Research again"))
+    await waitFor(() => {
+      expect(__getProfile(id).research).toBe("requested")
+    })
+  })
+
   it("step three: the founder reviews and activates — owner-member, brief election, pending cleared", async () => {
     const { createProperty } = await import("../firestoreApi")
     const { MOCK_FOUNDER } = await import("../mocks/fixtures")

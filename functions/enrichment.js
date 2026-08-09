@@ -59,11 +59,14 @@ function parseResearch(raw = "") {
 }
 
 // Research fills only what the form left blank — a founder-entered value
-// always wins over a scraped one.
+// always wins over a scraped one. A 0 counts as blank: number inputs
+// write 0 for untouched fields, and no home truly has 0 bedrooms or was
+// built in year 0.
 function fillProfileGaps(current = {}, found = {}) {
   const patch = {}
   for (const key of PROFILE_KEYS) {
-    const has = current[key] !== undefined && current[key] !== null && `${current[key]}`.trim() !== ""
+    const cur = `${current[key] ?? ""}`.trim()
+    const has = cur !== "" && cur !== "0"
     if (!has && found[key]) patch[key] = found[key]
   }
   return patch

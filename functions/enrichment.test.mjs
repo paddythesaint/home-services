@@ -47,6 +47,14 @@ test("gap-fill never overwrites a founder-entered value", () => {
   assert.deepEqual(patch, { acreage: "2.1", bathrooms: "3" })
 })
 
+test("a 0 counts as blank — untouched number inputs must not block research", () => {
+  const patch = fillProfileGaps(
+    { yearBuilt: 0, acreage: "0", bedrooms: 0, bathrooms: "4.5" },
+    { yearBuilt: "1975", acreage: "2.03", bedrooms: "5", bathrooms: "4" }
+  )
+  assert.deepEqual(patch, { yearBuilt: "1975", acreage: "2.03", bedrooms: "5" })
+})
+
 test("runResearch resumes pause_turn and joins every text block", async () => {
   const replies = [
     { stop_reason: "pause_turn", content: [{ type: "text", text: "searching…" }] },
