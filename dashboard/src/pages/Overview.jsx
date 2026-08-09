@@ -70,6 +70,7 @@ function FullOverview() {
   const { items: workOrders } = useItems(uid, "workOrders")
   const { items: conversations } = useItems(uid, "conversations")
   const { items: briefs } = useItems(uid, "briefs")
+  const { items: factItems } = useItems(uid, "facts")
   const { items: healthItems, loading: healthLoading } = healthApi
   const { items: priorityItems, loading: priorityLoading } = priorityApi
   const { items: jobItems } = jobApi
@@ -85,7 +86,7 @@ function FullOverview() {
     (p) => !p.status || p.status === "open" || p.status === "scheduled"
   )
   const topPriorities = openPriorities.slice(0, 3)
-  const feed = homeFeed({ jobs: jobItems, conversations, briefs }, 6)
+  const feed = homeFeed({ jobs: jobItems, conversations, briefs, facts: factItems }, 6)
 
   const currentMonth = new Date().toLocaleDateString("en-US", { month: "long" })
   const thisMonthTasks = calendarItems.filter((t) => t.month === currentMonth)
@@ -190,7 +191,11 @@ function FullOverview() {
                     Address research done{profile.researchOn ? ` — ${profile.researchOn}` : ""}.
                   </span>{" "}
                   {profile.researchFactCount || 0} public-record detail
-                  {(profile.researchFactCount || 0) === 1 ? "" : "s"} filed to the record
+                  {(profile.researchFactCount || 0) === 1 ? "" : "s"} filed to{" "}
+                  <Link to="/health-report#facts" className="underline text-brand-700">
+                    What we know
+                  </Link>
+                  {" "}(profile basics land in Edit property info)
                   {profile.researchNote ? ` · ${profile.researchNote}` : ""}
                 </>
               )}

@@ -86,6 +86,7 @@ export default function HomeownerHome() {
   const { items: nudges } = useItems(uid, "nudges")
   const { items: conversations } = useItems(uid, "conversations")
   const { items: briefs } = useItems(uid, "briefs")
+  const { items: facts } = useItems(uid, "facts")
   const latestNote = visitNotes[visitNotes.length - 1]
   const recap = buildRecap({ jobs, priorities })
 
@@ -96,7 +97,7 @@ export default function HomeownerHome() {
   // The acknowledgment stream: care done, emails received (and what was
   // filed from them), briefs sent — so "did you get my email?" is answered
   // by glancing at Home, not by asking.
-  const recent = homeFeed({ jobs, conversations, briefs }, 4)
+  const recent = homeFeed({ jobs, conversations, briefs, facts }, 4)
 
   // Weather nudges: only while the alert is live. Weather is care, not
   // machinery — it shows in Simple too.

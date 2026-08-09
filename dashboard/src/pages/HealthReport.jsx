@@ -4,6 +4,7 @@ import { useItems } from "../useItems"
 import PhotoSection from "../PhotoSection"
 import PhotoAudit from "../PhotoAudit"
 import FilterSupplies from "../FilterSupplies"
+import FactsCard from "../FactsCard"
 import ActivitySection from "../ActivitySection"
 import SystemsGlance, { tradeRollup } from "../SystemsGlance"
 import { RecordTabs } from "../HubTabs"
@@ -452,6 +453,12 @@ export default function HealthReport() {
           calendar as derived rows. */}
       <div className="mt-6">
         <FilterSupplies uid={uid} />
+      </div>
+
+      {/* The fact file: where research, email intake, and assistant
+          conversations actually land — readable and prunable. */}
+      <div className="mt-6" id="facts">
+        <FactsCard uid={uid} />
       </div>
 
       {viewFor(user?.email).business && items.length > 0 && (
