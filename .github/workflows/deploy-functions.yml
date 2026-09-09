@@ -39,11 +39,15 @@ jobs:
           GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
           GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
           GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          HOME_SUMMARY_TOKEN: ${{ secrets.HOME_SUMMARY_TOKEN }}
         run: |
           printf 'ANTHROPIC_API_KEY=%s\n' "$ANTHROPIC_API_KEY" > functions/.env
           printf 'GMAIL_CLIENT_ID=%s\n' "$GMAIL_CLIENT_ID" >> functions/.env
           printf 'GMAIL_CLIENT_SECRET=%s\n' "$GMAIL_CLIENT_SECRET" >> functions/.env
           printf 'GMAIL_REFRESH_TOKEN=%s\n' "$GMAIL_REFRESH_TOKEN" >> functions/.env
+          # Optional: enables the read-only home-summary endpoint for the
+          # family-ops assistant. Unset = endpoint answers 404.
+          printf 'HOME_SUMMARY_TOKEN=%s\n' "$HOME_SUMMARY_TOKEN" >> functions/.env
 
       - name: Write deploy credentials
         env:

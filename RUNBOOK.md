@@ -64,7 +64,9 @@ server-side. It deploys automatically via GitHub Actions
 (`deploy-functions.yml`) whenever `functions/**` changes on main — no
 console visit, no local CLI. It depends on three GitHub repo secrets:
 `FIREBASE_SERVICE_ACCOUNT`, `ANTHROPIC_API_KEY`, and the existing
-`VITE_FIREBASE_PROJECT_ID`.
+`VITE_FIREBASE_PROJECT_ID`. Optional fourth: `HOME_SUMMARY_TOKEN`
+enables the read-only home-summary endpoint for the family-ops
+assistant (see FAMILY-OPS.md); unset, that endpoint answers 404.
 
 **Verify:** Command Center → System status → Run checks → the
 "Backend (AI proxy)" row should be green ("reachable · key configured").
