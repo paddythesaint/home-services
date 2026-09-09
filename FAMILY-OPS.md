@@ -9,6 +9,12 @@ project. Three touchpoints, from zero-setup to one-secret:
 `GET https://us-central1-<PROJECT_ID>.cloudfunctions.net/homeSummary`
 with header `Authorization: Bearer <HOME_SUMMARY_TOKEN>`.
 
+Note: the Firebase console shows the same function under its Cloud Run
+address (`https://homesummary-<hash>-uc.a.run.app`) — v2 functions run
+on Cloud Run, so both URL forms are legitimate and hit the same code.
+Verify an address by matching it against the `homeSummary` row in
+Firebase console → Build → Functions.
+
 Returns one JSON snapshot of Patrick's home (resolved by his membership —
 the same source of truth as the app):
 
