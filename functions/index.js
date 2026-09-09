@@ -186,6 +186,73 @@ exports.api = onRequest(
 )
 
 // ---------------------------------------------------------------------------
+// Home-summary read API (9/9): a machine-readable snapshot of ONE home for
+// an external personal assistant (Patrick's family-ops). Auth is a shared
+// bearer token (HOME_SUMMARY_TOKEN, a GitHub secret written to .env by
+// CI); the property is resolved by HOME_SUMMARY_EMAIL's membership — the
+// same source of truth as everything else. Read-only, GET-only, no CORS
+// (server-to-server). Unset token = endpoint disabled.
+const { homeSummary } = require("./summary")
+const { timingSafeEqual } = require("node:crypto")
+
+const tokenMatches = (given, expected) => {
+  const a = Buffer.from(given || "")
+  const b = Buffer.from(expected || "")
+  return a.length === b.length && a.length > 0 && timingSafeEqual(a, b)
+}
+
+exports.homeSummary = onRequest(
+  { maxInstances: 1, memory: "256MiB", timeoutSeconds: 60 },
+  async (req, res) => {
+    if (req.method !== "GET") {
+      res.status(405).json({ error: "GET only" })
+      return
+    }
+    const expected = process.env.HOME_SUMMARY_TOKEN || ""
+    if (!expected) {
+      res.status(404).json({ error: "Not configured" })
+      return
+    }
+    const header = req.get("authorization") || ""
+    const given = header.startsWith("Bearer ") ? header.slice(7) : ""
+    if (!tokenMatches(given, expected)) {
+      res.status(401).json({ error: "Bad token" })
+      return
+    }
+
+    const email = (process.env.HOME_SUMMARY_EMAIL || FOUNDER_EMAILS[0]).toLowerCase()
+    const db = getFirestore()
+    const found = await db
+      .collection("properties")
+      .where("memberEmails", "array-contains", email)
+      .limit(1)
+      .get()
+    if (found.empty) {
+      res.status(404).json({ error: "No home on record for the configured member" })
+      return
+    }
+    const doc = found.docs[0]
+
+    try {
+      const [jobs, workOrders, calendar, systems, supplies, priorities] = await Promise.all(
+        ["jobHistory", "workOrders", "careCalendar", "healthReport", "supplies", "priorityList"].map(
+          async (c) => {
+            const snap = await db.collection(`properties/${doc.id}/${c}`).get()
+            return snap.docs.map((d) => d.data())
+          }
+        )
+      )
+      res.json(
+        homeSummary({ profile: doc.data(), jobs, workOrders, calendar, systems, supplies, priorities })
+      )
+    } catch (err) {
+      console.error("homeSummary failed:", err.message)
+      res.status(500).json({ error: "Summary failed" })
+    }
+  }
+)
+
+// ---------------------------------------------------------------------------
 // Inbound email pipeline, phase 2: the Gmail poller. Every 10 minutes, read
 // unread mail from the shared intake mailbox (cvillehomeservicestest@gmail.com
 // — forwards from founders/clients land there, optionally tagged per home as
